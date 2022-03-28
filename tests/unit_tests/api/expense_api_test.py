@@ -1,5 +1,6 @@
 import re
 
+from pytest import mark
 from starlette.testclient import TestClient
 
 from odin.api import app
@@ -25,3 +26,21 @@ def test_create_expense(mocker):
     assert response_data['amount'] == '100000'
     assert re.match(UUID_PATTERN, response_data['uuid'])
     repository_mock.assert_called_once()
+
+
+create_expense_data_params = (
+    {'date': '2022-03-27'},
+    {'amount': '1000'}
+)
+
+
+@mark.parametrize('data', create_expense_data_params)
+def test_create_expense_with_missing_data(mocker, data):
+    client = TestClient(app)
+    repository_mock = mocker.patch.object(ExpenseRepository, 'add')
+    response = client.post(
+        '/expenses',
+        json=data
+    )
+    assert response.status_code == 400
+    repository_mock.assert_not_called()

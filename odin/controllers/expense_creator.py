@@ -7,8 +7,8 @@ from odin.repositories import ExpenseRepository
 
 
 class ExpenseCreator(Entity):
-    _date = fields.DateField(private=True)
-    _amount = fields.DecimalField(private=True)
+    _date = fields.DateField(private=True, required=True)
+    _amount = fields.DecimalField(private=True, required=True)
 
     def create(self):
         expense = Expense(
