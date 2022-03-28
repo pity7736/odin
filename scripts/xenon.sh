@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-xenon -b A -m A -a A ../odin
+xenon -b A -m A -a A odin

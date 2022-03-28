@@ -4,9 +4,7 @@ from decimal import Decimal
 
 from odin.controllers import ExpenseCreator
 from odin.repositories import ExpenseRepository
-
-
-UUID_PATTERN = r'^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$'
+from tests.utils import UUID_PATTERN
 
 
 def test_create_expense(mocker):
