@@ -30,12 +30,14 @@ def test_create_expense(mocker):
 
 create_expense_data_params = (
     {'date': '2022-03-27'},
-    {'amount': '1000'}
+    {'amount': '1000'},
+    {'date': 'wrong date', 'amount': '100'},
+    {'date': '2022-03-29', 'amount': 'wrong amount'},
 )
 
 
 @mark.parametrize('data', create_expense_data_params)
-def test_create_expense_with_missing_data(mocker, data):
+def test_create_expense_with_missing_or_wrong_data(mocker, data):
     client = TestClient(app)
     repository_mock = mocker.patch.object(ExpenseRepository, 'add')
     response = client.post(

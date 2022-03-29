@@ -1,4 +1,4 @@
-from nyoibo.exceptions import RequiredValueError
+from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
@@ -12,7 +12,7 @@ class Expense(HTTPEndpoint):
         data = await request.json()
         try:
             expense_creator = ExpenseCreator(**data)
-        except RequiredValueError:
+        except (RequiredValueError, FieldValueError):
             status_code = 400
             response_data = {}
         else:
