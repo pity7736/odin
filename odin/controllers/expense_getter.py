@@ -5,4 +5,7 @@ class ExpenseGetter:
 
     def get_by_uuid(self, uuid):
         repository = ExpenseRepository()
-        return repository.get_by(uuid=uuid)
+        try:
+            return repository.get_by(uuid=uuid)
+        except KeyError:
+            return None

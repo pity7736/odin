@@ -2,7 +2,7 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.controllers import ExpenseCreator
+from odin.controllers import ExpenseCreator, ExpenseGetter
 
 
 class Expense(HTTPEndpoint):
@@ -24,3 +24,18 @@ class Expense(HTTPEndpoint):
                 'uuid': expense.uuid
             }
         return JSONResponse(response_data, status_code=status_code)
+
+
+def get_expense(request):
+    expense_getter = ExpenseGetter()
+    expense = expense_getter.get_by_uuid(request.path_params['uuid'])
+    if expense:
+        return JSONResponse(
+            {
+                'date': expense.date.isoformat(),
+                'amount': str(expense.amount),
+                'uuid': expense.uuid
+            },
+            status_code=200
+        )
+    return JSONResponse({}, status_code=404)

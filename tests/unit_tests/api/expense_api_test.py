@@ -41,3 +41,32 @@ def test_create_expense_with_missing_or_wrong_data(data):
         json=data
     )
     assert response.status_code == 400
+
+
+def test_get_expense():
+    client = TestClient(app)
+    post_response = client.post(
+        '/expenses',
+        json={
+            'date': '2022-03-27',
+            'amount': '100000'
+        }
+    )
+    response_data = post_response.json()
+    response = client.get(f'/expenses/{response_data["uuid"]}')
+    response_data = response.json()
+
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/json'
+    assert response_data['date'] == '2022-03-27'
+    assert response_data['amount'] == '100000'
+
+
+def test_get_non_existing_expense(expense_fixture):
+    client = TestClient(app)
+    response = client.get('/expenses/1234')
+    response_data = response.json()
+
+    assert response.status_code == 404
+    assert response.headers['content-type'] == 'application/json'
+    assert response_data == {}

@@ -5,7 +5,8 @@ from . import views
 
 
 routes = [
-    Route('/expenses', views.Expense)
+    Route('/expenses', views.Expense),
+    Route('/expenses/{uuid}', views.get_expense)
 ]
 
 app = Starlette(routes=routes)
