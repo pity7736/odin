@@ -8,3 +8,6 @@ class ExpenseRepository:
 
     def get_by(self, uuid):
         return self._expenses[uuid]
+
+    def get_all(self):
+        pass
