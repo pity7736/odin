@@ -1,8 +1,10 @@
 
 class ExpenseRepository:
 
+    _expenses = {}
+
     def add(self, expense):
-        pass
+        self._expenses[expense.uuid] = expense
 
     def get_by(self, uuid):
-        pass
+        return self._expenses[uuid]
