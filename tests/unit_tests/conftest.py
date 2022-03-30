@@ -1,12 +1,11 @@
 from pytest import fixture
 
-from odin.controllers import ExpenseCreator
+from tests.factories import ExpenseFactory
 
 
 @fixture
 def expense_fixture():
-    expense_creator = ExpenseCreator(
+    return ExpenseFactory.create(
         date='2022-03-27',
-        amount='100_000'
+        amount='100_00'
     )
-    return expense_creator.create()
