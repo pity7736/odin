@@ -4,13 +4,11 @@ from pytest import mark
 from starlette.testclient import TestClient
 
 from odin.api import app
-from odin.repositories import ExpenseRepository
 from tests.utils import UUID_PATTERN
 
 
-def test_create_expense(mocker):
+def test_create_expense():
     client = TestClient(app)
-    repository_mock = mocker.patch.object(ExpenseRepository, 'add')
     response = client.post(
         '/expenses',
         json={
@@ -25,7 +23,6 @@ def test_create_expense(mocker):
     assert response_data['date'] == '2022-03-27'
     assert response_data['amount'] == '100000'
     assert re.match(UUID_PATTERN, response_data['uuid'])
-    repository_mock.assert_called_once()
 
 
 create_expense_data_params = (
@@ -37,12 +34,10 @@ create_expense_data_params = (
 
 
 @mark.parametrize('data', create_expense_data_params)
-def test_create_expense_with_missing_or_wrong_data(mocker, data):
+def test_create_expense_with_missing_or_wrong_data(data):
     client = TestClient(app)
-    repository_mock = mocker.patch.object(ExpenseRepository, 'add')
     response = client.post(
         '/expenses',
         json=data
     )
     assert response.status_code == 400
-    repository_mock.assert_not_called()
