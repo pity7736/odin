@@ -1,4 +1,5 @@
 from odin.repositories import ExpenseRepository
+from odin.repositories.exceptions import DoesNotExist
 
 
 class ExpenseGetter:
@@ -11,7 +12,7 @@ class ExpenseGetter:
     def get_by_uuid(self, uuid):
         try:
             return self._repository.get_by(uuid=uuid)
-        except KeyError:
+        except DoesNotExist:
             return None
 
     def all(self):
