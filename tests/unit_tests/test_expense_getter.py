@@ -1,3 +1,5 @@
+import uuid
+
 from odin.controllers import ExpenseGetter, ExpenseCreator
 from odin.repositories import ExpenseRepository
 
@@ -8,6 +10,13 @@ def test_get_expense_by_uuid(expense_fixture):
 
     assert gotten_expense.date == expense_fixture.date
     assert gotten_expense.amount == expense_fixture.amount
+
+
+def test_get_non_existing_expense_by_uuid(expense_fixture):
+    expense_fixture = ExpenseGetter()
+    gotten_expense = expense_fixture.get_by_uuid(uuid=uuid.uuid4())
+
+    assert gotten_expense is None
 
 
 def test_get_all(mocker):
