@@ -1,7 +1,7 @@
 import uuid
 
-from odin.controllers import ExpenseGetter, ExpenseCreator
-from odin.repositories import ExpenseRepository
+from odin.controllers import ExpenseGetter
+from tests.factories import ExpenseFactory
 
 
 def test_get_expense_by_uuid(expense_fixture):
@@ -19,20 +19,9 @@ def test_get_non_existing_expense_by_uuid(expense_fixture):
     assert gotten_expense is None
 
 
-def test_get_all(mocker):
-    expense_creator = ExpenseCreator(
-        date='2022-03-30',
-        amount='100'
-    )
-    expense0 = expense_creator.create()
-    expense_creator = ExpenseCreator(
-        date='2022-03-29',
-        amount='10000'
-    )
-    expense1 = expense_creator.create()
-
+def test_get_all(db_transaction):
+    ExpenseFactory.create_batch(2)
     expense_getter = ExpenseGetter()
-    mocker.patch.object(ExpenseRepository, 'get_all', return_value=(expense0, expense1))
     expenses = expense_getter.all()
 
-    assert expenses == (expense0, expense1)
+    assert expenses == expenses

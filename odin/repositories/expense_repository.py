@@ -15,4 +15,4 @@ class ExpenseRepository:
             raise DoesNotExist('Expense not found')
 
     def get_all(self):
-        pass
+        return tuple(self._expenses.values())
