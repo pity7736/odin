@@ -7,9 +7,8 @@ from odin.api import app
 from tests.utils import UUID_PATTERN
 
 
-def test_create_expense():
-    client = TestClient(app)
-    response = client.post(
+def test_create_expense(test_client):
+    response = test_client.post(
         '/expenses',
         json={
             'date': '2022-03-27',
@@ -34,9 +33,8 @@ create_expense_data_params = (
 
 
 @mark.parametrize('data', create_expense_data_params)
-def test_create_expense_with_missing_or_wrong_data(data):
-    client = TestClient(app)
-    response = client.post(
+def test_create_expense_with_missing_or_wrong_data(data, test_client):
+    response = test_client.post(
         '/expenses',
         json=data
     )
@@ -44,8 +42,8 @@ def test_create_expense_with_missing_or_wrong_data(data):
 
 
 def test_get_expense():
-    client = TestClient(app)
-    post_response = client.post(
+    test_client = TestClient(app)
+    post_response = test_client.post(
         '/expenses',
         json={
             'date': '2022-03-27',
@@ -53,7 +51,7 @@ def test_get_expense():
         }
     )
     response_data = post_response.json()
-    response = client.get(f'/expenses/{response_data["uuid"]}')
+    response = test_client.get(f'/expenses/{response_data["uuid"]}')
     response_data = response.json()
 
     assert response.status_code == 200
@@ -62,9 +60,8 @@ def test_get_expense():
     assert response_data['amount'] == '100000'
 
 
-def test_get_non_existing_expense(expense_fixture):
-    client = TestClient(app)
-    response = client.get('/expenses/1234')
+def test_get_non_existing_expense(expense_fixture, test_client):
+    response = test_client.get('/expenses/1234')
     response_data = response.json()
 
     assert response.status_code == 404
