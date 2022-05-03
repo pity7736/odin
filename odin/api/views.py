@@ -25,6 +25,19 @@ class Expense(HTTPEndpoint):
             }
         return JSONResponse(response_data, status_code=status_code)
 
+    @staticmethod
+    async def get(request):
+        expense_getter = ExpenseGetter()
+        expenses = expense_getter.all()
+        serialized_expenses = []
+        for expense in expenses:
+            serialized_expenses.append({
+                'date': expense.date.isoformat(),
+                'amount': str(expense.amount),
+                'uuid': expense.uuid
+            })
+        return JSONResponse({'expenses': serialized_expenses})
+
 
 def get_expense(request):
     expense_getter = ExpenseGetter()
