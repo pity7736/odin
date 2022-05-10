@@ -12,7 +12,7 @@ class Expense(HTTPEndpoint):
         data = await request.json()
         try:
             expense_creator = ExpenseCreator(**data)
-        except (RequiredValueError, FieldValueError):
+        except (RequiredValueError, FieldValueError, ValueError):
             status_code = 400
             response_data = {}
         else:

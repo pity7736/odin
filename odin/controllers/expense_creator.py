@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from nyoibo import Entity, fields
@@ -9,6 +10,11 @@ from odin.repositories import ExpenseRepository
 class ExpenseCreator(Entity):
     _date = fields.DateField(private=True, required=True)
     _amount = fields.DecimalField(private=True, required=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self._date > datetime.date.today():
+            raise ValueError('date must be less or equal than today.')
 
     def create(self):
         expense = Expense(

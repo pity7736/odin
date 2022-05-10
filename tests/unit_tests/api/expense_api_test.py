@@ -1,3 +1,4 @@
+import datetime
 import re
 
 from pytest import mark
@@ -39,6 +40,18 @@ def test_create_expense_with_missing_or_wrong_data(data, test_client):
         '/expenses',
         json=data
     )
+    assert response.status_code == 400
+
+
+def test_create_expense_with_date_in_the_future(test_client):
+    response = test_client.post(
+        '/expenses',
+        json={
+            'date': (datetime.date.today() + datetime.timedelta(days=1)).isoformat(),
+            'amount': '100000'
+        }
+    )
+
     assert response.status_code == 400
 
 
