@@ -1,0 +1,30 @@
+from pytest import mark
+
+
+params = (
+    'test category0',
+    'test category1',
+)
+
+
+@mark.parametrize('category_name', params)
+def test_create_category(category_name, test_client, db_transaction):
+    response = test_client.post(
+        '/categories',
+        json={'name': category_name}
+    )
+    response_data = response.json()
+
+    assert response.headers['content-type'] == 'application/json'
+    assert response.status_code == 201
+    assert response_data['name'] == category_name
+
+
+@mark.parametrize('category_name', params)
+def test_get_all_categories(category_name, test_client, db_transaction):
+    test_client.post('/categories', json={'name': category_name})
+    response = test_client.get('/categories')
+    response_data = response.json()
+
+    assert response.status_code == 200
+    assert response_data['categories'] == [{'name': category_name}]

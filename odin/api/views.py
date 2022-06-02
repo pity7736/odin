@@ -2,7 +2,7 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.controllers import ExpenseCreator, ExpenseGetter
+from odin.controllers import ExpenseCreator, ExpenseGetter, CategoryCreator, CategoryGetter
 
 
 class Expense(HTTPEndpoint):
@@ -52,3 +52,17 @@ def get_expense(request):
             status_code=200
         )
     return JSONResponse({}, status_code=404)
+
+
+async def create_category(request):
+    if request.method == 'POST':
+        data = await request.json()
+        creator = CategoryCreator(name=data['name'])
+        category = creator.create()
+        return JSONResponse({'name': category.name}, status_code=201)
+
+    categories = []
+    getter = CategoryGetter()
+    for category in getter.get_all():
+        categories.append({'name': category.name})
+    return JSONResponse({'categories': categories})
