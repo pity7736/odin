@@ -3,13 +3,14 @@ import uuid
 
 from nyoibo import Entity, fields
 
-from odin.models import Expense
+from odin.models import Expense, Category
 from odin.repositories import ExpenseRepository
 
 
 class ExpenseCreator(Entity):
     _date = fields.DateField(private=True, required=True)
     _amount = fields.DecimalField(private=True, required=True)
+    _category = fields.LinkField(to=Category, private=True, required=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -20,7 +21,8 @@ class ExpenseCreator(Entity):
         expense = Expense(
             uuid=str(uuid.uuid4()),
             date=self._date,
-            amount=self._amount
+            amount=self._amount,
+            category=self._category
         )
         repository = ExpenseRepository()
         repository.add(expense)

@@ -2,19 +2,19 @@ import datetime
 import re
 
 from pytest import mark
-from starlette.testclient import TestClient
 
-from odin.api import app
-from tests.factories import ExpenseFactory
+from tests.factories import ExpenseFactory, CategoryFactory
 from tests.utils import UUID_PATTERN
 
 
 def test_create_expense(test_client):
+    category = CategoryFactory.create()
     response = test_client.post(
         '/expenses',
         json={
             'date': '2022-03-27',
-            'amount': '100000'
+            'amount': '100000',
+            'category': category.name
         }
     )
     response_data = response.json()
@@ -23,7 +23,23 @@ def test_create_expense(test_client):
     assert response.status_code == 201
     assert response_data['date'] == '2022-03-27'
     assert response_data['amount'] == '100000'
+    assert response_data['category'] == category.name
     assert re.match(UUID_PATTERN, response_data['uuid'])
+
+
+def test_create_expense_with_wrong_category_name(test_client):
+    CategoryFactory.create()
+    response = test_client.post(
+        '/expenses',
+        json={
+            'date': '2022-03-27',
+            'amount': '100000',
+            'category': 'wrong category name'
+        }
+    )
+
+    assert response.headers['content-type'] == 'application/json'
+    assert response.status_code == 400
 
 
 create_expense_data_params = (
@@ -55,13 +71,14 @@ def test_create_expense_with_date_in_the_future(test_client):
     assert response.status_code == 400
 
 
-def test_get_expense():
-    test_client = TestClient(app)
+def test_get_expense(test_client):
+    category = CategoryFactory.create()
     post_response = test_client.post(
         '/expenses',
         json={
             'date': '2022-03-27',
-            'amount': '100000'
+            'amount': '100000',
+            'category': category.name
         }
     )
     response_data = post_response.json()
@@ -72,6 +89,7 @@ def test_get_expense():
     assert response.headers['content-type'] == 'application/json'
     assert response_data['date'] == '2022-03-27'
     assert response_data['amount'] == '100000'
+    assert response_data['category'] == category.name
 
 
 def test_get_non_existing_expense(expense_fixture, test_client):
@@ -88,7 +106,8 @@ def test_get_all_expenses(test_client, db_transaction):
     expected_expenses = [{
         'date': expense.date.isoformat(),
         'amount': str(expense.amount),
-        'uuid': expense.uuid
+        'uuid': expense.uuid,
+        'category': expense.category.name
     } for expense in expenses]
     response = test_client.get('/expenses')
     response_data = response.json()

@@ -10,7 +10,12 @@ class Expense(HTTPEndpoint):
     @staticmethod
     async def post(request):
         data = await request.json()
+        category = CategoryGetter().get_by_name(data.get('category'))
+        if category is None:
+            return JSONResponse({}, status_code=400)
+
         try:
+            data['category'] = category
             expense_creator = ExpenseCreator(**data)
         except (RequiredValueError, FieldValueError, ValueError):
             status_code = 400
@@ -21,7 +26,8 @@ class Expense(HTTPEndpoint):
             response_data = {
                 'date': expense.date.isoformat(),
                 'amount': str(expense.amount),
-                'uuid': expense.uuid
+                'uuid': expense.uuid,
+                'category': category.name
             }
         return JSONResponse(response_data, status_code=status_code)
 
@@ -34,7 +40,8 @@ class Expense(HTTPEndpoint):
             serialized_expenses.append({
                 'date': expense.date.isoformat(),
                 'amount': str(expense.amount),
-                'uuid': expense.uuid
+                'uuid': expense.uuid,
+                'category': expense.category.name
             })
         return JSONResponse({'expenses': serialized_expenses})
 
@@ -47,7 +54,8 @@ def get_expense(request):
             {
                 'date': expense.date.isoformat(),
                 'amount': str(expense.amount),
-                'uuid': expense.uuid
+                'uuid': expense.uuid,
+                'category': expense.category.name
             },
             status_code=200
         )

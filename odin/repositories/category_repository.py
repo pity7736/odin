@@ -10,3 +10,6 @@ class CategoryRepository:
 
     def get_all(self) -> tuple[Category]:
         return tuple(self.__class__._categories.values())
+
+    def get_by_name(self, name) -> Category | None:
+        return self._categories.get(name)
