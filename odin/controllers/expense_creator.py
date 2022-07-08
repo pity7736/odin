@@ -16,7 +16,7 @@ class ExpenseCreator(Entity):
         if self._date > datetime.date.today():
             raise ValueError('date must be less or equal than today.')
 
-    def create(self):
+    def create(self) -> Expense:
         expense = Expense(
             uuid=str(uuid.uuid4()),
             date=self._date,

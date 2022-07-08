@@ -7,7 +7,7 @@ from odin.repositories import CategoryRepository
 class CategoryCreator(Entity):
     _name = fields.StrField()
 
-    def create(self):
+    def create(self) -> Category:
         category = Category(name=self.name)
         repository = CategoryRepository()
         repository.add(category)
