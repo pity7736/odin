@@ -9,7 +9,7 @@ from odin.repositories import ExpenseRepository, CategoryRepository
 
 
 class CategoryFactory(factory.Factory):
-    name = 'test category'
+    name = factory.Sequence(lambda n: f'test category{n}')
 
     class Meta:
         model = Category
