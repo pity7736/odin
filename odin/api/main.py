@@ -5,9 +5,9 @@ from . import views
 
 
 routes = [
-    Route('/expenses', views.Expense),
-    Route('/expenses/{uuid}', views.get_expense),
-    Route('/categories', views.create_category, methods=['GET', 'POST'])
+    Route('/expenses', views.ExpensesEndpoint),
+    Route('/expenses/{uuid}', views.ExpenseEndpoint),
+    Route('/categories', views.CategoriesEndpoint)
 ]
 
 app = Starlette(routes=routes)
