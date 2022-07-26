@@ -1,5 +1,4 @@
 import datetime
-import uuid
 
 from nyoibo import Entity, fields
 
@@ -19,7 +18,6 @@ class ExpenseCreator(Entity):
 
     def create(self) -> Expense:
         expense = Expense(
-            uuid=str(uuid.uuid4()),
             date=self._date,
             amount=self._amount,
             category=self._category

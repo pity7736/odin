@@ -7,7 +7,12 @@ class ExpenseRepository:
     _expenses: dict[str, Expense] = {}
 
     def add(self, expense: Expense):
-        self._expenses[expense.uuid] = expense
+        self.__class__._expenses[expense.uuid] = Expense(
+            uuid=expense.uuid,
+            amount=expense.amount,
+            date=expense.date,
+            category=expense.category
+        )
 
     def get_by(self, uuid) -> Expense:
         try:

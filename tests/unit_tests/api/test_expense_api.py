@@ -81,15 +81,16 @@ def test_get_expense(test_client):
             'category': category.name
         }
     )
-    response_data = post_response.json()
-    response = test_client.get(f'/expenses/{response_data["uuid"]}')
+    post_response_data = post_response.json()
+    response = test_client.get(f'/expenses/{post_response_data["uuid"]}')
     response_data = response.json()
 
     assert response.status_code == 200
     assert response.headers['content-type'] == 'application/json'
-    assert response_data['date'] == '2022-03-27'
-    assert response_data['amount'] == '100000'
-    assert response_data['category'] == category.name
+    assert response_data['date'] == post_response_data['date']
+    assert response_data['amount'] == post_response_data['amount']
+    assert response_data['category'] == post_response_data['category']
+    assert response_data['uuid'] == post_response_data['uuid']
 
 
 def test_get_non_existing_expense(expense_fixture, test_client):
