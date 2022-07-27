@@ -7,7 +7,7 @@ from tests.factories import ExpenseFactory, CategoryFactory
 from tests.utils import UUID_PATTERN
 
 
-def test_create_expense(test_client):
+def test_create_expense(test_client, db_transaction):
     category = CategoryFactory.create()
     response = test_client.post(
         '/expenses',
@@ -27,7 +27,7 @@ def test_create_expense(test_client):
     assert re.match(UUID_PATTERN, response_data['uuid'])
 
 
-def test_create_expense_with_wrong_category_name(test_client):
+def test_create_expense_with_wrong_category_name(test_client, db_transaction):
     CategoryFactory.create()
     response = test_client.post(
         '/expenses',
@@ -51,7 +51,7 @@ create_expense_data_params = (
 
 
 @mark.parametrize('data', create_expense_data_params)
-def test_create_expense_with_missing_or_wrong_data(data, test_client):
+def test_create_expense_with_missing_or_wrong_data(data, test_client, db_transaction):
     response = test_client.post(
         '/expenses',
         json=data
@@ -71,7 +71,7 @@ def test_create_expense_with_date_in_the_future(test_client):
     assert response.status_code == 400
 
 
-def test_get_expense(test_client):
+def test_get_expense(test_client, db_transaction):
     category = CategoryFactory.create()
     post_response = test_client.post(
         '/expenses',
@@ -93,7 +93,7 @@ def test_get_expense(test_client):
     assert response_data['uuid'] == post_response_data['uuid']
 
 
-def test_get_non_existing_expense(expense_fixture, test_client):
+def test_get_non_existing_expense(expense_fixture, test_client, db_transaction):
     response = test_client.get('/expenses/1234')
     response_data = response.json()
 
