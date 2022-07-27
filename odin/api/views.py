@@ -14,8 +14,8 @@ class ExpensesEndpoint(HTTPEndpoint):
         if category is None:
             return JSONResponse({}, status_code=400)
 
+        data['category'] = category
         try:
-            data['category'] = category
             expense_creator = ExpenseCreator(**data)
         except (RequiredValueError, FieldValueError, ValueError):
             status_code = 400
