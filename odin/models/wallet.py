@@ -17,7 +17,7 @@ class Wallet(Entity):
         super().__init__(**kwargs)
 
     def add_expense(self, expense: Expense):
-        assert isinstance(expense, Expense)
+        assert isinstance(expense, Expense), 'expense argument must be Expense instance'
         assert expense.amount <= self._balance, 'expense amount must be lower than wallet balance'
         self._balance -= expense.amount
         self._expenses.append(expense)

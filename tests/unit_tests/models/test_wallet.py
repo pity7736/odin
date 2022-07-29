@@ -9,8 +9,10 @@ from tests.factories import WalletBuilder, ExpenseFactory
 
 def test_assert_is_expense_instance(category_fixture):
     wallet = WalletBuilder().build()
-    with raises(AssertionError):
+    with raises(AssertionError) as error:
         wallet.add_expense(Decimal('100_000'))
+
+    assert str(error.value) == 'expense argument must be Expense instance'
 
 
 add_expense_params = (
