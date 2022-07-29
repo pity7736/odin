@@ -18,5 +18,6 @@ class Wallet(Entity):
 
     def add_expense(self, expense: Expense):
         assert isinstance(expense, Expense)
+        assert expense.amount <= self._balance, 'expense amount must be lower than wallet balance'
         self._balance -= expense.amount
         self._expenses.append(expense)

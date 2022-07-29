@@ -56,3 +56,13 @@ def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixtu
 
     assert wallet.balance == Decimal('800_000')
     assert len(wallet.expenses) == 2
+
+
+def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
+    wallet = WalletBuilder().balance('100_000').build()
+    expense = ExpenseFactory.create(amount=Decimal('100_001'))
+
+    with raises(AssertionError) as error:
+        wallet.add_expense(expense)
+
+    assert str(error.value) == 'expense amount must be lower than wallet balance'
