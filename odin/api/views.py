@@ -16,6 +16,7 @@ class ExpensesEndpoint(HTTPEndpoint):
             return JSONResponse({}, status_code=400)
 
         data['category'] = category
+        data['wallet'] = WalletRepository().get_by_name(data.get('wallet'))
         try:
             expense_creator = ExpenseCreator(**data)
         except (RequiredValueError, FieldValueError, ValueError):

@@ -1,19 +1,24 @@
 import datetime
+from decimal import Decimal
 
 from nyoibo import Entity, fields
 
-from odin.models import Expense, Category
+from odin.models import Expense, Category, Wallet
 from odin.repositories import ExpenseRepository
 
 
 class ExpenseCreator(Entity):
-    _date = fields.DateField(private=True, required=True)
-    _amount = fields.DecimalField(private=True, required=True)
-    _category = fields.LinkField(to=Category, private=True, required=True)
+    _date: datetime.date = fields.DateField(private=True, required=True)
+    _amount: Decimal = fields.DecimalField(private=True, required=True)
+    _category: Category = fields.LinkField(to=Category, private=True, required=True)
+    _wallet: Wallet = fields.LinkField(to=Wallet, private=True, required=True)
 
     def __init__(self, **kwargs):
         if kwargs.get('category') is None:
             raise ValueError('category is required')
+
+        if kwargs.get('wallet') is None:
+            raise ValueError('wallet is required')
 
         super().__init__(**kwargs)
         if self._date > datetime.date.today():
@@ -23,8 +28,9 @@ class ExpenseCreator(Entity):
         expense = Expense(
             date=self._date,
             amount=self._amount,
-            category=self._category
+            category=self._category,
         )
+        self._wallet.add_expense(expense)
         repository = ExpenseRepository()
         repository.add(expense)
         return expense
