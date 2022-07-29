@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 
-from pytest import raises
+from pytest import raises, mark
 
 from odin.repositories import WalletRepository
 from tests.factories import WalletBuilder, ExpenseFactory
@@ -13,17 +13,35 @@ def test_assert_is_expense_instance(category_fixture):
         wallet.add_expense(Decimal('100_000'))
 
 
-def test_add_expense(category_fixture):
-    wallet = WalletBuilder().build()
+add_expense_params = (
+    (
+        WalletBuilder(),
+        Decimal('100_000'),
+        Decimal('900_000'),
+        1
+    ),
+    (
+        WalletBuilder()
+        .create_expense('150_000'),
+        Decimal('200_000'),
+        Decimal('650_000'),
+        2
+    )
+)
+
+
+@mark.parametrize('wallet_builder, amount, expected_balance, expected_expenses_number', add_expense_params)
+def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses_number, category_fixture):
+    wallet = wallet_builder.build()
     expense = ExpenseFactory.create(
         date=datetime.date.today(),
-        amount='100_000',
+        amount=amount,
         category=category_fixture,
     )
     wallet.add_expense(expense)
 
-    assert wallet.balance == Decimal('900_000')
-    assert wallet.expenses == [expense]
+    assert wallet.balance == expected_balance
+    assert len(wallet.expenses) == expected_expenses_number
 
 
 def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixture):
