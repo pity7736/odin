@@ -1,18 +1,21 @@
 import datetime
 import re
 
-from pytest import mark
+from pytest import mark, fixture
 
-from odin.controllers import WalletCreator
-from tests.factories import ExpenseFactory
+from tests.factories import ExpenseFactory, WalletBuilder
 from tests.utils import UUID_PATTERN
 
 
 # TODO: test error messages text
 
 
-def test_create_expense(test_client, category_fixture):
-    wallet = WalletCreator(balance='1_000_000', name='savings account').create()
+@fixture
+def wallet():
+    return WalletBuilder().build()
+
+
+def test_create_expense(test_client, category_fixture, wallet):
     response = test_client.post(
         '/expenses',
         json={
@@ -75,8 +78,7 @@ def test_create_expense_with_date_in_the_future(test_client):
     assert response.status_code == 400
 
 
-def test_get_expense(test_client, category_fixture):
-    wallet = WalletCreator(balance='1_000_000', name='savings account').create()
+def test_get_expense(test_client, category_fixture, wallet):
     post_response = test_client.post(
         '/expenses',
         json={

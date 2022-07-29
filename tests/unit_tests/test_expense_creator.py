@@ -4,15 +4,15 @@ from decimal import Decimal
 
 from pytest import raises
 
-from odin.controllers import ExpenseCreator, WalletCreator
+from odin.controllers import ExpenseCreator
+from tests.factories import WalletBuilder
 from tests.utils import UUID_PATTERN
 
 
 def test_create_expense(category_fixture):
     date = datetime.date.today()
     amount = Decimal('100_000')
-    wallet_creator = WalletCreator(balance='1_000_000', name='savings account')
-    wallet = wallet_creator.create()
+    wallet = WalletBuilder().build()
     expense_creator = ExpenseCreator(
         date=date,
         amount=amount,
@@ -29,8 +29,7 @@ def test_create_expense(category_fixture):
 
 
 def test_create_expense_with_date_in_the_future(category_fixture):
-    wallet_creator = WalletCreator(balance='1_000_000', name='savings account')
-    wallet = wallet_creator.create()
+    wallet = WalletBuilder().build()
     with raises(ValueError) as e:
         ExpenseCreator(
             date=datetime.date.today() + datetime.timedelta(days=2),

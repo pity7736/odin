@@ -4,7 +4,8 @@ from uuid import uuid4
 
 import factory
 
-from odin.models import Expense, Category
+from odin.controllers import WalletCreator
+from odin.models import Expense, Category, Wallet
 from odin.repositories import ExpenseRepository, CategoryRepository
 
 
@@ -37,3 +38,21 @@ class ExpenseFactory(factory.Factory):
         repository = ExpenseRepository()
         repository.add(expense)
         return expense
+
+
+class WalletBuilder:
+
+    def __init__(self):
+        self._name = 'savings account'
+        self._balance = '1_000_000'
+
+    def name(self, name) -> 'WalletBuilder':
+        self._name = name
+        return self
+
+    def balance(self, balance) -> 'WalletBuilder':
+        self._balance = balance
+        return self
+
+    def build(self) -> Wallet:
+        return WalletCreator(name=self._name, balance=self._balance).create()
