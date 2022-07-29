@@ -27,14 +27,8 @@ def test_add_expense(category_fixture):
 
 
 def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixture):
-    wallet = WalletBuilder().build()
-    expense = ExpenseFactory.create(
-        date=datetime.date.today(),
-        amount='100_000',
-        category=category_fixture,
-    )
-    wallet.add_expense(expense)
-    wallet = WalletRepository().get_by_name(name=wallet.name)
+    builder = WalletBuilder().create_expense(amount='100_000')
+    wallet = WalletRepository().get_by_name(name=builder.build().name)
     expense = ExpenseFactory.create(
         date=datetime.date.today(),
         amount='100_000',
