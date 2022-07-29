@@ -5,19 +5,9 @@ from odin.repositories import CategoryRepository
 from tests.factories import CategoryFactory
 
 
-@fixture(autouse=True)
-def auto_db_transaction(db_transaction):
-    pass
-
-
 @fixture
-def repository_fixture():
+def repository_fixture(db_transaction):
     return CategoryRepository()
-
-
-@fixture
-def category_fixture():
-    return CategoryFactory.create()
 
 
 def create_category(category_name):

@@ -3,7 +3,7 @@ from starlette.testclient import TestClient
 
 from odin.api import app
 from odin.repositories import ExpenseRepository, CategoryRepository, WalletRepository
-from tests.factories import ExpenseFactory
+from tests.factories import ExpenseFactory, CategoryFactory
 
 
 @fixture
@@ -25,3 +25,8 @@ def db_transaction():
     CategoryRepository._categories.clear()
     ExpenseRepository._expenses.clear()
     WalletRepository._wallets.clear()
+
+
+@fixture
+def category_fixture(db_transaction):
+    return CategoryFactory.create()

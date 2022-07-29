@@ -4,22 +4,21 @@ import re
 from pytest import mark
 
 from odin.controllers import WalletCreator
-from tests.factories import ExpenseFactory, CategoryFactory
+from tests.factories import ExpenseFactory
 from tests.utils import UUID_PATTERN
 
 
 # TODO: test error messages text
 
 
-def test_create_expense(test_client, db_transaction):
-    category = CategoryFactory.create()
+def test_create_expense(test_client, category_fixture):
     wallet = WalletCreator(balance='1_000_000', name='savings account').create()
     response = test_client.post(
         '/expenses',
         json={
             'date': '2022-03-27',
             'amount': '100000',
-            'category': category.name,
+            'category': category_fixture.name,
             'wallet': wallet.name
         }
     )
@@ -29,12 +28,11 @@ def test_create_expense(test_client, db_transaction):
     assert response.status_code == 201
     assert response_data['date'] == '2022-03-27'
     assert response_data['amount'] == '100000'
-    assert response_data['category'] == category.name
+    assert response_data['category'] == category_fixture.name
     assert re.match(UUID_PATTERN, response_data['uuid'])
 
 
-def test_create_expense_with_wrong_category_name(test_client, db_transaction):
-    CategoryFactory.create()
+def test_create_expense_with_wrong_category_name(test_client, category_fixture):
     response = test_client.post(
         '/expenses',
         json={
@@ -77,15 +75,14 @@ def test_create_expense_with_date_in_the_future(test_client):
     assert response.status_code == 400
 
 
-def test_get_expense(test_client, db_transaction):
-    category = CategoryFactory.create()
+def test_get_expense(test_client, category_fixture):
     wallet = WalletCreator(balance='1_000_000', name='savings account').create()
     post_response = test_client.post(
         '/expenses',
         json={
             'date': '2022-03-27',
             'amount': '100000',
-            'category': category.name,
+            'category': category_fixture.name,
             'wallet': wallet.name
         }
     )
