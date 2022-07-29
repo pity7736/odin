@@ -30,7 +30,10 @@ class ExpenseCreator(Entity):
             amount=self._amount,
             category=self._category,
         )
-        self._wallet.add_expense(expense)
+        try:
+            self._wallet.add_expense(expense)
+        except AssertionError as error:
+            raise ValueError(str(error))
         repository = ExpenseRepository()
         repository.add(expense)
         return expense

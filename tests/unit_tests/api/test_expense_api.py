@@ -78,6 +78,23 @@ def test_create_expense_with_date_in_the_future(test_client):
     assert response.status_code == 400
 
 
+def test_create_expense_with_higher_amount_that_wallet_balance(test_client, category_fixture):
+    wallet = WalletBuilder().balance('100_000').build()
+    response = test_client.post(
+        '/expenses',
+        json={
+            'date': '2022-03-27',
+            'amount': '102000',
+            'category': category_fixture.name,
+            'wallet': wallet.name
+        }
+    )
+    response_data = response.json()
+
+    assert response.status_code == 400
+    assert response_data['error'] == 'expense amount must be lower than wallet balance'
+
+
 def test_get_expense(test_client, category_fixture, wallet):
     post_response = test_client.post(
         '/expenses',

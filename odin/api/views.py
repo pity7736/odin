@@ -19,11 +19,11 @@ class ExpensesEndpoint(HTTPEndpoint):
         data['wallet'] = WalletRepository().get_by_name(data.get('wallet'))
         try:
             expense_creator = ExpenseCreator(**data)
-        except (RequiredValueError, FieldValueError, ValueError):
-            status_code = 400
-            response_data = {}
-        else:
             expense = expense_creator.create()
+        except (RequiredValueError, FieldValueError, ValueError) as error:
+            status_code = 400
+            response_data = {'error': str(error)}
+        else:
             status_code = 201
             response_data = {
                 'date': expense.date.isoformat(),
