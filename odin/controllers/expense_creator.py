@@ -12,6 +12,9 @@ class ExpenseCreator(Entity):
     _category = fields.LinkField(to=Category, private=True, required=True)
 
     def __init__(self, **kwargs):
+        if kwargs.get('category') is None:
+            raise ValueError('category is required')
+
         super().__init__(**kwargs)
         if self._date > datetime.date.today():
             raise ValueError('date must be less or equal than today.')
