@@ -1,3 +1,4 @@
 *.pyc
 tasks.md
 .idea/
+.coverage
