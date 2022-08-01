@@ -39,3 +39,22 @@ def test_create_expense_with_date_in_the_future(category_fixture):
         )
 
     assert str(e.value) == 'date must be less or equal than today.'
+
+
+def test_without_category(db_transaction):
+    wallet = WalletBuilder().build()
+    with raises(ValueError):
+        ExpenseCreator(
+            date=datetime.date.today(),
+            amount=Decimal('100_000'),
+            wallet=wallet
+        )
+
+
+def test_without_wallet(category_fixture):
+    with raises(ValueError):
+        ExpenseCreator(
+            date=datetime.date.today(),
+            amount=Decimal('100_000'),
+            category=category_fixture
+        )
