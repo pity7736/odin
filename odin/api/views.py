@@ -2,8 +2,10 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.controllers import ExpenseCreator, ExpenseGetter, CategoryCreator, CategoryGetter, WalletCreator
+from odin.controllers import ExpenseCreator, ExpenseGetter, CategoryCreator, CategoryGetter, WalletCreator, \
+    IncomeCreator
 from odin.repositories import WalletRepository
+from odin.repositories.income_repository import IncomeRepository
 
 
 class ExpensesEndpoint(HTTPEndpoint):
@@ -113,3 +115,41 @@ class WalletEndpoint(HTTPEndpoint):
         repository = WalletRepository()
         wallet = repository.get_by_name(request.path_params['name'])
         return JSONResponse({'name': wallet.name, 'balance': str(wallet.balance)})
+
+
+class IncomesEndpoint(HTTPEndpoint):
+
+    @staticmethod
+    async def post(request):
+        data = await request.json()
+        category = CategoryGetter().get_by_name(data.get('category'))
+        try:
+            income_creator = IncomeCreator(date=data['date'], amount=data['amount'], category=category)
+        except ValueError:
+            return JSONResponse({}, status_code=400)
+
+        income = income_creator.create()
+        return JSONResponse({
+                'date': income.date.isoformat(),
+                'amount': str(income.amount),
+                'uuid': str(income.uuid)
+            },
+            status_code=201
+        )
+
+
+class IncomeEndpoint(HTTPEndpoint):
+
+    @staticmethod
+    def get(request):
+        income_uuid = request.path_params['uuid']
+        repository = IncomeRepository()
+        income = repository.get_by_uuid(uuid=income_uuid)
+        return JSONResponse(
+            {
+                'date': income.date.isoformat(),
+                'amount': str(income.amount),
+                'uuid': income.uuid,
+                'category': income.category.name
+            }
+        )

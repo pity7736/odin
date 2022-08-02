@@ -10,6 +10,8 @@ routes = [
     Route('/categories', views.CategoriesEndpoint),
     Route('/wallets', views.WalletsEndpoint),
     Route('/wallets/{name}', views.WalletEndpoint),
+    Route('/incomes', views.IncomesEndpoint),
+    Route('/incomes/{uuid}', views.IncomeEndpoint)
 ]
 
 app = Starlette(routes=routes)
