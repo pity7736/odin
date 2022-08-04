@@ -28,17 +28,21 @@ class ExpenseRepository:
 
     def get_by(self, uuid) -> Expense:
         try:
-            expense_data = self._expenses[uuid].copy()
-            category = self._category_repository.get_by_name(expense_data.pop('category_name'))
-            expense_data['category'] = category
-            return Expense(**expense_data)
+            expense_data = self._expenses[uuid]
         except KeyError:
             raise DoesNotExist('Expense not found')
+        else:
+            return Expense(
+                **expense_data,
+                category=self._category_repository.get_by_name(expense_data.get('category_name'))
+            )
 
     def get_all(self) -> tuple[Expense]:
         expenses = []
         for expense_data in self._expenses.values():
-            data = expense_data.copy()
-            data['category'] = self._category_repository.get_by_name(data.pop('category_name'))
-            expenses.append(Expense(**data))
+            expenses.append(
+                Expense(
+                    **expense_data,
+                    category=self._category_repository.get_by_name(expense_data.get('category_name')))
+            )
         return tuple(expenses)
