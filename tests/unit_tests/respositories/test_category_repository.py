@@ -71,3 +71,12 @@ def test_get_by_wrong_name(category_fixture, repository_fixture):
 
 def test_by_none_name(category_fixture, repository_fixture):
     assert repository_fixture.get_by_name(None) is None
+
+
+def test_get_all(repository_fixture):
+    CategoryFactory.create_batch(5)
+    categories = repository_fixture.get_all()
+
+    assert len(categories) == 5
+    for category in categories:
+        assert isinstance(category, Category)
