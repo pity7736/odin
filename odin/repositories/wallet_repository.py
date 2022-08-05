@@ -7,6 +7,10 @@ class WalletRepository:
 
     _wallets: dict[str, dict] = {}
 
+    def update(self, wallet: Wallet):
+        if self.get_by_name(wallet.name):
+            self.add(wallet)
+
     def add(self, wallet: Wallet):
         self.__class__._wallets[wallet.name] = {
             'name': wallet.name,

@@ -20,3 +20,11 @@ def test_get_by_wrong_name(db_transaction):
     WalletBuilder().build()
     repository = WalletRepository()
     assert repository.get_by_name('wrong name') is None
+
+
+def test_update_non_existing_wallet(category_fixture):
+    wallet_name = 'savings account'
+    repository = WalletRepository()
+    repository.update(Wallet(name=wallet_name, balance='100000'))
+
+    assert repository.get_by_name(wallet_name) is None
