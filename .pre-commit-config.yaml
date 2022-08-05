@@ -17,6 +17,6 @@ repos:
     hooks:
       - id: test
         name: tests
-        entry: pytest -vvvv tests/
-        language: python
+        entry: scripts/tests.sh
+        language: script
         types: [python]

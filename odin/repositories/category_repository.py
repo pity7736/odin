@@ -3,18 +3,21 @@ from odin.models import Category
 
 class CategoryRepository:
 
-    _categories: dict[str, Category] = {}
+    _categories: list[str] = []
 
     def add(self, category: Category):
         assert isinstance(category, Category), 'category argument must be Category instance'
         category_name = category.name.lower()
-        if category_name in self._categories.keys():
+        if category_name in self._categories:
             raise ValueError(f'a category with name {category_name} already exists')
-        self.__class__._categories[category_name] = Category(name=category_name)
+        self.__class__._categories.append(category_name)
 
     def get_all(self) -> tuple[Category]:
-        return tuple(self._categories.values())
+        return tuple(Category(name=name) for name in self._categories)
 
     def get_by_name(self, name) -> Category | None:
         if name:
-            return self._categories.get(name.lower())
+            name = name.lower()
+            for category_name in self._categories:
+                if category_name == name:
+                    return Category(name=name)
