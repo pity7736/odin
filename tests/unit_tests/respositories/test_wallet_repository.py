@@ -13,6 +13,7 @@ def test_get_by_name(db_transaction):
 
     assert wallet.name == wallet_name
     assert wallet.balance == Decimal('100_000')
+    assert len(wallet.expenses) == 0
 
 
 def test_get_by_wrong_name(db_transaction):

@@ -60,7 +60,7 @@ def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixtu
     wallet.add_expense(expense)
 
     assert wallet.balance == Decimal('800_000')
-    # assert len(wallet.expenses) == 2
+    assert len(wallet.expenses) == 2
 
 
 def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
