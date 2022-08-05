@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from odin.models import Wallet
 from odin.repositories import WalletRepository
+from tests.factories import WalletBuilder
 
 
 def test_get_by_name(db_transaction):
@@ -12,3 +13,9 @@ def test_get_by_name(db_transaction):
 
     assert wallet.name == wallet_name
     assert wallet.balance == Decimal('100_000')
+
+
+def test_get_by_wrong_name(db_transaction):
+    WalletBuilder().build()
+    repository = WalletRepository()
+    assert repository.get_by_name('wrong name') is None
