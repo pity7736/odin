@@ -14,9 +14,9 @@ def test_client():
 @fixture
 def db_transaction():
     yield
-    CategoryRepository._categories.clear()
     ExpenseRepository._expenses.clear()
     WalletRepository._wallets.clear()
+    CategoryRepository._categories.clear()
 
 
 @fixture

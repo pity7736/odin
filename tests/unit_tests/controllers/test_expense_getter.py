@@ -26,7 +26,7 @@ def test_get_non_existing_expense_by_uuid(expense_fixture):
     assert gotten_expense is None
 
 
-def test_get_all():
+def test_get_all(db_transaction):
     ExpenseFactory.create_batch(2)
     expense_getter = ExpenseGetter()
     expenses = expense_getter.all()

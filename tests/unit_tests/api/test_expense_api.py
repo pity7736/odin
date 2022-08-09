@@ -66,7 +66,7 @@ def test_create_expense_with_missing_or_wrong_data(data, test_client, db_transac
     assert response.status_code == 400
 
 
-def test_create_expense_with_date_in_the_future(test_client):
+def test_create_expense_with_date_in_the_future(test_client, db_transaction):
     response = test_client.post(
         '/expenses',
         json={
