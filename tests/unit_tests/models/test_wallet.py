@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from pytest import raises, mark
 
+from odin.models import Income
 from odin.repositories import WalletRepository
 from tests.factories import WalletBuilder, ExpenseFactory
 
@@ -71,3 +72,24 @@ def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
         wallet.add_expense(expense)
 
     assert str(error.value) == 'expense amount must be lower than wallet balance'
+
+
+def test_add_income(category_fixture):
+    wallet = WalletBuilder().build()
+    income = Income(
+        date=datetime.date.today(),
+        amount=Decimal('100_000'),
+        category=category_fixture
+    )
+    wallet.add_income(income)
+
+    assert wallet.balance == Decimal('1_100_000')
+    assert len(wallet.incomes) == 1
+
+
+def test_check_income_type_in_add_income(db_transaction):
+    wallet = WalletBuilder().build()
+    with raises(AssertionError) as error:
+        wallet.add_income(100_000)
+
+    assert str(error.value) == 'income argument must be Income instance'

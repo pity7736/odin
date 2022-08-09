@@ -2,7 +2,8 @@ import uuid
 
 from nyoibo import Entity, fields
 
-from odin.models import Expense
+from .expense import Expense
+from .income import Income
 
 
 class Wallet(Entity):
@@ -10,10 +11,12 @@ class Wallet(Entity):
     _name = fields.StrField(required=True)
     _uuid = fields.StrField(required=True)
     _expenses: list[Expense] = fields.ListField()
+    _incomes: list[Income] = fields.ListField()
 
     def __init__(self, **kwargs):
         kwargs.setdefault('uuid', uuid.uuid4())
         kwargs.setdefault('expenses', [])
+        kwargs.setdefault('incomes', [])
         super().__init__(**kwargs)
 
     def add_expense(self, expense: Expense):
@@ -21,3 +24,8 @@ class Wallet(Entity):
         assert expense.amount <= self._balance, 'expense amount must be lower than wallet balance'
         self._balance -= expense.amount
         self._expenses.append(expense)
+
+    def add_income(self, income: Income):
+        assert isinstance(income, Income), 'income argument must be Income instance'
+        self._balance += income.amount
+        self._incomes.append(income)

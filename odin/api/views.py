@@ -123,8 +123,14 @@ class IncomesEndpoint(HTTPEndpoint):
     async def post(request):
         data = await request.json()
         category = CategoryGetter().get_by_name(data.get('category'))
+        wallet = WalletRepository().get_by_name(data.get('wallet'))
         try:
-            income_creator = IncomeCreator(date=data['date'], amount=data['amount'], category=category)
+            income_creator = IncomeCreator(
+                date=data['date'],
+                amount=data['amount'],
+                category=category,
+                wallet=wallet
+            )
         except ValueError:
             return JSONResponse({}, status_code=400)
 

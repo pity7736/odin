@@ -1,15 +1,18 @@
 import re
 
+from tests.factories import WalletBuilder
 from tests.utils import UUID_PATTERN
 
 
 def test_create_income(test_client, category_fixture):
+    wallet = WalletBuilder().build()
     response = test_client.post(
         '/incomes',
         json={
             'date': '2022-07-31',
             'amount': '10000000',
-            'category': category_fixture.name
+            'category': category_fixture.name,
+            'wallet': wallet.name
         }
     )
     response_data = response.json()
@@ -39,7 +42,8 @@ def test_get_income(test_client, category_fixture):
         json={
             'date': '2022-07-31',
             'amount': '10000000',
-            'category': category_fixture.name
+            'category': category_fixture.name,
+            'wallet': WalletBuilder().build().name
         }
     )
     post_response_data = post_response.json()
