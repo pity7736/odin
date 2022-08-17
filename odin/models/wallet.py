@@ -19,6 +19,9 @@ class Wallet(Entity):
         kwargs.setdefault('incomes', [])
         super().__init__(**kwargs)
 
+    def __eq__(self, other: 'Wallet'):
+        return self._uuid == other._uuid
+
     def add_expense(self, expense: Expense):
         assert isinstance(expense, Expense), 'expense argument must be Expense instance'
         assert expense.amount <= self._balance, 'expense amount must be lower than wallet balance'
