@@ -4,7 +4,7 @@ from decimal import Decimal
 from pytest import raises
 
 from odin.controllers.transference_creator import TransferenceCreator
-from odin.repositories import WalletRepository
+from odin.repositories import WalletRepository, TransferenceRepository
 from tests.factories import WalletBuilder, CategoryFactory
 
 
@@ -23,6 +23,7 @@ def test_transfer(db_transaction):
     assert transference.target == wallet_target
     assert transference.amount == Decimal('100_000')
     assert transference.date == datetime.date.today()
+    assert transference == TransferenceRepository().get_all()[0]
 
 
 def test_transfer_with_date(db_transaction):

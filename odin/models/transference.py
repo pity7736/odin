@@ -1,3 +1,5 @@
+import uuid
+
 from nyoibo import Entity, fields
 
 from .expense import Expense
@@ -12,3 +14,8 @@ class Transference(Entity):
     _income = fields.LinkField(to=Income)
     _amount = fields.DecimalField()
     _date = fields.DateField()
+    _uuid = fields.StrField()
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('uuid', uuid.uuid4())
+        super().__init__(**kwargs)

@@ -4,7 +4,7 @@ from nyoibo import Entity, fields
 from nyoibo.fields import Decimal
 
 from odin.models import Wallet, Transference
-from odin.repositories import CategoryRepository
+from odin.repositories import CategoryRepository, TransferenceRepository
 from .expense_creator import ExpenseCreator
 from .income_creator import IncomeCreator
 
@@ -18,7 +18,7 @@ class TransferenceCreator(Entity):
         transference_category = CategoryRepository().get_by_name('transference')
         expense = self._create_expense(amount, date, transference_category)
         income = self._create_income(amount, date, transference_category)
-        return Transference(
+        transference = Transference(
             source=self._source,
             target=self._target,
             expense=expense,
@@ -26,6 +26,8 @@ class TransferenceCreator(Entity):
             amount=amount,
             date=date
         )
+        TransferenceRepository().add(transference)
+        return transference
 
     def _create_expense(self, amount, date, transference_category):
         return ExpenseCreator(
