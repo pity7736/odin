@@ -23,7 +23,7 @@ def test_transfer(db_transaction):
     assert transference.target == wallet_target
     assert transference.amount == Decimal('100_000')
     assert transference.date == datetime.date.today()
-    assert transference == TransferenceRepository().get_all()[0]
+    assert transference == TransferenceRepository().get_by_uuid(transference.uuid)
 
 
 def test_transfer_with_date(db_transaction):
