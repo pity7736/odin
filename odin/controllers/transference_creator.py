@@ -14,33 +14,33 @@ class TransferenceCreator(Entity):
     _target = fields.LinkField(to=Wallet, private=True)
 
     def transfer(self, amount: Decimal, date: datetime.date = None):
-        date = date or datetime.date.today()
-        transference_category = CategoryRepository().get_by_name('transference')
-        expense = self._create_expense(amount, date, transference_category)
-        income = self._create_income(amount, date, transference_category)
+        return self._create_transference(amount, date or datetime.date.today())
+
+    def _create_transference(self, amount: Decimal, date: datetime.date):
+        category = CategoryRepository().get_by_name('transference')
         transference = Transference(
             source=self._source,
             target=self._target,
-            expense=expense,
-            income=income,
+            expense=self._create_expense(amount, date, category),
+            income=self._create_income(amount, date, category),
             amount=amount,
             date=date
         )
         TransferenceRepository().add(transference)
         return transference
 
-    def _create_expense(self, amount, date, transference_category):
+    def _create_expense(self, amount, date, category):
         return ExpenseCreator(
             amount=amount,
             date=date,
-            category=transference_category,
+            category=category,
             wallet=self._source
         ).create()
 
-    def _create_income(self, amount, date, transference_category):
+    def _create_income(self, amount, date, category):
         return IncomeCreator(
             amount=amount,
             date=date,
-            category=transference_category,
+            category=category,
             wallet=self._target
         ).create()
