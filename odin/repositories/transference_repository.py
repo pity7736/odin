@@ -10,3 +10,6 @@ class TransferenceRepository:
 
     def get_all(self) -> tuple[Transference]:
         return tuple(self._transfers.values())
+
+    def get_by_uuid(self, uuid):
+        return self._transfers.get(uuid)

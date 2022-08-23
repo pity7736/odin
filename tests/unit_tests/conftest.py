@@ -2,7 +2,7 @@ from pytest import fixture
 from starlette.testclient import TestClient
 
 from odin.api import app
-from odin.repositories import ExpenseRepository, CategoryRepository, WalletRepository
+from odin.repositories import ExpenseRepository, CategoryRepository, WalletRepository, TransferenceRepository
 from tests.factories import ExpenseFactory, CategoryFactory
 
 
@@ -17,6 +17,7 @@ def db_transaction():
     ExpenseRepository._expenses.clear()
     WalletRepository._wallets.clear()
     CategoryRepository._categories.clear()
+    TransferenceRepository._transfers.clear()
 
 
 @fixture
