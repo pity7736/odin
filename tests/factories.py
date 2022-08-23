@@ -4,9 +4,9 @@ from uuid import uuid4
 
 import factory
 
-from odin.controllers import WalletCreator, ExpenseCreator
-from odin.models import Expense, Category, Wallet
-from odin.repositories import ExpenseRepository, CategoryRepository
+from odin.accounting.controllers import WalletCreator, ExpenseCreator
+from odin.accounting.models import Expense, Category, Wallet
+from odin.accounting.repositories import ExpenseRepository, CategoryRepository
 
 
 class CategoryFactory(factory.Factory):
