@@ -7,8 +7,8 @@ from tests.utils import UUID_PATTERN
 
 def test_create(test_client, db_transaction):
     CategoryFactory.create(name='transference')
-    wallet_source = WalletBuilder().build()
-    wallet_target = WalletBuilder().name('cash').build()
+    wallet_source = WalletBuilder().create()
+    wallet_target = WalletBuilder().name('cash').create()
     response = test_client.post(
         '/transfers',
         json={
@@ -29,7 +29,7 @@ def test_create(test_client, db_transaction):
 
 def test_create_with_non_existing_source_wallet(test_client, db_transaction):
     CategoryFactory.create(name='transference')
-    wallet_target = WalletBuilder().name('cash').build()
+    wallet_target = WalletBuilder().name('cash').create()
     response = test_client.post(
         '/transfers',
         json={
@@ -45,7 +45,7 @@ def test_create_with_non_existing_source_wallet(test_client, db_transaction):
 
 def test_create_with_non_existing_target_wallet(test_client, db_transaction):
     CategoryFactory.create(name='transference')
-    source_wallet = WalletBuilder().name('cash').build()
+    source_wallet = WalletBuilder().name('cash').create()
     response = test_client.post(
         '/transfers',
         json={
@@ -61,8 +61,8 @@ def test_create_with_non_existing_target_wallet(test_client, db_transaction):
 
 def test_get(test_client, db_transaction):
     CategoryFactory.create(name='transference')
-    wallet_source = WalletBuilder().build()
-    wallet_target = WalletBuilder().name('cash').build()
+    wallet_source = WalletBuilder().create()
+    wallet_target = WalletBuilder().name('cash').create()
     post_response = test_client.post(
         '/transfers',
         json={

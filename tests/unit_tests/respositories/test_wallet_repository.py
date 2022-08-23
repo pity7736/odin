@@ -17,7 +17,7 @@ def test_get_by_name(db_transaction):
 
 
 def test_get_by_wrong_name(db_transaction):
-    WalletBuilder().build()
+    WalletBuilder().create()
     repository = WalletRepository()
     assert repository.get_by_name('wrong name') is None
 

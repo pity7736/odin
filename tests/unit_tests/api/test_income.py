@@ -5,7 +5,7 @@ from tests.utils import UUID_PATTERN
 
 
 def test_create_income(test_client, category_fixture):
-    wallet = WalletBuilder().build()
+    wallet = WalletBuilder().create()
     response = test_client.post(
         '/incomes',
         json={
@@ -43,7 +43,7 @@ def test_get_income(test_client, category_fixture):
             'date': '2022-07-31',
             'amount': '10000000',
             'category': category_fixture.name,
-            'wallet': WalletBuilder().build().name
+            'wallet': WalletBuilder().create().name
         }
     )
     post_response_data = post_response.json()

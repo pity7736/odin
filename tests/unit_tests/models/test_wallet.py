@@ -9,7 +9,7 @@ from tests.factories import WalletBuilder, ExpenseFactory
 
 
 def test_assert_is_expense_instance(category_fixture):
-    wallet = WalletBuilder().build()
+    wallet = WalletBuilder().create()
     with raises(AssertionError) as error:
         wallet.add_expense(Decimal('100_000'))
 
@@ -25,7 +25,7 @@ add_expense_params = (
     ),
     (
         WalletBuilder()
-        .create_expense('150_000'),
+        .add_expense('150_000'),
         Decimal('200_000'),
         Decimal('650_000'),
         2
@@ -35,7 +35,7 @@ add_expense_params = (
 
 @mark.parametrize('wallet_builder, amount, expected_balance, expected_expenses_number', add_expense_params)
 def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses_number, category_fixture):
-    wallet = wallet_builder.build()
+    wallet = wallet_builder.create()
     expense = ExpenseFactory.create(
         date=datetime.date.today(),
         amount=amount,
@@ -48,9 +48,9 @@ def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses
 
 
 def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixture):
-    builder = WalletBuilder().create_expense(amount='100_000')
+    builder = WalletBuilder().add_expense(amount='100_000')
     repository = WalletRepository()
-    wallet = builder.build()
+    wallet = builder.create()
     repository.add(wallet=wallet)
     wallet = repository.get_by_name(name=wallet.name)
     expense = ExpenseFactory.create(
@@ -65,7 +65,7 @@ def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixtu
 
 
 def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
-    wallet = WalletBuilder().balance('100_000').build()
+    wallet = WalletBuilder().balance('100_000').create()
     expense = ExpenseFactory.create(amount=Decimal('100_001'))
 
     with raises(AssertionError) as error:
@@ -75,7 +75,7 @@ def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
 
 
 def test_add_income(category_fixture):
-    wallet = WalletBuilder().build()
+    wallet = WalletBuilder().create()
     income = Income(
         date=datetime.date.today(),
         amount=Decimal('100_000'),
@@ -88,7 +88,7 @@ def test_add_income(category_fixture):
 
 
 def test_check_income_type_in_add_income(db_transaction):
-    wallet = WalletBuilder().build()
+    wallet = WalletBuilder().create()
     with raises(AssertionError) as error:
         wallet.add_income(100_000)
 

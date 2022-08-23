@@ -12,7 +12,7 @@ from tests.utils import UUID_PATTERN
 
 @fixture
 def wallet():
-    return WalletBuilder().build()
+    return WalletBuilder().create()
 
 
 def test_create_expense(test_client, category_fixture, wallet):
@@ -79,7 +79,7 @@ def test_create_expense_with_date_in_the_future(test_client, db_transaction):
 
 
 def test_create_expense_with_higher_amount_that_wallet_balance(test_client, category_fixture):
-    wallet = WalletBuilder().balance('100_000').build()
+    wallet = WalletBuilder().balance('100_000').create()
     response = test_client.post(
         '/expenses',
         json={

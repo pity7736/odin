@@ -9,7 +9,7 @@ from tests.factories import WalletBuilder
 def test_create_income(category_fixture):
     date = datetime.date.today()
     amount = Decimal('100_000')
-    wallet = WalletBuilder().build()
+    wallet = WalletBuilder().create()
     income_creator = IncomeCreator(
         date=date,
         amount=amount,

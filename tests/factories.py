@@ -55,7 +55,7 @@ class WalletBuilder:
         self._balance = balance
         return self
 
-    def create_expense(self, amount, date=None, category=None) -> 'WalletBuilder':
+    def add_expense(self, amount, date=None, category=None) -> 'WalletBuilder':
         self._expenses_data.append({
             'amount': amount,
             'date': date or datetime.date.today(),
@@ -63,7 +63,7 @@ class WalletBuilder:
         })
         return self
 
-    def build(self) -> Wallet:
+    def create(self) -> Wallet:
         wallet = WalletCreator(name=self._name, balance=self._balance).create()
         for expense_data in self._expenses_data:
             category = expense_data['category']

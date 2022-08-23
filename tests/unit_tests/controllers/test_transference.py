@@ -10,8 +10,8 @@ from tests.factories import WalletBuilder, CategoryFactory
 
 def test_transfer(db_transaction):
     CategoryFactory.create(name='transference')
-    wallet_source = WalletBuilder().build()
-    wallet_target = WalletBuilder().name('cash').build()
+    wallet_source = WalletBuilder().create()
+    wallet_target = WalletBuilder().name('cash').create()
     transference_creator = TransferenceCreator(source=wallet_source, target=wallet_target)
     transference = transference_creator.transfer(amount=Decimal('100_000'))
 
@@ -28,8 +28,8 @@ def test_transfer(db_transaction):
 
 def test_transfer_with_date(db_transaction):
     CategoryFactory.create(name='transference')
-    wallet_source = WalletBuilder().build()
-    wallet_target = WalletBuilder().name('cash').build()
+    wallet_source = WalletBuilder().create()
+    wallet_target = WalletBuilder().name('cash').create()
     transference = TransferenceCreator(source=wallet_source, target=wallet_target)
     transference.transfer(amount=Decimal('100_000'), date=datetime.date(2022, 8, 15))
     wallet_source = WalletRepository().get_by_name(wallet_source.name)
@@ -41,8 +41,8 @@ def test_transfer_with_date(db_transaction):
 
 def test_transfer_with_date_in_the_future(db_transaction):
     CategoryFactory.create(name='transference')
-    wallet_source = WalletBuilder().build()
-    wallet_target = WalletBuilder().name('cash').build()
+    wallet_source = WalletBuilder().create()
+    wallet_target = WalletBuilder().name('cash').create()
     transference = TransferenceCreator(source=wallet_source, target=wallet_target)
     with raises(ValueError):
         transference.transfer(amount=Decimal('100_000'), date=datetime.date.today() + datetime.timedelta(days=1))
