@@ -2,22 +2,12 @@ from pytest import fixture
 from starlette.testclient import TestClient
 
 from odin.accounting.api import app
-from odin.accounting.repositories import ExpenseRepository, CategoryRepository, WalletRepository, TransferenceRepository
 from tests.factories import ExpenseFactory, CategoryFactory
 
 
 @fixture
 def test_client():
     return TestClient(app=app)
-
-
-@fixture
-def db_transaction():
-    yield
-    ExpenseRepository._expenses.clear()
-    WalletRepository._wallets.clear()
-    CategoryRepository._categories.clear()
-    TransferenceRepository._transfers.clear()
 
 
 @fixture
