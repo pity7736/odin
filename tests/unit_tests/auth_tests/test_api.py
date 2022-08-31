@@ -27,17 +27,9 @@ def test_login_with_wrong_password(user_fixture, test_client):
     assert response_data['message'] == 'email or password are wrong'
 
 
-def test_logout(user_fixture, test_client):
-    login_response = test_client.post(
-        '/auth/login',
-        json={
-            'email': user_fixture.email,
-            'password': 'test'
-        }
-    )
-    token = login_response.json()['token']
-    response = test_client.post('/auth/logout', headers={'Authorization': f'token {token}'})
-    second_response = test_client.post('/auth/logout', headers={'Authorization': f'token {token}'})
+def test_logout(token_value_fixture, test_client):
+    response = test_client.post('/auth/logout', headers={'Authorization': f'token {token_value_fixture}'})
+    second_response = test_client.post('/auth/logout', headers={'Authorization': f'token {token_value_fixture}'})
     second_response_data = second_response.json()
 
     assert response.status_code == 200

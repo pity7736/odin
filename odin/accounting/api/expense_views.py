@@ -4,11 +4,13 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import CategoryGetter, ExpenseCreator, ExpenseGetter
 from odin.accounting.repositories import WalletRepository
+from odin.auth.decorators import login_required
 
 
 class ExpensesEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     async def post(request):
         data = await request.json()
         category = CategoryGetter().get_by_name(data.get('category'))
@@ -34,6 +36,7 @@ class ExpensesEndpoint(HTTPEndpoint):
         return JSONResponse(response_data, status_code=status_code)
 
     @staticmethod
+    @login_required
     def get(request):
         expense_getter = ExpenseGetter()
         expenses = expense_getter.all()
@@ -51,6 +54,7 @@ class ExpensesEndpoint(HTTPEndpoint):
 class ExpenseEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     def get(request):
         expense_getter = ExpenseGetter()
         expense = expense_getter.get_by_uuid(request.path_params['uuid'])

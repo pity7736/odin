@@ -3,11 +3,13 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import CategoryGetter, IncomeCreator
 from odin.accounting.repositories import WalletRepository, IncomeRepository
+from odin.auth.decorators import login_required
 
 
 class IncomesEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     async def post(request):
         data = await request.json()
         category = CategoryGetter().get_by_name(data.get('category'))

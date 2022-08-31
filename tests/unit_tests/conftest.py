@@ -34,3 +34,16 @@ def user_fixture(db_transaction):
     )
     UserRepository().add(user)
     return user
+
+
+@fixture
+def token_value_fixture(user_fixture, test_client):
+    login_response = test_client.post(
+        '/auth/login',
+        json={
+            'email': user_fixture.email,
+            'password': 'test'
+        }
+    )
+    data = login_response.json()
+    return data['token']

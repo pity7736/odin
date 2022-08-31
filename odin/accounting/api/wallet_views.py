@@ -3,11 +3,13 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import WalletCreator
 from odin.accounting.repositories import WalletRepository
+from odin.auth.decorators import login_required
 
 
 class WalletsEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     async def post(request):
         data = await request.json()
         repository = WalletRepository()
@@ -29,6 +31,7 @@ class WalletsEndpoint(HTTPEndpoint):
 class WalletEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     def get(request):
         repository = WalletRepository()
         wallet = repository.get_by_name(request.path_params['name'])

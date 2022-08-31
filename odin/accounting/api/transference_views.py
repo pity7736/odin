@@ -3,11 +3,13 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import TransferenceCreator
 from odin.accounting.repositories import TransferenceRepository
+from odin.auth.decorators import login_required
 
 
 class TransfersEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     async def post(request):
         data = await request.json()
         try:
@@ -31,6 +33,7 @@ class TransfersEndpoint(HTTPEndpoint):
 class TransferenceEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     def get(request):
         transference = TransferenceRepository().get_by_uuid(request.path_params['uuid'])
         if transference:
