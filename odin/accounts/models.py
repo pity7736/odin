@@ -16,3 +16,8 @@ class User(Entity):
             self._password = password
         else:
             self._password = make_password(password)
+
+    def check_password(self, raw_password):
+        salt = self._password.split('$')[0]
+        hash_password = make_password(raw_password, salt=salt)
+        return hash_password == self._password

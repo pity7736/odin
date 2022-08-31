@@ -1,3 +1,5 @@
+from typing import Optional
+
 from odin.accounts.models import User
 
 
@@ -12,5 +14,5 @@ class UserRepository:
             last_name=user.last_name
         )
 
-    def get_by_email(self, email):
+    def get_by_email(self, email) -> Optional[User]:
         return self._user.get(email)

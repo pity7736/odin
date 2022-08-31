@@ -1,13 +1,6 @@
 from pytest import fixture
-from starlette.testclient import TestClient
 
-from odin.accounting.api import app
 from tests.factories import ExpenseFactory, CategoryFactory
-
-
-@fixture
-def test_client():
-    return TestClient(app=app)
 
 
 @fixture
