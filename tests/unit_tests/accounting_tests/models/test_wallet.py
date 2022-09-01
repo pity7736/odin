@@ -35,7 +35,7 @@ add_expense_params = (
 
 @mark.parametrize('wallet_builder, amount, expected_balance, expected_expenses_number', add_expense_params)
 def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses_number, category_fixture):
-    wallet = wallet_builder.create()
+    wallet = wallet_builder.build()
     expense = ExpenseFactory.create(
         date=datetime.date.today(),
         amount=amount,

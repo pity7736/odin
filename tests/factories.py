@@ -59,20 +59,29 @@ class WalletBuilder:
         self._expenses_data.append({
             'amount': amount,
             'date': date or datetime.date.today(),
-            'category': category or CategoryFactory.create
+            'category': category
         })
         return self
 
     def create(self) -> Wallet:
         wallet = WalletCreator(name=self._name, balance=self._balance).create()
         for expense_data in self._expenses_data:
-            category = expense_data['category']
-            if callable(category):
-                category = category()
             ExpenseCreator(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
-                category=category,
+                category=expense_data['category'] or CategoryFactory.create(),
                 wallet=wallet
             ).create()
+        return wallet
+
+    def build(self) -> Wallet:
+        wallet = Wallet(name=self._name, balance=self._balance)
+        for expense_data in self._expenses_data:
+            expense = Expense(
+                amount=expense_data['amount'],
+                date=expense_data['date'],
+                category=expense_data['category'] or CategoryFactory.build(),
+                wallet=wallet
+            )
+            wallet.add_expense(expense)
         return wallet
