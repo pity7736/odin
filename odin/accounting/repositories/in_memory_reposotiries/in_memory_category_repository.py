@@ -1,7 +1,7 @@
 from odin.accounting.models import Category
 
 
-class CategoryRepository:
+class InMemoryCategoryRepository:
 
     _categories: list[str] = []
 

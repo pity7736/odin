@@ -1,7 +1,7 @@
 from odin.accounting.models import Income
 
 
-class IncomeRepository:
+class InMemoryIncomeRepository:
 
     _incomes = {}
 

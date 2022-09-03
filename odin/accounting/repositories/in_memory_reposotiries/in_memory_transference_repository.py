@@ -1,7 +1,7 @@
 from odin.accounting.models import Transference
 
 
-class TransferenceRepository:
+class InMemoryTransferenceRepository:
 
     _transfers: dict[str, Transference] = {}
 

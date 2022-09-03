@@ -1,15 +1,15 @@
 from odin.accounting.models import Expense
-from .exceptions import DoesNotExist
+from ..exceptions import DoesNotExist
 
-from .category_repository import CategoryRepository
+from .in_memory_category_repository import InMemoryCategoryRepository
 
 
-class ExpenseRepository:
+class InMemoryExpenseRepository:
 
     _expenses: dict[str, dict[str, str]] = {}
 
     def __init__(self):
-        self._category_repository = CategoryRepository()
+        self._category_repository = InMemoryCategoryRepository()
 
     def add(self, expense: Expense):
         self.__class__._expenses[expense.uuid] = {
