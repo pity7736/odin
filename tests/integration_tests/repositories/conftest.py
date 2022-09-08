@@ -10,14 +10,18 @@ class Rollback(Exception):
 
 @pytest.fixture(scope='session')
 def prepare_db():
-    subprocess.run('edgedb migrate'.split())
+    subprocess.run('edgedb -d odin_tests migrate'.split())
+
+
+@pytest.fixture(scope='session')
+def db_client(prepare_db):
+    return edgedb.create_client(database='odin_tests')
 
 
 @pytest.fixture
-def db_client(mocker, prepare_db):
-    client = edgedb.create_client(database='odin_tests')
+def db_transaction(mocker, db_client):
     try:
-        for transaction in client.transaction():
+        for transaction in db_client.transaction():
             with transaction:
                 mocker.patch.object(edgedb, 'create_client', return_value=transaction)
                 yield transaction

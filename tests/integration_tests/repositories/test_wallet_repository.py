@@ -2,7 +2,7 @@ from odin.accounting.repositories.edgedb_repositories import EdgeDBWalletReposit
 from tests.factories import WalletBuilder
 
 
-def test_get_by_name(db_client):
+def test_get_by_name(db_transaction):
     wallet = WalletBuilder().build()
     repository = EdgeDBWalletRepository()
     repository.add(wallet)

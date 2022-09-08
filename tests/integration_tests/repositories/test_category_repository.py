@@ -2,7 +2,7 @@ from odin.accounting.models import Category
 from odin.accounting.repositories.edgedb_repositories import EdgeDBCategoryRepository
 
 
-def test_get_by_name(db_client):
+def test_get_by_name(db_transaction):
     category = Category(name='test')
     repository = EdgeDBCategoryRepository()
     repository.add(category)
