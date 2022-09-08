@@ -3,9 +3,6 @@ import subprocess
 import edgedb
 import pytest
 
-from odin.accounting.models import Category
-from odin.accounting.repositories.edgedb_repositories import EdgeDBCategoryRepository
-
 
 class Rollback(Exception):
     pass
@@ -27,12 +24,3 @@ def db_client(mocker, prepare_db):
                 raise Rollback
     except Rollback:
         pass
-
-
-def test_get_by_name(db_client):
-    category = Category(name='test')
-    repository = EdgeDBCategoryRepository()
-    repository.add(category)
-    fetched_category = repository.get_by_name(name=category.name)
-
-    assert category.name == fetched_category.name
