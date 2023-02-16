@@ -3,6 +3,8 @@ import subprocess
 import edgedb
 import pytest
 
+from odin.accounting.repositories.edgedb_repositories.db_client import DBClient
+
 
 class Rollback(Exception):
     pass
@@ -20,6 +22,7 @@ def db_client(prepare_db):
 
 @pytest.fixture
 def db_transaction(mocker, db_client):
+    DBClient._instance = None
     try:
         for transaction in db_client.transaction():
             with transaction:
