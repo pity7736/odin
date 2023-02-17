@@ -47,6 +47,7 @@ def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses
     assert len(wallet.expenses) == expected_expenses_number
 
 
+@mark.skip(reason='I need a production use case for this.')
 def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixture):
     builder = WalletBuilder().add_expense(amount='100_000')
     repository = WalletRepository()

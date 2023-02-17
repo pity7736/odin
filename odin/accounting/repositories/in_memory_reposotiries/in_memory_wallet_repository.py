@@ -1,7 +1,5 @@
 from odin.accounting.models import Wallet
 
-from .in_memory_expense_repository import InMemoryExpenseRepository
-
 
 class InMemoryWalletRepository:
 
@@ -22,8 +20,4 @@ class InMemoryWalletRepository:
     def get_by_name(self, name: str) -> Wallet:
         wallet_data = self._wallets.get(name)
         if wallet_data:
-            expenses = []
-            for expense_uuid in wallet_data['expenses_uuid']:
-                expenses.append(InMemoryExpenseRepository().get_by(uuid=expense_uuid))
-            wallet_data['expenses'] = expenses
             return Wallet(**wallet_data)
