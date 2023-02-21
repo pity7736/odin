@@ -42,7 +42,9 @@ module default {
     }
 
     type Token {
-        required property value -> str;
         required link user -> User;
+        required property value -> str {
+            constraint exclusive;
+        }
     }
 };
