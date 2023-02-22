@@ -1,4 +1,4 @@
-from odin.accounts.repositories import UserRepository
+from odin.accounts.repositories import InMemoryUserRepository
 
 from odin.accounts.models import User
 
@@ -10,7 +10,7 @@ def test_get_by_email(db_transaction):
         first_name='julián',
         last_name='cortés'
     )
-    repository = UserRepository()
+    repository = InMemoryUserRepository()
     repository.add(user)
 
     fetched_user = repository.get_by_email(user.email)

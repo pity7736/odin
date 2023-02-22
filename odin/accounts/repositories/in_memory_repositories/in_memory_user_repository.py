@@ -3,7 +3,7 @@ from typing import Optional
 from odin.accounts.models import User
 
 
-class UserRepository:
+class InMemoryUserRepository:
     _user = {}
 
     def add(self, user: User):

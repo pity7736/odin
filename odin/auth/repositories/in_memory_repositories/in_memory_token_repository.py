@@ -1,5 +1,5 @@
 
-class TokenRepository:
+class InMemoryTokenRepository:
     _tokens = {}
 
     def add(self, token):

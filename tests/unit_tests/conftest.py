@@ -1,11 +1,9 @@
-from _pytest.fixtures import fixture
-from starlette.testclient import TestClient
+from pytest import fixture
 
-from odin.accounts.models import User
-from odin.auth.repositories import TokenRepository
-from odin.main import app
 from odin.accounting.repositories import ExpenseRepository, WalletRepository, CategoryRepository, TransferenceRepository
-from odin.accounts.repositories import UserRepository
+from odin.accounts.models import User
+from odin.accounts.repositories import InMemoryUserRepository
+from odin.auth.repositories.in_memory_repositories import InMemoryTokenRepository
 
 
 @fixture
@@ -15,13 +13,8 @@ def db_transaction():
     WalletRepository._wallets.clear()
     CategoryRepository._categories.clear()
     TransferenceRepository._transfers.clear()
-    UserRepository._user.clear()
-    TokenRepository._tokens.clear()
-
-
-@fixture
-def test_client():
-    return TestClient(app=app)
+    InMemoryUserRepository._user.clear()
+    InMemoryTokenRepository._tokens.clear()
 
 
 @fixture
@@ -32,7 +25,7 @@ def user_fixture(db_transaction):
         first_name='julián',
         last_name='cortés'
     )
-    UserRepository().add(user)
+    InMemoryUserRepository().add(user)
     return user
 
 

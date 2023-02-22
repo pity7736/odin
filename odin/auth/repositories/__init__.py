@@ -1,1 +1,1 @@
-from .in_memory_repositories import TokenRepository  # noqa: F401
+from .repository_factory import get_token_repository  # noqa: F401

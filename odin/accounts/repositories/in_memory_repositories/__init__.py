@@ -1,1 +1,1 @@
-from .in_memory_user_repository import UserRepository  # noqa: F401
+from .in_memory_user_repository import InMemoryUserRepository  # noqa: F401
