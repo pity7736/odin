@@ -10,7 +10,7 @@ def test_create(test_client, token_value_fixture):
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     response = test_client.post(
-        '/transfers',
+        '/accounting/transfers',
         json={
             'source': wallet_source.name,
             'target': wallet_target.name,
@@ -32,7 +32,7 @@ def test_create_with_non_existing_source_wallet(test_client, token_value_fixture
     CategoryFactory.create(name='transference')
     wallet_target = WalletBuilder().name('cash').create()
     response = test_client.post(
-        '/transfers',
+        '/accounting/transfers',
         json={
             'source': 'source wallet',
             'target': wallet_target.name,
@@ -49,7 +49,7 @@ def test_create_with_non_existing_target_wallet(test_client, token_value_fixture
     CategoryFactory.create(name='transference')
     source_wallet = WalletBuilder().name('cash').create()
     response = test_client.post(
-        '/transfers',
+        '/accounting/transfers',
         json={
             'source': source_wallet.name,
             'target': 'target wallet',
@@ -67,7 +67,7 @@ def test_get(test_client, token_value_fixture):
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     post_response = test_client.post(
-        '/transfers',
+        '/accounting/transfers',
         json={
             'source': wallet_source.name,
             'target': wallet_target.name,
@@ -77,7 +77,7 @@ def test_get(test_client, token_value_fixture):
     )
     response_data = post_response.json()
     response = test_client.get(
-        f'/transfers/{response_data["uuid"]}',
+        f'/accounting/transfers/{response_data["uuid"]}',
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()
@@ -90,7 +90,10 @@ def test_get(test_client, token_value_fixture):
 
 
 def test_get_with_wrong_uuid(test_client, token_value_fixture):
-    response = test_client.get(f'transfers/{uuid.uuid4()}', headers={'Authorization': f'token {token_value_fixture}'})
+    response = test_client.get(
+        f'/accounting/transfers/{uuid.uuid4()}',
+        headers={'Authorization': f'token {token_value_fixture}'}
+    )
 
     assert response.status_code == 404
     assert response.headers['content-type'] == 'application/json'

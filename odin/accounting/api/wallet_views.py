@@ -34,5 +34,5 @@ class WalletEndpoint(HTTPEndpoint):
     @login_required
     def get(request):
         repository = WalletRepository()
-        wallet = repository.get_by_name(request.path_params['name'])
+        wallet = repository.get_by_name(request.path_params['wallet_name'])
         return JSONResponse({'name': wallet.name, 'balance': str(wallet.balance)})

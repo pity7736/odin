@@ -5,7 +5,7 @@ from tests.utils import UUID_PATTERN
 
 def test_create_wallet(test_client, token_value_fixture):
     response = test_client.post(
-        '/wallets',
+        '/accounting/wallets',
         json={
             'name': 'test wallet',
             'balance': '10000000',
@@ -23,7 +23,7 @@ def test_create_wallet(test_client, token_value_fixture):
 
 def test_create_wallet_with_existing_name(test_client, token_value_fixture):
     test_client.post(
-        '/wallets',
+        '/accounting/wallets',
         json={
             'name': 'test wallet',
             'balance': '10000000',
@@ -31,7 +31,7 @@ def test_create_wallet_with_existing_name(test_client, token_value_fixture):
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response = test_client.post(
-        '/wallets',
+        '/accounting/wallets',
         json={
             'name': 'test wallet',
             'balance': '10000000',
@@ -45,7 +45,7 @@ def test_create_wallet_with_existing_name(test_client, token_value_fixture):
 
 def test_get_wallet(test_client, token_value_fixture):
     post_response = test_client.post(
-        '/wallets',
+        '/accounting/wallets',
         json={
             'name': 'test wallet',
             'balance': '10000000'
@@ -54,7 +54,7 @@ def test_get_wallet(test_client, token_value_fixture):
     )
     post_response_data = post_response.json()
     response = test_client.get(
-        f'/wallets/{post_response_data["name"]}',
+        f'/accounting/wallets/{post_response_data["name"]}',
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()

@@ -10,7 +10,7 @@ params = (
 @mark.parametrize('category_name', params)
 def test_create_category(category_name, test_client, token_value_fixture):
     response = test_client.post(
-        '/categories',
+        '/accounting/categories',
         json={'name': category_name},
         headers={'Authorization': f'token {token_value_fixture}'}
     )
@@ -24,11 +24,11 @@ def test_create_category(category_name, test_client, token_value_fixture):
 @mark.parametrize('category_name', params)
 def test_get_all_categories(category_name, test_client, token_value_fixture):
     test_client.post(
-        '/categories',
+        '/accounting/categories',
         json={'name': category_name},
         headers={'Authorization': f'token {token_value_fixture}'}
     )
-    response = test_client.get('/categories', headers={'Authorization': f'token {token_value_fixture}'})
+    response = test_client.get('/accounting/categories', headers={'Authorization': f'token {token_value_fixture}'})
     response_data = response.json()
 
     assert response.status_code == 200

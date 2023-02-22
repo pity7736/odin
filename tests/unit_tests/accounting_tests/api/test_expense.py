@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from pytest import mark, fixture
+from pytest import mark
 
 from tests.factories import ExpenseFactory, WalletBuilder
 from tests.utils import UUID_PATTERN
@@ -10,19 +10,13 @@ from tests.utils import UUID_PATTERN
 # TODO: test error messages text
 
 
-@fixture
-def wallet():
-    return WalletBuilder().create()
-
-
 def test_create_expense(test_client, category_fixture, wallet, token_value_fixture):
     response = test_client.post(
-        '/expenses',
+        f'/accounting/wallets/{wallet.name}/expenses',
         json={
             'date': '2022-03-27',
             'amount': '100000',
             'category': category_fixture.name,
-            'wallet': wallet.name
         },
         headers={'Authorization': f'token {token_value_fixture}'}
     )
@@ -36,9 +30,9 @@ def test_create_expense(test_client, category_fixture, wallet, token_value_fixtu
     assert re.match(UUID_PATTERN, response_data['uuid'])
 
 
-def test_create_expense_with_wrong_category_name(test_client, category_fixture, token_value_fixture):
+def test_create_expense_with_wrong_category_name(test_client, category_fixture, wallet, token_value_fixture):
     response = test_client.post(
-        '/expenses',
+        f'/accounting/wallets/{wallet.name}/expenses',
         json={
             'date': '2022-03-27',
             'amount': '100000',
@@ -60,18 +54,18 @@ create_expense_data_params = (
 
 
 @mark.parametrize('data', create_expense_data_params)
-def test_create_expense_with_missing_or_wrong_data(data, test_client, token_value_fixture):
+def test_create_expense_with_missing_or_wrong_data(data, test_client, wallet, token_value_fixture):
     response = test_client.post(
-        '/expenses',
+        f'/accounting/wallets/{wallet.name}/expenses',
         json=data,
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     assert response.status_code == 400
 
 
-def test_create_expense_with_date_in_the_future(test_client, token_value_fixture):
+def test_create_expense_with_date_in_the_future(test_client, wallet, token_value_fixture):
     response = test_client.post(
-        '/expenses',
+        f'/accounting/wallets/{wallet.name}/expenses',
         json={
             'date': (datetime.date.today() + datetime.timedelta(days=1)).isoformat(),
             'amount': '100000'
@@ -82,15 +76,15 @@ def test_create_expense_with_date_in_the_future(test_client, token_value_fixture
     assert response.status_code == 400
 
 
-def test_create_expense_with_higher_amount_that_wallet_balance(test_client, category_fixture, token_value_fixture):
+def test_create_expense_with_higher_amount_that_wallet_balance(test_client, category_fixture, wallet,
+                                                               token_value_fixture):
     wallet = WalletBuilder().balance('100_000').create()
     response = test_client.post(
-        '/expenses',
+        f'/accounting/wallets/{wallet.name}/expenses',
         json={
             'date': '2022-03-27',
             'amount': '102000',
             'category': category_fixture.name,
-            'wallet': wallet.name
         },
         headers={'Authorization': f'token {token_value_fixture}'}
     )
@@ -102,18 +96,17 @@ def test_create_expense_with_higher_amount_that_wallet_balance(test_client, cate
 
 def test_get_expense(test_client, category_fixture, wallet, token_value_fixture):
     post_response = test_client.post(
-        '/expenses',
+        f'/accounting/wallets/{wallet.name}/expenses',
         json={
             'date': '2022-03-27',
             'amount': '100000',
             'category': category_fixture.name,
-            'wallet': wallet.name
         },
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     post_response_data = post_response.json()
     response = test_client.get(
-        f'/expenses/{post_response_data["uuid"]}',
+        f'/accounting/wallets/{wallet.name}/expenses/{post_response_data["uuid"]}',
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()
@@ -126,8 +119,11 @@ def test_get_expense(test_client, category_fixture, wallet, token_value_fixture)
     assert response_data['uuid'] == post_response_data['uuid']
 
 
-def test_get_non_existing_expense(expense_fixture, test_client, token_value_fixture):
-    response = test_client.get('/expenses/1234', headers={'Authorization': f'token {token_value_fixture}'})
+def test_get_non_existing_expense(expense_fixture, test_client, wallet, token_value_fixture):
+    response = test_client.get(
+        f'/accounting/wallets/{wallet.name}/expenses/1234',
+        headers={'Authorization': f'token {token_value_fixture}'}
+    )
     response_data = response.json()
 
     assert response.status_code == 404
@@ -135,7 +131,7 @@ def test_get_non_existing_expense(expense_fixture, test_client, token_value_fixt
     assert response_data == {}
 
 
-def test_get_all_expenses(test_client, token_value_fixture):
+def test_get_all_expenses(test_client, token_value_fixture, wallet):
     expenses = ExpenseFactory.create_batch(5)
     expected_expenses = [{
         'date': expense.date.isoformat(),
@@ -143,7 +139,10 @@ def test_get_all_expenses(test_client, token_value_fixture):
         'uuid': expense.uuid,
         'category': expense.category.name
     } for expense in expenses]
-    response = test_client.get('/expenses', headers={'Authorization': f'token {token_value_fixture}'})
+    response = test_client.get(
+        f'/accounting/wallets/{wallet.name}/expenses',
+        headers={'Authorization': f'token {token_value_fixture}'}
+    )
     response_data = response.json()
 
     assert response.status_code == 200

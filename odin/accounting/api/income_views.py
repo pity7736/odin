@@ -1,4 +1,5 @@
 from starlette.endpoints import HTTPEndpoint
+from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import CategoryGetter, IncomeCreator
@@ -10,10 +11,10 @@ class IncomesEndpoint(HTTPEndpoint):
 
     @staticmethod
     @login_required
-    async def post(request):
+    async def post(request: Request):
         data = await request.json()
         category = CategoryGetter().get_by_name(data.get('category'))
-        wallet = WalletRepository().get_by_name(data.get('wallet'))
+        wallet = WalletRepository().get_by_name(request.path_params['wallet_name'])
         try:
             income_creator = IncomeCreator(
                 date=data['date'],

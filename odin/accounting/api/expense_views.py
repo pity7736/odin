@@ -18,7 +18,7 @@ class ExpensesEndpoint(HTTPEndpoint):
             return JSONResponse({}, status_code=400)
 
         data['category'] = category
-        data['wallet'] = WalletRepository().get_by_name(data.get('wallet'))
+        data['wallet'] = WalletRepository().get_by_name(request.path_params['wallet_name'])
         try:
             expense_creator = ExpenseCreator(**data)
             expense = expense_creator.create()
