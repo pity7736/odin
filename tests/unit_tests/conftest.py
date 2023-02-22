@@ -3,7 +3,9 @@ from pytest import fixture
 from odin.accounting.repositories import ExpenseRepository, WalletRepository, CategoryRepository, TransferenceRepository
 from odin.accounts.models import User
 from odin.accounts.repositories import InMemoryUserRepository
+from odin.auth.models import Token
 from odin.auth.repositories.in_memory_repositories import InMemoryTokenRepository
+from odin.utils import get_random_string
 
 
 @fixture
@@ -31,12 +33,10 @@ def user_fixture(db_transaction):
 
 @fixture
 def token_value_fixture(user_fixture, test_client):
-    login_response = test_client.post(
-        '/auth/login',
-        json={
-            'email': user_fixture.email,
-            'password': 'test'
-        }
+    token = Token(
+        value=get_random_string(length=50),
+        user=user_fixture
     )
-    data = login_response.json()
-    return data['token']
+    repository = InMemoryTokenRepository()
+    repository.add(token)
+    return token.value
