@@ -2,7 +2,7 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import WalletCreator
-from odin.accounting.repositories import WalletRepository
+from odin.accounting.repositories.repository_factory import get_wallet_repository
 from odin.auth.decorators import login_required
 
 
@@ -12,7 +12,8 @@ class WalletsEndpoint(HTTPEndpoint):
     @login_required
     async def post(request):
         data = await request.json()
-        repository = WalletRepository()
+        repository = get_wallet_repository()
+        # refactor: move this to WalletCreator
         if repository.get_by_name(data['name']):
             return JSONResponse({}, status_code=400)
 
@@ -33,6 +34,6 @@ class WalletEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     def get(request):
-        repository = WalletRepository()
+        repository = get_wallet_repository()
         wallet = repository.get_by_name(request.path_params['wallet_name'])
-        return JSONResponse({'name': wallet.name, 'balance': str(wallet.balance)})
+        return JSONResponse({'name': wallet.name, 'balance': f'{wallet.balance:f}'})
