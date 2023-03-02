@@ -14,7 +14,8 @@ class EdgeDBCategoryRepository:
         self._client.execute('insert Category { name := <str>$name }', name=category.name)
 
     def get_all(self) -> tuple[Category]:
-        return tuple(Category(name=name) for name in self._categories)
+        records = self._client.query('select Category {name}')
+        return tuple(Category(name=record.name) for record in records)
 
     def get_by_name(self, name) -> Category | None:
         if category_data := self._client.query_single('select Category {name} filter .name = <str>$name', name=name):
