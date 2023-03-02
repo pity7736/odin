@@ -1,7 +1,3 @@
-import re
-
-from tests.utils import UUID_PATTERN
-
 
 def test_create_wallet(test_client, token_value_fixture):
     response = test_client.post(
@@ -18,7 +14,6 @@ def test_create_wallet(test_client, token_value_fixture):
     assert response.status_code == 201
     assert response_data['name'] == 'test wallet'
     assert response_data['balance'] == '10000000'
-    assert re.match(UUID_PATTERN, response_data['uuid'])
 
 
 def test_create_wallet_with_existing_name(test_client, token_value_fixture):

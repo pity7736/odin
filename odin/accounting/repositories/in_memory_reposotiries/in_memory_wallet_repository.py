@@ -21,7 +21,6 @@ class InMemoryWalletRepository:
         self.__class__._wallets[wallet.name] = {
             'name': wallet.name,
             'balance': wallet.balance,
-            'uuid': wallet.uuid,
             'expenses_uuid': [expense.uuid for expense in wallet.expenses]
         }
 

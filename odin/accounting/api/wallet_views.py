@@ -25,7 +25,6 @@ class WalletsEndpoint(HTTPEndpoint):
         return JSONResponse({
             'name': wallet.name,
             'balance': str(wallet.balance),
-            'uuid': wallet.uuid
         }, status_code=201)
 
 

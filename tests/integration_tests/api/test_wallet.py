@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from odin.accounting.repositories.edgedb_repositories import EdgeDBWalletRepository
 
 
@@ -16,7 +18,9 @@ def test_create_wallet(test_client, token_value_fixture):
     wallet = repository.get_by_name(wallet_name)
 
     assert response_data['name'] == wallet_name
+    assert response_data['balance'] == '10000000'
     assert wallet.name == wallet_name
+    assert wallet.balance == Decimal('10000000')
 
 
 def test_get_wallet(test_client, token_value_fixture):

@@ -1,5 +1,3 @@
-import uuid
-
 from nyoibo import Entity, fields
 
 from .expense import Expense
@@ -9,18 +7,16 @@ from .income import Income
 class Wallet(Entity):
     _balance = fields.DecimalField(required=True)
     _name = fields.StrField(required=True)
-    _uuid = fields.StrField(required=True)
     _expenses: list[Expense] = fields.ListField()
     _incomes: list[Income] = fields.ListField()
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('uuid', uuid.uuid4())
         kwargs.setdefault('expenses', [])
         kwargs.setdefault('incomes', [])
         super().__init__(**kwargs)
 
     def __eq__(self, other: 'Wallet'):
-        return self._uuid == other._uuid
+        return self._name == other._name
 
     def add_expense(self, expense: Expense):
         assert isinstance(expense, Expense), 'expense argument must be Expense instance'
