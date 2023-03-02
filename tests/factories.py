@@ -6,7 +6,8 @@ import factory
 
 from odin.accounting.controllers import WalletCreator, ExpenseCreator
 from odin.accounting.models import Expense, Category, Wallet
-from odin.accounting.repositories import ExpenseRepository, CategoryRepository
+from odin.accounting.repositories import ExpenseRepository
+from odin.accounting.repositories.repository_factory import get_category_repository
 
 
 class CategoryFactory(factory.Factory):
@@ -18,7 +19,7 @@ class CategoryFactory(factory.Factory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         category = super()._create(model_class, *args, **kwargs)
-        repository = CategoryRepository()
+        repository = get_category_repository()
         repository.add(category)
         return category
 

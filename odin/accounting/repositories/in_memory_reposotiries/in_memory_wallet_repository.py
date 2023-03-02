@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 from odin.accounting.models import Wallet
@@ -11,6 +12,7 @@ class InMemoryWalletRepository:
     def add_expense(self, wallet, expense):
         wallet = self.get_by_name(wallet.name)
         wallet.add_expense(expense)
+        expense.uuid = uuid.uuid4()
         self.add(wallet)
         repository = InMemoryExpenseRepository()
         repository.add(expense)
