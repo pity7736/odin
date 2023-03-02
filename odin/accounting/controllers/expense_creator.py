@@ -4,7 +4,7 @@ from decimal import Decimal
 from nyoibo import Entity, fields
 
 from odin.accounting.models import Expense, Category, Wallet
-from odin.accounting.repositories import ExpenseRepository, WalletRepository
+from odin.accounting.repositories.repository_factory import get_wallet_repository
 
 
 class ExpenseCreator(Entity):
@@ -34,7 +34,5 @@ class ExpenseCreator(Entity):
             self._wallet.add_expense(expense)
         except AssertionError as error:
             raise ValueError(str(error))
-        repository = ExpenseRepository()
-        repository.add(expense)
-        WalletRepository().update(wallet=self._wallet)
+        get_wallet_repository().add_expense(wallet=self._wallet, expense=expense)
         return expense

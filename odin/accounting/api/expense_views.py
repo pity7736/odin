@@ -4,6 +4,7 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import CategoryGetter, ExpenseCreator, ExpenseGetter
 from odin.accounting.repositories import WalletRepository
+from odin.accounting.repositories.repository_factory import get_wallet_repository
 from odin.auth.decorators import login_required
 
 
@@ -56,16 +57,16 @@ class ExpenseEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     def get(request):
-        expense_getter = ExpenseGetter()
-        expense = expense_getter.get_by_uuid(request.path_params['uuid'])
-        if expense:
-            return JSONResponse(
-                {
-                    'date': expense.date.isoformat(),
-                    'amount': str(expense.amount),
-                    'uuid': expense.uuid,
-                    'category': expense.category.name
-                },
-                status_code=200
-            )
+        wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
+        for expense in wallet.expenses:
+            if expense.uuid == request.path_params['uuid']:
+                return JSONResponse(
+                    {
+                        'date': expense.date.isoformat(),
+                        'amount': str(expense.amount),
+                        'uuid': expense.uuid,
+                        'category': expense.category.name
+                    },
+                    status_code=200
+                )
         return JSONResponse({}, status_code=404)

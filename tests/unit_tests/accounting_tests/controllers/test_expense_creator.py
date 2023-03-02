@@ -5,7 +5,7 @@ from decimal import Decimal
 from pytest import raises
 
 from odin.accounting.controllers import ExpenseCreator
-from odin.accounting.repositories import WalletRepository
+from odin.accounting.repositories.in_memory_reposotiries import InMemoryWalletRepository
 from tests.factories import WalletBuilder
 from tests.utils import UUID_PATTERN
 
@@ -21,7 +21,7 @@ def test_create_expense(category_fixture):
         wallet=wallet
     )
     expense = expense_creator.create()
-    wallet = WalletRepository().get_by_name(wallet.name)
+    wallet = InMemoryWalletRepository().get_by_name(wallet.name)
 
     assert expense.date == date
     assert expense.amount == amount
