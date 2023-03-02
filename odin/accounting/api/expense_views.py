@@ -62,7 +62,7 @@ class ExpenseEndpoint(HTTPEndpoint):
                 return JSONResponse(
                     {
                         'date': expense.date.isoformat(),
-                        'amount': str(expense.amount),
+                        'amount': f'{expense.amount:f}',
                         'uuid': expense.uuid,
                         'category': expense.category.name
                     },

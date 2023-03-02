@@ -1,6 +1,6 @@
 from typing import Optional
 
-from odin.accounting.models import Wallet, Expense
+from odin.accounting.models import Wallet, Expense, Category
 
 from .db_client import DBClient
 
@@ -44,13 +44,18 @@ class EdgeDBWalletRepository:
             )
 
     def get_by_name_with_expenses(self, name: str) -> Optional[Wallet]:
-        expenses_query = 'expenses := .<wallet[is Expense] {id, date, amount}'
+        expenses_query = 'expenses := .<wallet[is Expense] {id, date, amount, category: {name}}'
         record = self._client.query_single(
             f'select Wallet {{id, name, balance, {expenses_query}}} filter .name = <str>$name',
             name=name
         )
         expenses = [
-            Expense(date=expense_data.date, uuid=expense_data.id, amount=expense_data.amount)
+            Expense(
+                date=expense_data.date,
+                uuid=expense_data.id,
+                amount=expense_data.amount,
+                category=Category(name=expense_data.category.name)
+            )
             for expense_data in record.expenses
         ]
         if record:

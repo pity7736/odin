@@ -28,4 +28,30 @@ def test_create(test_client, token_value_fixture):
     assert response_data['category'] == category.name
     assert expense.date == datetime.date(2022, 3, 27)
     assert expense.amount == Decimal('100000')
-    assert expense.uuid == response_data['uuid']
+
+
+def test_get_expense(test_client, token_value_fixture):
+    category = CategoryFactory.create()
+    wallet = WalletBuilder().create()
+    post_response = test_client.post(
+        f'/accounting/wallets/{wallet.name}/expenses',
+        json={
+            'date': '2022-03-27',
+            'amount': '100000',
+            'category': category.name,
+        },
+        headers={'Authorization': f'token {token_value_fixture}'}
+    )
+    post_response_data = post_response.json()
+    response = test_client.get(
+        f'/accounting/wallets/{wallet.name}/expenses/{post_response_data["uuid"]}',
+        headers={'Authorization': f'token {token_value_fixture}'}
+    )
+    response_data = response.json()
+
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/json'
+    assert response_data['date'] == post_response_data['date']
+    assert response_data['amount'] == post_response_data['amount']
+    assert response_data['category'] == post_response_data['category']
+    assert response_data['uuid'] == post_response_data['uuid']
