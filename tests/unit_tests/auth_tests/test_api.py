@@ -37,7 +37,7 @@ def test_logout(token_value_fixture, test_client):
     assert second_response_data['message'] == 'invalid token'
 
 
-def test_logout_with_token(user_fixture, test_client):
+def test_logout_without_token(user_fixture, test_client):
     response = test_client.post('/auth/logout')
     response_data = response.json()
 

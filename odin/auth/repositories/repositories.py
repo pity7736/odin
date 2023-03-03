@@ -13,3 +13,7 @@ class TokenRepository(metaclass=ABCMeta):
     @abstractmethod
     def get_by_value(self, value: str) -> Optional[Token]:
         pass
+
+    @abstractmethod
+    def delete_by_value(self, value: str):
+        pass
