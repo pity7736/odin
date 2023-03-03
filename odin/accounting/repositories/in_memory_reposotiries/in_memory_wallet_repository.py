@@ -21,6 +21,7 @@ class InMemoryWalletRepository:
     def add_income(self, wallet, income):
         wallet = self.get_by_name_with_incomes(wallet.name)
         wallet.add_income(income)
+        income.uuid = uuid.uuid4()
         self.add(wallet)
         repository = InMemoryIncomeRepository()
         repository.add(income)

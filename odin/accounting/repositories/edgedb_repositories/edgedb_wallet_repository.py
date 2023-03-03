@@ -1,6 +1,6 @@
 from typing import Optional
 
-from odin.accounting.models import Wallet, Expense, Category
+from odin.accounting.models import Wallet, Expense, Category, Income
 
 from .db_client import DBClient
 
@@ -34,6 +34,23 @@ class EdgeDBWalletRepository:
         )
         expense.uuid = result.id
 
+    def add_income(self, wallet: Wallet, income: Income):
+        category_query = 'select Category filter .name = <str>$category_name'
+        wallet_query = 'select Wallet filter .name = <str>$wallet_name'
+        expense_query = (
+            f'insert Income {{'
+            f'date := <cal::local_date>$date, amount := <decimal>$amount, '
+            f'category := ({category_query}), wallet := ({wallet_query})}}'
+        )
+        result = self._client.query_single(
+            expense_query,
+            category_name=income.category.name,
+            wallet_name=wallet.name,
+            date=income.date,
+            amount=income.amount
+        )
+        income.uuid = result.id
+
     def get_by_name(self, name: str) -> Optional[Wallet]:
         record = self._client.query_single('select Wallet {id, name, balance} filter .name = <str>$name', name=name)
         if record:
@@ -64,4 +81,27 @@ class EdgeDBWalletRepository:
                 balance=record.balance,
                 uuid=record.id,
                 expenses=expenses
+            )
+
+    def get_by_name_with_incomes(self, name):
+        incomes_query = 'incomes := .<wallet[is Income] {id, date, amount, category: {name}}'
+        record = self._client.query_single(
+            f'select Wallet {{id, name, balance, {incomes_query}}} filter .name = <str>$name',
+            name=name
+        )
+        incomes = [
+            Income(
+                date=income_data.date,
+                uuid=income_data.id,
+                amount=income_data.amount,
+                category=Category(name=income_data.category.name)
+            )
+            for income_data in record.incomes
+        ]
+        if record:
+            return Wallet(
+                name=record.name,
+                balance=record.balance,
+                uuid=record.id,
+                incomes=incomes
             )
