@@ -4,7 +4,6 @@ from decimal import Decimal
 from pytest import raises, mark
 
 from odin.accounting.models import Income
-from odin.accounting.repositories import WalletRepository
 from tests.factories import WalletBuilder, ExpenseFactory
 
 
@@ -36,7 +35,7 @@ add_expense_params = (
 @mark.parametrize('wallet_builder, amount, expected_balance, expected_expenses_number', add_expense_params)
 def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses_number, category_fixture):
     wallet = wallet_builder.build()
-    expense = ExpenseFactory.create(
+    expense = ExpenseFactory.build(
         date=datetime.date.today(),
         amount=amount,
         category=category_fixture,
@@ -47,27 +46,9 @@ def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses
     assert len(wallet.expenses) == expected_expenses_number
 
 
-@mark.skip(reason='I need a production use case for this.')
-def test_get_wallet_with_expenses_from_repository_and_add_expense(category_fixture):
-    builder = WalletBuilder().add_expense(amount='100_000')
-    repository = WalletRepository()
-    wallet = builder.create()
-    repository.add(wallet=wallet)
-    wallet = repository.get_by_name(name=wallet.name)
-    expense = ExpenseFactory.create(
-        date=datetime.date.today(),
-        amount='100_000',
-        category=category_fixture,
-    )
-    wallet.add_expense(expense)
-
-    assert wallet.balance == Decimal('800_000')
-    assert len(wallet.expenses) == 2
-
-
 def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
     wallet = WalletBuilder().balance('100_000').create()
-    expense = ExpenseFactory.create(amount=Decimal('100_001'))
+    expense = ExpenseFactory.build(amount=Decimal('100_001'))
 
     with raises(AssertionError) as error:
         wallet.add_expense(expense)

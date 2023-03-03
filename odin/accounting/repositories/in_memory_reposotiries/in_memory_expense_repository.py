@@ -36,13 +36,3 @@ class InMemoryExpenseRepository:
                 **expense_data,
                 category=self._category_repository.get_by_name(expense_data.get('category_name'))
             )
-
-    def get_all(self) -> tuple[Expense]:
-        expenses = []
-        for expense_data in self._expenses.values():
-            expenses.append(
-                Expense(
-                    **expense_data,
-                    category=self._category_repository.get_by_name(expense_data.get('category_name')))
-            )
-        return tuple(expenses)

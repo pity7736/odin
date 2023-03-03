@@ -1,7 +1,9 @@
 from pytest import fixture
 
-from odin.accounting.repositories.in_memory_reposotiries import InMemoryExpenseRepository, InMemoryWalletRepository,\
-    InMemoryCategoryRepository, InMemoryTransferenceRepository
+from odin.accounting.repositories.in_memory_reposotiries import InMemoryWalletRepository, InMemoryCategoryRepository, \
+    InMemoryTransferenceRepository
+from odin.accounting.repositories.in_memory_reposotiries.in_memory_expense_repository import InMemoryExpenseRepository
+from odin.accounting.repositories.in_memory_reposotiries.in_memory_income_repository import InMemoryIncomeRepository
 from odin.accounts.models import User
 from odin.accounts.repositories.in_memory_repositories import InMemoryUserRepository
 from odin.auth.models import Token
@@ -13,6 +15,7 @@ from odin.utils import get_random_string
 def db_transaction():
     yield
     InMemoryExpenseRepository._expenses.clear()
+    InMemoryIncomeRepository._incomes.clear()
     InMemoryWalletRepository._wallets.clear()
     InMemoryCategoryRepository._categories.clear()
     InMemoryTransferenceRepository._transfers.clear()

@@ -6,7 +6,6 @@ import factory
 
 from odin.accounting.controllers import WalletCreator, ExpenseCreator
 from odin.accounting.models import Expense, Category, Wallet
-from odin.accounting.repositories import ExpenseRepository
 from odin.accounting.repositories.repository_factory import get_category_repository
 
 
@@ -32,13 +31,6 @@ class ExpenseFactory(factory.Factory):
 
     class Meta:
         model = Expense
-
-    @classmethod
-    def _create(cls, model_class, *args, **kwargs):
-        expense = super()._create(model_class, *args, **kwargs)
-        repository = ExpenseRepository()
-        repository.add(expense)
-        return expense
 
 
 class WalletBuilder:
