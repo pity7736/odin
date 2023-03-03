@@ -2,8 +2,8 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.accounting.controllers import CategoryGetter, ExpenseCreator
-from odin.accounting.repositories.repository_factory import get_wallet_repository
+from odin.accounting.controllers import ExpenseCreator
+from odin.accounting.repositories.repository_factory import get_wallet_repository, get_category_repository
 from odin.auth.decorators import login_required
 
 
@@ -13,7 +13,7 @@ class ExpensesEndpoint(HTTPEndpoint):
     @login_required
     async def post(request):
         data = await request.json()
-        category = CategoryGetter().get_by_name(data.get('category'))
+        category = get_category_repository().get_by_name(data.get('category'))
         if category is None:
             return JSONResponse({}, status_code=400)
 
