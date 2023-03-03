@@ -3,7 +3,7 @@ import re
 
 from pytest import mark
 
-from tests.factories import ExpenseFactory, WalletBuilder
+from tests.factories import WalletBuilder
 from tests.utils import UUID_PATTERN
 
 
@@ -131,20 +131,26 @@ def test_get_non_existing_expense(expense_fixture, test_client, wallet, token_va
     assert response_data == {}
 
 
-def test_get_all_expenses(test_client, token_value_fixture, wallet):
-    expenses = ExpenseFactory.create_batch(5)
-    expected_expenses = [{
-        'date': expense.date.isoformat(),
-        'amount': str(expense.amount),
-        'uuid': expense.uuid,
-        'category': expense.category.name
-    } for expense in expenses]
+def test_get_all_expenses(test_client, token_value_fixture):
+    wallet_builder = WalletBuilder() \
+        .add_expense(amount='100000') \
+        .add_expense(amount='50000') \
+        .add_expense(amount='20000')
+    wallet = wallet_builder.create()
     response = test_client.get(
         f'/accounting/wallets/{wallet.name}/expenses',
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()
-
+    expected_expenses = [
+        {
+            'date': expense.date.isoformat(),
+            'amount': f'{expense.amount:f}',
+            'uuid': expense.uuid,
+            'category': expense.category.name
+        }
+        for expense in wallet.expenses
+    ]
     assert response.status_code == 200
     assert response.headers['content-type'] == 'application/json'
     assert response_data['expenses'] == expected_expenses

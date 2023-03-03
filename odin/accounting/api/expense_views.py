@@ -2,7 +2,7 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.accounting.controllers import CategoryGetter, ExpenseCreator, ExpenseGetter
+from odin.accounting.controllers import CategoryGetter, ExpenseCreator
 from odin.accounting.repositories.repository_factory import get_wallet_repository
 from odin.auth.decorators import login_required
 
@@ -38,13 +38,12 @@ class ExpensesEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     def get(request):
-        expense_getter = ExpenseGetter()
-        expenses = expense_getter.all()
+        wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
         serialized_expenses = []
-        for expense in expenses:
+        for expense in wallet.expenses:
             serialized_expenses.append({
                 'date': expense.date.isoformat(),
-                'amount': str(expense.amount),
+                'amount': f'{expense.amount:f}',
                 'uuid': expense.uuid,
                 'category': expense.category.name
             })

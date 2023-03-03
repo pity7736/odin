@@ -55,3 +55,29 @@ def test_get_expense(test_client, token_value_fixture):
     assert response_data['amount'] == post_response_data['amount']
     assert response_data['category'] == post_response_data['category']
     assert response_data['uuid'] == post_response_data['uuid']
+
+
+def test_get_all_expenses(test_client, token_value_fixture):
+    wallet_builder = WalletBuilder() \
+        .add_expense(amount='100000') \
+        .add_expense(amount='50000') \
+        .add_expense(amount='20000')
+    wallet = wallet_builder.create()
+
+    response = test_client.get(
+        f'/accounting/wallets/{wallet.name}/expenses',
+        headers={'Authorization': f'token {token_value_fixture}'}
+    )
+    response_data = response.json()
+    expected_expenses = [
+        {
+            'date': expense.date.isoformat(),
+            'amount': f'{expense.amount:f}',
+            'uuid': expense.uuid,
+            'category': expense.category.name
+        }
+        for expense in wallet.expenses
+    ]
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/json'
+    assert response_data['expenses'] == expected_expenses

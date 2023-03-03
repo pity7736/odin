@@ -10,7 +10,7 @@ class InMemoryWalletRepository:
     _wallets: dict[str, dict] = {}
 
     def add_expense(self, wallet, expense):
-        wallet = self.get_by_name(wallet.name)
+        wallet = self.get_by_name_with_expenses(wallet.name)
         wallet.add_expense(expense)
         expense.uuid = uuid.uuid4()
         self.add(wallet)
