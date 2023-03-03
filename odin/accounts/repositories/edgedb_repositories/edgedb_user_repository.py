@@ -1,13 +1,14 @@
 from odin.accounting.repositories.edgedb_repositories.db_client import DBClient
 from odin.accounts.models import User
+from ..repositories import UserRepository
 
 
-class EdgeDBUserRepository:
+class EdgeDBUserRepository(UserRepository):
 
     def __init__(self):
         self._client = DBClient()
 
-    def add(self, user: User):
+    def add(self, user):
         self._client.execute(
             'insert User {'
             'email := <str>$email,'

@@ -1,5 +1,7 @@
+from ..repositories import TokenRepository
 
-class InMemoryTokenRepository:
+
+class InMemoryTokenRepository(TokenRepository):
     _tokens = {}
 
     def add(self, token):

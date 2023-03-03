@@ -1,9 +1,10 @@
 from odin.accounting.repositories.edgedb_repositories.db_client import DBClient
 from odin.accounts.models import User
 from odin.auth.models import Token
+from ..repositories import TokenRepository
 
 
-class EdgeDBTokenRepository:
+class EdgeDBTokenRepository(TokenRepository):
 
     def __init__(self):
         self._client = DBClient()

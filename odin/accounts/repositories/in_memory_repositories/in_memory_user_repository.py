@@ -1,12 +1,14 @@
 from typing import Optional
 
 from odin.accounts.models import User
+from ..repositories import UserRepository
 
 
-class InMemoryUserRepository:
+class InMemoryUserRepository(UserRepository):
+
     _user = {}
 
-    def add(self, user: User):
+    def add(self, user):
         self.__class__._user[user.email] = User(
             email=user.email,
             password=user.password,

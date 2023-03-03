@@ -1,12 +1,12 @@
 import uuid
-from typing import Optional
 
 from odin.accounting.models import Wallet
 from .in_memory_expense_repository import InMemoryExpenseRepository
 from .in_memory_income_repository import InMemoryIncomeRepository
+from ..repositories import WalletRepository
 
 
-class InMemoryWalletRepository:
+class InMemoryWalletRepository(WalletRepository):
 
     _wallets: dict[str, dict] = {}
 
@@ -26,7 +26,7 @@ class InMemoryWalletRepository:
         repository = InMemoryIncomeRepository()
         repository.add(income)
 
-    def add(self, wallet: Wallet):
+    def add(self, wallet):
         self.__class__._wallets[wallet.name] = {
             'name': wallet.name,
             'balance': wallet.balance,
@@ -34,12 +34,12 @@ class InMemoryWalletRepository:
             'incomes_uuid': [income.uuid for income in wallet.incomes]
         }
 
-    def get_by_name(self, name: str) -> Wallet:
+    def get_by_name(self, name):
         wallet_data = self._wallets.get(name)
         if wallet_data:
             return Wallet(**wallet_data)
 
-    def get_by_name_with_expenses(self, name) -> Optional[Wallet]:
+    def get_by_name_with_expenses(self, name):
         wallet_data = self._wallets.get(name)
         expenses = []
         repository = InMemoryExpenseRepository()
@@ -48,7 +48,7 @@ class InMemoryWalletRepository:
             expenses.append(expense)
         return Wallet(**wallet_data, expenses=expenses)
 
-    def get_by_name_with_incomes(self, name) -> Optional[Wallet]:
+    def get_by_name_with_incomes(self, name):
         wallet_data = self._wallets.get(name)
         incomes = []
         repository = InMemoryIncomeRepository()
