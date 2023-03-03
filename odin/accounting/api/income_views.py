@@ -40,7 +40,7 @@ class IncomeEndpoint(HTTPEndpoint):
     @staticmethod
     def get(request):
         wallet = get_wallet_repository().get_by_name_with_incomes(request.path_params['wallet_name'])
-        for income in wallet.expenses:
+        for income in wallet.incomes:
             if income.uuid == request.path_params['uuid']:
                 return JSONResponse(
                     {

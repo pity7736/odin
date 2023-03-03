@@ -55,4 +55,4 @@ class InMemoryWalletRepository:
         for income_uuid in wallet_data['incomes_uuid']:
             income = repository.get_by_uuid(uuid=income_uuid)
             incomes.append(income)
-        return Wallet(**wallet_data, expenses=incomes)
+        return Wallet(**wallet_data, incomes=incomes)
