@@ -33,10 +33,6 @@ class InMemoryWalletRepository:
             'incomes_uuid': [income.uuid for income in wallet.incomes]
         }
 
-    def update(self, wallet: Wallet):
-        if self.get_by_name(wallet.name):
-            self.add(wallet)
-
     def get_by_name(self, name: str) -> Wallet:
         wallet_data = self._wallets.get(name)
         if wallet_data:
