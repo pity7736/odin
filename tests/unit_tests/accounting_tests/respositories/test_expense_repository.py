@@ -3,13 +3,13 @@ import uuid
 from pytest import raises
 
 from odin.accounting.models import Expense, Category
-from odin.accounting.repositories import ExpenseRepository
+from odin.accounting.repositories.in_memory_reposotiries import InMemoryExpenseRepository
 from odin.accounting.repositories.exceptions import DoesNotExist
 from tests.factories import ExpenseFactory
 
 
 def test_get_expense_by_uuid(expense_fixture):
-    repository = ExpenseRepository()
+    repository = InMemoryExpenseRepository()
     gotten_expense = repository.get_by(uuid=expense_fixture.uuid)
 
     assert gotten_expense.date == expense_fixture.date
@@ -19,7 +19,7 @@ def test_get_expense_by_uuid(expense_fixture):
 
 
 def test_get_expense_by_uuid_twice(expense_fixture):
-    repository = ExpenseRepository()
+    repository = InMemoryExpenseRepository()
     repository.get_by(uuid=expense_fixture.uuid)
     gotten_expense = repository.get_by(uuid=expense_fixture.uuid)
 
@@ -30,7 +30,7 @@ def test_get_expense_by_uuid_twice(expense_fixture):
 
 
 def test_get_non_existing_expense_by_uuid(expense_fixture):
-    repository = ExpenseRepository()
+    repository = InMemoryExpenseRepository()
     with raises(DoesNotExist) as e:
         repository.get_by(uuid=uuid.uuid4())
 
@@ -39,7 +39,7 @@ def test_get_non_existing_expense_by_uuid(expense_fixture):
 
 def test_get_all_expenses(db_transaction):
     ExpenseFactory.create_batch(5)
-    repository = ExpenseRepository()
+    repository = InMemoryExpenseRepository()
     expenses = repository.get_all()
 
     assert len(expenses) == 5
@@ -50,7 +50,7 @@ def test_get_all_expenses(db_transaction):
 
 def test_get_all_expenses_twice(db_transaction):
     ExpenseFactory.create_batch(5)
-    repository = ExpenseRepository()
+    repository = InMemoryExpenseRepository()
     repository.get_all()
     expenses = repository.get_all()
 

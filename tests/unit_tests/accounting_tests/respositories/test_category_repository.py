@@ -1,13 +1,13 @@
 from pytest import mark, fixture, raises
 
 from odin.accounting.models import Category
-from odin.accounting.repositories import CategoryRepository
+from odin.accounting.repositories.in_memory_reposotiries import InMemoryCategoryRepository
 from tests.factories import CategoryFactory
 
 
 @fixture
 def repository_fixture(db_transaction):
-    return CategoryRepository()
+    return InMemoryCategoryRepository()
 
 
 def create_category(category_name):
