@@ -1,11 +1,10 @@
 from decimal import Decimal
 
 from odin.accounting.repositories.edgedb_repositories import EdgeDBTransferRepository
-from tests.factories import CategoryFactory, WalletBuilder
+from tests.factories import WalletBuilder
 
 
-def test_create(test_client, token_value_fixture):
-    CategoryFactory.create(name='transfer')
+def test_create(test_client, token_value_fixture, transfer_category):
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     response = test_client.post(
@@ -29,8 +28,7 @@ def test_create(test_client, token_value_fixture):
     assert transfer.amount == Decimal('100000')
 
 
-def test_get(test_client, token_value_fixture):
-    CategoryFactory.create(name='transfer')
+def test_get(test_client, token_value_fixture, transfer_category):
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     post_response = test_client.post(
