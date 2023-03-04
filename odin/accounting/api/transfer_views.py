@@ -40,7 +40,7 @@ class TransferEndpoint(HTTPEndpoint):
             return JSONResponse({
                 'source': transference.source.name,
                 'target': transference.target.name,
-                'amount': str(transference.amount),
+                'amount': f'{transference.amount:f}',
                 'uuid': transference.uuid
             }, status_code=200)
         return JSONResponse({}, status_code=404)

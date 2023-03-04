@@ -9,7 +9,7 @@ from tests.factories import WalletBuilder, CategoryFactory
 
 
 def test_transfer(db_transaction):
-    CategoryFactory.create(name='transference')
+    CategoryFactory.create(name='transfer')
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     transference_creator = TransferCreator(source=wallet_source, target=wallet_target)
@@ -27,7 +27,7 @@ def test_transfer(db_transaction):
 
 
 def test_transfer_with_date(db_transaction):
-    CategoryFactory.create(name='transference')
+    CategoryFactory.create(name='transfer')
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     transference = TransferCreator(source=wallet_source, target=wallet_target)
@@ -40,7 +40,7 @@ def test_transfer_with_date(db_transaction):
 
 
 def test_transfer_with_date_in_the_future(db_transaction):
-    CategoryFactory.create(name='transference')
+    CategoryFactory.create(name='transfer')
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     transference = TransferCreator(source=wallet_source, target=wallet_target)

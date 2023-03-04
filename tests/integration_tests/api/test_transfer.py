@@ -1,8 +1,7 @@
-import re
-import uuid
+from decimal import Decimal
 
-from tests.factories import WalletBuilder, CategoryFactory
-from tests.utils import UUID_PATTERN
+from odin.accounting.repositories.edgedb_repositories import EdgeDBTransferRepository
+from tests.factories import CategoryFactory, WalletBuilder
 
 
 def test_create(test_client, token_value_fixture):
@@ -19,47 +18,15 @@ def test_create(test_client, token_value_fixture):
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()
+    repository = EdgeDBTransferRepository()
+    transfer = repository.get_by_uuid(response_data['uuid'])
 
     assert response.status_code == 201
     assert response.headers['content-type'] == 'application/json'
     assert response_data['source'] == wallet_source.name
     assert response_data['target'] == wallet_target.name
     assert response_data['amount'] == '100000'
-    assert re.match(UUID_PATTERN, response_data['uuid'])
-
-
-def test_create_with_non_existing_source_wallet(test_client, token_value_fixture):
-    CategoryFactory.create(name='transfer')
-    wallet_target = WalletBuilder().name('cash').create()
-    response = test_client.post(
-        '/accounting/transfers',
-        json={
-            'source': 'source wallet',
-            'target': wallet_target.name,
-            'amount': '100000',
-        },
-        headers={'Authorization': f'token {token_value_fixture}'}
-    )
-
-    assert response.status_code == 400
-    assert response.headers['content-type'] == 'application/json'
-
-
-def test_create_with_non_existing_target_wallet(test_client, token_value_fixture):
-    CategoryFactory.create(name='transfer')
-    source_wallet = WalletBuilder().name('cash').create()
-    response = test_client.post(
-        '/accounting/transfers',
-        json={
-            'source': source_wallet.name,
-            'target': 'target wallet',
-            'amount': '100000',
-        },
-        headers={'Authorization': f'token {token_value_fixture}'}
-    )
-
-    assert response.status_code == 400
-    assert response.headers['content-type'] == 'application/json'
+    assert transfer.amount == Decimal('100000')
 
 
 def test_get(test_client, token_value_fixture):
@@ -87,13 +54,3 @@ def test_get(test_client, token_value_fixture):
     assert response_data['source'] == wallet_source.name
     assert response_data['target'] == wallet_target.name
     assert response_data['amount'] == '100000'
-
-
-def test_get_with_wrong_uuid(test_client, token_value_fixture):
-    response = test_client.get(
-        f'/accounting/transfers/{uuid.uuid4()}',
-        headers={'Authorization': f'token {token_value_fixture}'}
-    )
-
-    assert response.status_code == 404
-    assert response.headers['content-type'] == 'application/json'

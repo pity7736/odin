@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from odin.accounting.models import Transfer
 from ..repositories import TransferRepository
 
@@ -7,6 +9,7 @@ class InMemoryTransferRepository(TransferRepository):
     _transfers: dict[str, Transfer] = {}
 
     def add(self, transference):
+        transference.uuid = uuid4()
         self.__class__._transfers[transference.uuid] = transference
 
     def get_all(self):

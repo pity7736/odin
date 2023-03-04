@@ -1,6 +1,6 @@
 from odin import settings
 from .in_memory_reposotiries import InMemoryCategoryRepository, InMemoryWalletRepository, InMemoryTransferRepository
-from .edgedb_repositories import EdgeDBCategoryRepository, EdgeDBWalletRepository
+from .edgedb_repositories import EdgeDBCategoryRepository, EdgeDBWalletRepository, EdgeDBTransferRepository
 from .repositories import CategoryRepository, WalletRepository, TransferRepository
 
 
@@ -19,4 +19,7 @@ def get_wallet_repository() -> WalletRepository:
 
 
 def get_transfer_repository() -> TransferRepository:
-    return InMemoryTransferRepository()
+    if settings.REPOSITORY == 'in-memory':
+        return InMemoryTransferRepository()
+    elif settings.REPOSITORY == 'edgedb':
+        return EdgeDBTransferRepository()
