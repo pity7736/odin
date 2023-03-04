@@ -3,14 +3,14 @@ import datetime
 from nyoibo import Entity, fields
 from nyoibo.fields import Decimal
 
-from odin.accounting.models import Wallet, Transference
+from odin.accounting.models import Wallet, Transfer
 from odin.accounting.repositories import CategoryRepository
 from .expense_creator import ExpenseCreator
 from .income_creator import IncomeCreator
-from ..repositories.repository_factory import get_wallet_repository, get_transference_repository
+from ..repositories.repository_factory import get_wallet_repository, get_transfer_repository
 
 
-class TransferenceCreator(Entity):
+class TransferCreator(Entity):
     _source = fields.LinkField(to=Wallet, private=True)
     _target = fields.LinkField(to=Wallet, private=True)
 
@@ -35,7 +35,7 @@ class TransferenceCreator(Entity):
 
     def _create_transference(self, amount: Decimal, date: datetime.date):
         category = CategoryRepository().get_by_name('transference')
-        transference = Transference(
+        transference = Transfer(
             source=self._source,
             target=self._target,
             expense=self._create_expense(amount, date, category),
@@ -43,7 +43,7 @@ class TransferenceCreator(Entity):
             amount=amount,
             date=date
         )
-        get_transference_repository().add(transference)
+        get_transfer_repository().add(transference)
         return transference
 
     def _create_expense(self, amount, date, category):

@@ -1,7 +1,7 @@
 from odin import settings
-from .in_memory_reposotiries import InMemoryCategoryRepository, InMemoryWalletRepository, InMemoryTransferenceRepository
+from .in_memory_reposotiries import InMemoryCategoryRepository, InMemoryWalletRepository, InMemoryTransferRepository
 from .edgedb_repositories import EdgeDBCategoryRepository, EdgeDBWalletRepository
-from .repositories import CategoryRepository, WalletRepository, TransferenceRepository
+from .repositories import CategoryRepository, WalletRepository, TransferRepository
 
 
 def get_category_repository() -> CategoryRepository:
@@ -18,5 +18,5 @@ def get_wallet_repository() -> WalletRepository:
         return EdgeDBWalletRepository()
 
 
-def get_transference_repository() -> TransferenceRepository:
-    return InMemoryTransferenceRepository()
+def get_transfer_repository() -> TransferRepository:
+    return InMemoryTransferRepository()

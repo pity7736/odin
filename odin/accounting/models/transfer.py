@@ -7,7 +7,7 @@ from .income import Income
 from .wallet import Wallet
 
 
-class Transference(Entity):
+class Transfer(Entity):
     _source = fields.LinkField(to=Wallet)
     _target = fields.LinkField(to=Wallet)
     _expense = fields.LinkField(to=Expense)

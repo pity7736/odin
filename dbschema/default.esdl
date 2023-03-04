@@ -23,7 +23,7 @@ module default {
 
     type Income extending Movement {}
 
-    type Transference {
+    type Transfer {
         required link source -> Wallet;
         required link target -> Wallet;
         required link expense -> Expense;

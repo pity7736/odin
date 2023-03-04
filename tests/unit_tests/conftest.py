@@ -1,7 +1,7 @@
 from pytest import fixture
 
 from odin.accounting.repositories.in_memory_reposotiries import InMemoryWalletRepository, InMemoryCategoryRepository, \
-    InMemoryTransferenceRepository
+    InMemoryTransferRepository
 from odin.accounting.repositories.in_memory_reposotiries.in_memory_expense_repository import InMemoryExpenseRepository
 from odin.accounting.repositories.in_memory_reposotiries.in_memory_income_repository import InMemoryIncomeRepository
 from odin.accounts.models import User
@@ -18,7 +18,7 @@ def db_transaction():
     InMemoryIncomeRepository._incomes.clear()
     InMemoryWalletRepository._wallets.clear()
     InMemoryCategoryRepository._categories.clear()
-    InMemoryTransferenceRepository._transfers.clear()
+    InMemoryTransferRepository._transfers.clear()
     InMemoryUserRepository._user.clear()
     InMemoryTokenRepository._tokens.clear()
 

@@ -1,10 +1,10 @@
-from odin.accounting.models import Transference
-from ..repositories import TransferenceRepository
+from odin.accounting.models import Transfer
+from ..repositories import TransferRepository
 
 
-class InMemoryTransferenceRepository(TransferenceRepository):
+class InMemoryTransferRepository(TransferRepository):
 
-    _transfers: dict[str, Transference] = {}
+    _transfers: dict[str, Transfer] = {}
 
     def add(self, transference):
         self.__class__._transfers[transference.uuid] = transference

@@ -3,7 +3,7 @@ from odin import settings
 
 if settings.REPOSITORY == 'in-memory':
     from .in_memory_reposotiries import InMemoryCategoryRepository, InMemoryWalletRepository,\
-        InMemoryTransferenceRepository
+        InMemoryTransferRepository
     CategoryRepository = InMemoryCategoryRepository
     WalletRepository = InMemoryWalletRepository
-    TransferenceRepository = InMemoryTransferenceRepository
+    TransferenceRepository = InMemoryTransferRepository
