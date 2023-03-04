@@ -49,7 +49,7 @@ class WalletRepository(metaclass=ABCMeta):
 class TransferRepository(metaclass=ABCMeta):
 
     @abstractmethod
-    def add(self, transference: Transfer):
+    def add(self, transfer: Transfer):
         pass
 
     @abstractmethod

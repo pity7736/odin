@@ -30,11 +30,11 @@ class TransferCreator(Entity):
         )
 
     def transfer(self, amount: Decimal, date: datetime.date = None):
-        return self._create_transference(amount, date or datetime.date.today())
+        return self._create_transfer(amount, date or datetime.date.today())
 
-    def _create_transference(self, amount: Decimal, date: datetime.date):
+    def _create_transfer(self, amount: Decimal, date: datetime.date):
         category = get_category_repository().get_by_name('transfer')
-        transference = Transfer(
+        transfer = Transfer(
             source=self._source,
             target=self._target,
             expense=self._create_expense(amount, date, category),
@@ -42,8 +42,8 @@ class TransferCreator(Entity):
             amount=amount,
             date=date
         )
-        get_transfer_repository().add(transference)
-        return transference
+        get_transfer_repository().add(transfer)
+        return transfer
 
     def _create_expense(self, amount, date, category):
         return ExpenseCreator(

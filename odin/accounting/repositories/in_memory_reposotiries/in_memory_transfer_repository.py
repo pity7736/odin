@@ -8,9 +8,9 @@ class InMemoryTransferRepository(TransferRepository):
 
     _transfers: dict[str, Transfer] = {}
 
-    def add(self, transference):
-        transference.uuid = uuid4()
-        self.__class__._transfers[transference.uuid] = transference
+    def add(self, transfer):
+        transfer.uuid = uuid4()
+        self.__class__._transfers[transfer.uuid] = transfer
 
     def get_all(self):
         return tuple(self._transfers.values())

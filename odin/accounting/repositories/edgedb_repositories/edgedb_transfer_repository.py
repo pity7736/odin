@@ -8,7 +8,7 @@ class EdgeDBTransferRepository(TransferRepository):
     def __init__(self):
         self._client = DBClient()
 
-    def add(self, transference):
+    def add(self, transfer):
         source = 'select Wallet filter .name = <str>$source_name'
         target = 'select Wallet filter .name = <str>$target_name'
         expense = 'select Expense filter .id = <uuid>$expense_uuid'
@@ -20,14 +20,14 @@ class EdgeDBTransferRepository(TransferRepository):
         )
         result = self._client.query_single(
             query,
-            source_name=transference.source.name,
-            target_name=transference.target.name,
-            expense_uuid=transference.expense.uuid,
-            income_uuid=transference.income.uuid,
-            amount=transference.amount,
-            date=transference.date
+            source_name=transfer.source.name,
+            target_name=transfer.target.name,
+            expense_uuid=transfer.expense.uuid,
+            income_uuid=transfer.income.uuid,
+            amount=transfer.amount,
+            date=transfer.date
         )
-        transference.uuid = result.id
+        transfer.uuid = result.id
 
     def get_by_uuid(self, uuid: str):
         record = self._client.query_single(

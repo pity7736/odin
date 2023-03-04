@@ -12,26 +12,26 @@ def test_transfer(db_transaction):
     CategoryFactory.create(name='transfer')
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
-    transference_creator = TransferCreator(source=wallet_source, target=wallet_target)
-    transference = transference_creator.transfer(amount=Decimal('100_000'))
+    transfer_creator = TransferCreator(source=wallet_source, target=wallet_target)
+    transfer = transfer_creator.transfer(amount=Decimal('100_000'))
 
     wallet_source = WalletRepository().get_by_name(wallet_source.name)
     wallet_target = WalletRepository().get_by_name(wallet_target.name)
     assert wallet_source.balance == Decimal('900_000')
     assert wallet_target.balance == Decimal('1_100_000')
-    assert transference.source == wallet_source
-    assert transference.target == wallet_target
-    assert transference.amount == Decimal('100_000')
-    assert transference.date == datetime.date.today()
-    assert transference == TransferenceRepository().get_by_uuid(transference.uuid)
+    assert transfer.source == wallet_source
+    assert transfer.target == wallet_target
+    assert transfer.amount == Decimal('100_000')
+    assert transfer.date == datetime.date.today()
+    assert transfer == TransferenceRepository().get_by_uuid(transfer.uuid)
 
 
 def test_transfer_with_date(db_transaction):
     CategoryFactory.create(name='transfer')
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
-    transference = TransferCreator(source=wallet_source, target=wallet_target)
-    transference.transfer(amount=Decimal('100_000'), date=datetime.date(2022, 8, 15))
+    transfer = TransferCreator(source=wallet_source, target=wallet_target)
+    transfer.transfer(amount=Decimal('100_000'), date=datetime.date(2022, 8, 15))
     wallet_source = WalletRepository().get_by_name(wallet_source.name)
     wallet_target = WalletRepository().get_by_name(wallet_target.name)
 
@@ -43,6 +43,6 @@ def test_transfer_with_date_in_the_future(db_transaction):
     CategoryFactory.create(name='transfer')
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
-    transference = TransferCreator(source=wallet_source, target=wallet_target)
+    transfer = TransferCreator(source=wallet_source, target=wallet_target)
     with raises(ValueError):
-        transference.transfer(amount=Decimal('100_000'), date=datetime.date.today() + datetime.timedelta(days=1))
+        transfer.transfer(amount=Decimal('100_000'), date=datetime.date.today() + datetime.timedelta(days=1))

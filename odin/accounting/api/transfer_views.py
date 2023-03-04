@@ -13,19 +13,19 @@ class TransfersEndpoint(HTTPEndpoint):
     async def post(request):
         data = await request.json()
         try:
-            transference_creator = TransferCreator.from_wallet_names(
+            transfer_creator = TransferCreator.from_wallet_names(
                 source_name=data['source'],
                 target_name=data['target']
             )
         except ValueError:
             return JSONResponse({}, status_code=400)
         else:
-            transference = transference_creator.transfer(amount=data['amount'])
+            transfer = transfer_creator.transfer(amount=data['amount'])
             response = {
-                'source': transference.source.name,
-                'target': transference.target.name,
-                'amount': str(transference.amount),
-                'uuid': transference.uuid
+                'source': transfer.source.name,
+                'target': transfer.target.name,
+                'amount': str(transfer.amount),
+                'uuid': transfer.uuid
             }
             return JSONResponse(response, status_code=201)
 
@@ -35,12 +35,12 @@ class TransferEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     def get(request):
-        transference = get_transfer_repository().get_by_uuid(request.path_params['uuid'])
-        if transference:
+        transfer = get_transfer_repository().get_by_uuid(request.path_params['uuid'])
+        if transfer:
             return JSONResponse({
-                'source': transference.source.name,
-                'target': transference.target.name,
-                'amount': f'{transference.amount:f}',
-                'uuid': transference.uuid
+                'source': transfer.source.name,
+                'target': transfer.target.name,
+                'amount': f'{transfer.amount:f}',
+                'uuid': transfer.uuid
             }, status_code=200)
         return JSONResponse({}, status_code=404)
