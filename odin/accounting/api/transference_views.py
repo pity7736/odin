@@ -2,7 +2,7 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import TransferenceCreator
-from odin.accounting.repositories import TransferenceRepository
+from odin.accounting.repositories.repository_factory import get_transference_repository
 from odin.auth.decorators import login_required
 
 
@@ -35,7 +35,7 @@ class TransferenceEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     def get(request):
-        transference = TransferenceRepository().get_by_uuid(request.path_params['uuid'])
+        transference = get_transference_repository().get_by_uuid(request.path_params['uuid'])
         if transference:
             return JSONResponse({
                 'source': transference.source.name,

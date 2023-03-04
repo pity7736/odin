@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional
 
-from odin.accounting.models import Category, Wallet, Expense, Income
+from odin.accounting.models import Category, Wallet, Expense, Income, Transference
 
 
 class CategoryRepository(metaclass=ABCMeta):
@@ -43,4 +43,15 @@ class WalletRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def get_by_name_with_incomes(self, name: str) -> Optional[Wallet]:
+        pass
+
+
+class TransferenceRepository(metaclass=ABCMeta):
+
+    @abstractmethod
+    def add(self, transference: Transference):
+        pass
+
+    @abstractmethod
+    def get_by_uuid(self, uuid: str) -> tuple[Transference]:
         pass
