@@ -11,8 +11,8 @@ class EdgeDBTransferRepository(TransferRepository):
     def add(self, transfer):
         source = 'select Wallet filter .name = <str>$source_name'
         target = 'select Wallet filter .name = <str>$target_name'
-        expense = 'select Expense filter .id = <uuid>$expense_uuid'
-        income = 'select Income filter .id = <uuid>$income_uuid'
+        expense = 'select Movement filter .id = <uuid>$expense_uuid'
+        income = 'select Movement filter .id = <uuid>$income_uuid'
         query = (
             'insert Transfer {'
             'amount := <decimal>$amount, date := <cal::local_date>$date, '

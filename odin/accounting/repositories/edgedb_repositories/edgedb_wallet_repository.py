@@ -20,8 +20,8 @@ class EdgeDBWalletRepository(WalletRepository):
         category_query = 'select Category filter .name = <str>$category_name'
         wallet_query = 'select Wallet filter .name = <str>$wallet_name'
         expense_query = (
-            f'insert Expense {{'
-            f'date := <cal::local_date>$date, amount := <decimal>$amount, '
+            f'insert Movement {{'
+            f'date := <cal::local_date>$date, amount := <decimal>$amount, type := "expense", '
             f'category := ({category_query}), wallet := ({wallet_query})}}'
         )
         result = self._client.query_single(
@@ -37,8 +37,8 @@ class EdgeDBWalletRepository(WalletRepository):
         category_query = 'select Category filter .name = <str>$category_name'
         wallet_query = 'select Wallet filter .name = <str>$wallet_name'
         expense_query = (
-            f'insert Income {{'
-            f'date := <cal::local_date>$date, amount := <decimal>$amount, '
+            f'insert Movement {{'
+            f'date := <cal::local_date>$date, amount := <decimal>$amount, type := "income", '
             f'category := ({category_query}), wallet := ({wallet_query})}}'
         )
         result = self._client.query_single(
@@ -60,7 +60,7 @@ class EdgeDBWalletRepository(WalletRepository):
             )
 
     def get_by_name_with_expenses(self, name: str):
-        expenses_query = 'expenses := .<wallet[is Expense] {id, date, amount, category: {name}}'
+        expenses_query = 'expenses := .<wallet[is Movement] {id, date, amount, category: {name}}'
         record = self._client.query_single(
             f'select Wallet {{id, name, balance, {expenses_query}}} filter .name = <str>$name',
             name=name
@@ -83,7 +83,7 @@ class EdgeDBWalletRepository(WalletRepository):
             )
 
     def get_by_name_with_incomes(self, name):
-        incomes_query = 'incomes := .<wallet[is Income] {id, date, amount, category: {name}}'
+        incomes_query = 'incomes := .<wallet[is Movement] {id, date, amount, category: {name}}'
         record = self._client.query_single(
             f'select Wallet {{id, name, balance, {incomes_query}}} filter .name = <str>$name',
             name=name

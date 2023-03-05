@@ -12,22 +12,21 @@ module default {
         }
     }
 
-    abstract type Movement {
+    type Movement {
         required property date -> cal::local_date;
         required property amount -> decimal;
         required link category -> Category;
         required link wallet -> Wallet;
+        required property type -> str {
+            constraint one_of ('expense', 'income');
+        }
     }
-
-    type Expense extending Movement {}
-
-    type Income extending Movement {}
 
     type Transfer {
         required link source -> Wallet;
         required link target -> Wallet;
-        required link expense -> Expense;
-        required link income -> Income;
+        required link expense -> Movement;
+        required link income -> Movement;
         required property amount -> decimal;
         required property date -> cal::local_date;
     }

@@ -1,4 +1,4 @@
-CREATE MIGRATION m1yaikwyzm37ooaeudh6topuybl2pj6bko5anwu2m64cdypq2totdq
+CREATE MIGRATION m1u64rhbzpr37os7dqk3avbbwsyr5bqnpdbntappqpeziusnfsfsrq
     ONTO initial
 {
   CREATE TYPE default::Category {
@@ -12,17 +12,18 @@ CREATE MIGRATION m1yaikwyzm37ooaeudh6topuybl2pj6bko5anwu2m64cdypq2totdq
           CREATE CONSTRAINT std::exclusive;
       };
   };
-  CREATE ABSTRACT TYPE default::Movement {
+  CREATE TYPE default::Movement {
       CREATE REQUIRED LINK category -> default::Category;
       CREATE REQUIRED LINK wallet -> default::Wallet;
       CREATE REQUIRED PROPERTY amount -> std::decimal;
       CREATE REQUIRED PROPERTY date -> cal::local_date;
+      CREATE REQUIRED PROPERTY type -> std::str {
+          CREATE CONSTRAINT std::one_of('expense', 'income');
+      };
   };
-  CREATE TYPE default::Expense EXTENDING default::Movement;
-  CREATE TYPE default::Income EXTENDING default::Movement;
-  CREATE TYPE default::Transference {
-      CREATE REQUIRED LINK expense -> default::Expense;
-      CREATE REQUIRED LINK income -> default::Income;
+  CREATE TYPE default::Transfer {
+      CREATE REQUIRED LINK expense -> default::Movement;
+      CREATE REQUIRED LINK income -> default::Movement;
       CREATE REQUIRED LINK source -> default::Wallet;
       CREATE REQUIRED LINK target -> default::Wallet;
       CREATE REQUIRED PROPERTY amount -> std::decimal;
@@ -38,6 +39,8 @@ CREATE MIGRATION m1yaikwyzm37ooaeudh6topuybl2pj6bko5anwu2m64cdypq2totdq
   };
   CREATE TYPE default::Token {
       CREATE REQUIRED LINK user -> default::User;
-      CREATE REQUIRED PROPERTY value -> std::str;
+      CREATE REQUIRED PROPERTY value -> std::str {
+          CREATE CONSTRAINT std::exclusive;
+      };
   };
 };
