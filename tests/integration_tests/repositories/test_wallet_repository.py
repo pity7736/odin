@@ -2,11 +2,29 @@ from odin.accounting.repositories.edgedb_repositories import EdgeDBWalletReposit
 from tests.factories import WalletBuilder
 
 
-def test_get_by_name(db_transaction):
-    wallet = WalletBuilder().build()
+def test_get_wallet_with_expenses_and_with_previous_incomes(db_transaction):
+    WalletBuilder().name('another wallet').add_expense('1000').create()
+    wallet = WalletBuilder() \
+        .add_income('100000') \
+        .add_income('100000') \
+        .add_expense('50000') \
+        .add_expense('20000') \
+        .create()
     repository = EdgeDBWalletRepository()
-    repository.add(wallet)
+    wallet = repository.get_by_name_with_expenses(wallet.name)
 
-    fetched_wallet = repository.get_by_name(wallet.name)
+    assert len(wallet.expenses) == 2
 
-    assert fetched_wallet.name == wallet.name
+
+def test_get_wallet_with_incomes_and_with_previous_expenses(db_transaction):
+    WalletBuilder().name('another wallet').add_income('1000').create()
+    wallet = WalletBuilder() \
+        .add_income('100000') \
+        .add_income('100000') \
+        .add_expense('50000') \
+        .add_expense('20000') \
+        .create()
+    repository = EdgeDBWalletRepository()
+    wallet = repository.get_by_name_with_incomes(wallet.name)
+
+    assert len(wallet.incomes) == 2

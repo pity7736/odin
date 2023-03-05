@@ -60,20 +60,20 @@ class EdgeDBWalletRepository(WalletRepository):
             )
 
     def get_by_name_with_expenses(self, name: str):
-        expenses_query = 'expenses := .<wallet[is Movement] {id, date, amount, category: {name}}'
+        expenses_query = 'expenses := .<wallet[is Movement] {id, date, amount, type, category: {name}}'
         record = self._client.query_single(
             f'select Wallet {{id, name, balance, {expenses_query}}} filter .name = <str>$name',
             name=name
         )
-        expenses = [
-            Expense(
-                date=expense_data.date,
-                uuid=expense_data.id,
-                amount=expense_data.amount,
-                category=Category(name=expense_data.category.name)
-            )
-            for expense_data in record.expenses
-        ]
+        expenses = []
+        for expense_data in record.expenses:
+            if expense_data.type == 'expense':
+                expenses.append(Expense(
+                    date=expense_data.date,
+                    uuid=expense_data.id,
+                    amount=expense_data.amount,
+                    category=Category(name=expense_data.category.name)
+                ))
         if record:
             return Wallet(
                 name=record.name,
@@ -83,20 +83,20 @@ class EdgeDBWalletRepository(WalletRepository):
             )
 
     def get_by_name_with_incomes(self, name):
-        incomes_query = 'incomes := .<wallet[is Movement] {id, date, amount, category: {name}}'
+        incomes_query = 'incomes := .<wallet[is Movement] {id, date, amount, type, category: {name}}'
         record = self._client.query_single(
             f'select Wallet {{id, name, balance, {incomes_query}}} filter .name = <str>$name',
             name=name
         )
-        incomes = [
-            Income(
-                date=income_data.date,
-                uuid=income_data.id,
-                amount=income_data.amount,
-                category=Category(name=income_data.category.name)
-            )
-            for income_data in record.incomes
-        ]
+        incomes = []
+        for income_data in record.incomes:
+            if income_data.type == 'income':
+                incomes.append(Income(
+                    date=income_data.date,
+                    uuid=income_data.id,
+                    amount=income_data.amount,
+                    category=Category(name=income_data.category.name)
+                ))
         if record:
             return Wallet(
                 name=record.name,

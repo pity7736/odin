@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import factory
 
-from odin.accounting.controllers import WalletCreator, ExpenseCreator
+from odin.accounting.controllers import WalletCreator, ExpenseCreator, IncomeCreator
 from odin.accounting.models import Expense, Category, Wallet
 from odin.accounting.repositories.repository_factory import get_category_repository
 
@@ -39,6 +39,7 @@ class WalletBuilder:
         self._name = 'savings account'
         self._balance = '1_000_000'
         self._expenses_data = []
+        self._incomes_data = []
 
     def name(self, name) -> 'WalletBuilder':
         self._name = name
@@ -56,8 +57,24 @@ class WalletBuilder:
         })
         return self
 
+    def add_income(self, amount, date=None, category=None) -> 'WalletBuilder':
+        self._incomes_data.append({
+            'amount': amount,
+            'date': date or datetime.date.today(),
+            'category': category
+        })
+        return self
+
     def create(self) -> Wallet:
         wallet = WalletCreator(name=self._name, balance=self._balance).create()
+        for income_data in self._incomes_data:
+            IncomeCreator(
+                amount=income_data['amount'],
+                date=income_data['date'],
+                category=income_data['category'] or CategoryFactory.create(),
+                wallet=wallet
+            ).create()
+
         for expense_data in self._expenses_data:
             ExpenseCreator(
                 amount=expense_data['amount'],
