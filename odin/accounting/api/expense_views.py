@@ -2,21 +2,23 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.accounting.controllers import CategoryGetter, ExpenseCreator, ExpenseGetter
-from odin.accounting.repositories import WalletRepository
+from odin.accounting.controllers import ExpenseCreator
+from odin.accounting.repositories.repository_factory import get_wallet_repository, get_category_repository
+from odin.auth.decorators import login_required
 
 
 class ExpensesEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     async def post(request):
         data = await request.json()
-        category = CategoryGetter().get_by_name(data.get('category'))
+        category = get_category_repository().get_by_name(data.get('category'))
         if category is None:
             return JSONResponse({}, status_code=400)
 
         data['category'] = category
-        data['wallet'] = WalletRepository().get_by_name(data.get('wallet'))
+        data['wallet'] = get_wallet_repository().get_by_name(request.path_params['wallet_name'])
         try:
             expense_creator = ExpenseCreator(**data)
             expense = expense_creator.create()
@@ -34,14 +36,14 @@ class ExpensesEndpoint(HTTPEndpoint):
         return JSONResponse(response_data, status_code=status_code)
 
     @staticmethod
+    @login_required
     def get(request):
-        expense_getter = ExpenseGetter()
-        expenses = expense_getter.all()
+        wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
         serialized_expenses = []
-        for expense in expenses:
+        for expense in wallet.expenses:
             serialized_expenses.append({
                 'date': expense.date.isoformat(),
-                'amount': str(expense.amount),
+                'amount': f'{expense.amount:f}',
                 'uuid': expense.uuid,
                 'category': expense.category.name
             })
@@ -51,17 +53,18 @@ class ExpensesEndpoint(HTTPEndpoint):
 class ExpenseEndpoint(HTTPEndpoint):
 
     @staticmethod
+    @login_required
     def get(request):
-        expense_getter = ExpenseGetter()
-        expense = expense_getter.get_by_uuid(request.path_params['uuid'])
-        if expense:
-            return JSONResponse(
-                {
-                    'date': expense.date.isoformat(),
-                    'amount': str(expense.amount),
-                    'uuid': expense.uuid,
-                    'category': expense.category.name
-                },
-                status_code=200
-            )
+        wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
+        for expense in wallet.expenses:
+            if expense.uuid == request.path_params['uuid']:
+                return JSONResponse(
+                    {
+                        'date': expense.date.isoformat(),
+                        'amount': f'{expense.amount:f}',
+                        'uuid': expense.uuid,
+                        'category': expense.category.name
+                    },
+                    status_code=200
+                )
         return JSONResponse({}, status_code=404)

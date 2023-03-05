@@ -2,3 +2,4 @@
 tasks.md
 .idea/
 .coverage
+poetry.lock

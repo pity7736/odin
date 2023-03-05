@@ -1,7 +1,7 @@
 from nyoibo import Entity, fields
 
 from odin.accounting.models import Wallet
-from odin.accounting.repositories import WalletRepository
+from odin.accounting.repositories.repository_factory import get_wallet_repository
 
 
 class WalletCreator(Entity):
@@ -13,6 +13,6 @@ class WalletCreator(Entity):
             name=self._name,
             balance=self._balance
         )
-        repository = WalletRepository()
+        repository = get_wallet_repository()
         repository.add(wallet)
         return wallet

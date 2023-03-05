@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 
 from odin.accounting.controllers import IncomeCreator
-from odin.accounting.repositories import WalletRepository
+from odin.accounting.repositories.repository_factory import get_wallet_repository
 from tests.factories import WalletBuilder
 
 
@@ -17,7 +17,7 @@ def test_create_income(category_fixture):
         wallet=wallet
     )
     income = income_creator.create()
-    wallet = WalletRepository().get_by_name(wallet.name)
+    wallet = get_wallet_repository().get_by_name(wallet.name)
 
     assert income.date == date
     assert income.amount == amount

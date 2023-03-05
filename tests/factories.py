@@ -4,9 +4,9 @@ from uuid import uuid4
 
 import factory
 
-from odin.accounting.controllers import WalletCreator, ExpenseCreator
+from odin.accounting.controllers import WalletCreator, ExpenseCreator, IncomeCreator
 from odin.accounting.models import Expense, Category, Wallet
-from odin.accounting.repositories import ExpenseRepository, CategoryRepository
+from odin.accounting.repositories.repository_factory import get_category_repository
 
 
 class CategoryFactory(factory.Factory):
@@ -18,7 +18,7 @@ class CategoryFactory(factory.Factory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         category = super()._create(model_class, *args, **kwargs)
-        repository = CategoryRepository()
+        repository = get_category_repository()
         repository.add(category)
         return category
 
@@ -32,13 +32,6 @@ class ExpenseFactory(factory.Factory):
     class Meta:
         model = Expense
 
-    @classmethod
-    def _create(cls, model_class, *args, **kwargs):
-        expense = super()._create(model_class, *args, **kwargs)
-        repository = ExpenseRepository()
-        repository.add(expense)
-        return expense
-
 
 class WalletBuilder:
 
@@ -46,6 +39,7 @@ class WalletBuilder:
         self._name = 'savings account'
         self._balance = '1_000_000'
         self._expenses_data = []
+        self._incomes_data = []
 
     def name(self, name) -> 'WalletBuilder':
         self._name = name
@@ -59,20 +53,45 @@ class WalletBuilder:
         self._expenses_data.append({
             'amount': amount,
             'date': date or datetime.date.today(),
-            'category': category or CategoryFactory.create
+            'category': category
+        })
+        return self
+
+    def add_income(self, amount, date=None, category=None) -> 'WalletBuilder':
+        self._incomes_data.append({
+            'amount': amount,
+            'date': date or datetime.date.today(),
+            'category': category
         })
         return self
 
     def create(self) -> Wallet:
         wallet = WalletCreator(name=self._name, balance=self._balance).create()
+        for income_data in self._incomes_data:
+            IncomeCreator(
+                amount=income_data['amount'],
+                date=income_data['date'],
+                category=income_data['category'] or CategoryFactory.create(),
+                wallet=wallet
+            ).create()
+
         for expense_data in self._expenses_data:
-            category = expense_data['category']
-            if callable(category):
-                category = category()
             ExpenseCreator(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
-                category=category,
+                category=expense_data['category'] or CategoryFactory.create(),
                 wallet=wallet
             ).create()
+        return wallet
+
+    def build(self) -> Wallet:
+        wallet = Wallet(name=self._name, balance=self._balance)
+        for expense_data in self._expenses_data:
+            expense = Expense(
+                amount=expense_data['amount'],
+                date=expense_data['date'],
+                category=expense_data['category'] or CategoryFactory.build(),
+                wallet=wallet
+            )
+            wallet.add_expense(expense)
         return wallet
