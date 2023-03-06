@@ -28,6 +28,7 @@ def test_create(test_client, token_value_fixture):
     assert response_data['category'] == category.name
     assert expense.date == datetime.date(2022, 3, 27)
     assert expense.amount == Decimal('100000')
+    assert wallet.balance == Decimal('900_000')
 
 
 def test_get_expense(test_client, token_value_fixture):

@@ -30,6 +30,7 @@ def test_create_income(test_client, token_value_fixture):
     assert income.date == datetime.date(2022, 7, 31)
     assert income.amount == Decimal('10_000_000')
     assert response_data['uuid'] == income.uuid
+    assert wallet.balance == Decimal('11_000_000')
 
 
 def test_get_income(test_client, token_value_fixture):

@@ -32,6 +32,7 @@ class EdgeDBWalletRepository(WalletRepository):
             amount=expense.amount
         )
         expense.uuid = result.id
+        self._update_wallet_balance(wallet)
 
     def add_income(self, wallet, income):
         category_query = 'select Category filter .name = <str>$category_name'
@@ -49,6 +50,14 @@ class EdgeDBWalletRepository(WalletRepository):
             amount=income.amount
         )
         income.uuid = result.id
+        self._update_wallet_balance(wallet)
+
+    def _update_wallet_balance(self, wallet):
+        self._client.execute(
+            'update Wallet filter .name = <str>$name set {balance := <decimal>$balance}',
+            name=wallet.name,
+            balance=wallet.balance
+        )
 
     def get_by_name(self, name):
         record = self._client.query_single('select Wallet {id, name, balance} filter .name = <str>$name', name=name)
