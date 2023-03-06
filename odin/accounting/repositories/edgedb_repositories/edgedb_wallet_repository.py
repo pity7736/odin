@@ -17,39 +17,28 @@ class EdgeDBWalletRepository(WalletRepository):
         )
 
     def add_expense(self, wallet, expense):
-        category_query = 'select Category filter .name = <str>$category_name'
-        wallet_query = 'select Wallet filter .name = <str>$wallet_name'
-        expense_query = (
-            f'insert Movement {{'
-            f'date := <cal::local_date>$date, amount := <decimal>$amount, type := "expense", '
-            f'category := ({category_query}), wallet := ({wallet_query})}}'
-        )
-        result = self._client.query_single(
-            expense_query,
-            category_name=expense.category.name,
-            wallet_name=wallet.name,
-            date=expense.date,
-            amount=expense.amount
-        )
-        expense.uuid = result.id
-        self._update_wallet_balance(wallet)
+        return self._add_movement(wallet, expense, "expense")
 
     def add_income(self, wallet, income):
+        return self._add_movement(wallet, income, "income")
+
+    def _add_movement(self, wallet, movement, movement_type):
         category_query = 'select Category filter .name = <str>$category_name'
         wallet_query = 'select Wallet filter .name = <str>$wallet_name'
         expense_query = (
             f'insert Movement {{'
-            f'date := <cal::local_date>$date, amount := <decimal>$amount, type := "income", '
+            f'date := <cal::local_date>$date, amount := <decimal>$amount, type := <str>$movement_type, '
             f'category := ({category_query}), wallet := ({wallet_query})}}'
         )
         result = self._client.query_single(
             expense_query,
-            category_name=income.category.name,
+            category_name=movement.category.name,
             wallet_name=wallet.name,
-            date=income.date,
-            amount=income.amount
+            date=movement.date,
+            amount=movement.amount,
+            movement_type=movement_type
         )
-        income.uuid = result.id
+        movement.uuid = result.id
         self._update_wallet_balance(wallet)
 
     def _update_wallet_balance(self, wallet):
