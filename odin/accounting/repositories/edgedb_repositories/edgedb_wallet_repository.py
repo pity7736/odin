@@ -1,6 +1,6 @@
 from odin.accounting.models import Wallet, Expense, Category, Income
 
-from .db_client import DBClient
+from odin.utils import DBClient
 from ..repositories import WalletRepository
 
 

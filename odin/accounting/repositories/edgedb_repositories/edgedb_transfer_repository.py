@@ -1,5 +1,5 @@
 from odin.accounting.models import Transfer, Wallet
-from .db_client import DBClient
+from odin.utils import DBClient
 from ..repositories import TransferRepository
 
 

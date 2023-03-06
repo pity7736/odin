@@ -5,7 +5,7 @@ import pytest
 from pytest import fixture
 
 from odin import settings
-from odin.accounting.repositories.edgedb_repositories.db_client import DBClient
+from odin.utils import DBClient
 from odin.accounts.models import User
 from odin.accounts.repositories.edgedb_repositories import EdgeDBUserRepository
 

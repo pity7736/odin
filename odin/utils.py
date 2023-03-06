@@ -1,8 +1,8 @@
-
 import base64
 import secrets
 import string
 
+import edgedb
 from Crypto.Protocol.KDF import scrypt
 
 
@@ -23,3 +23,19 @@ def make_password(value, salt=None):
     )
     password_encoded = base64.b64encode(password_hash)
     return f'{salt}${password_encoded.decode()}'
+
+
+class DBClient:
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._client = edgedb.create_client()
+        return cls._instance
+
+    def __getattribute__(self, item):
+        if item != '_client':
+            return getattr(self._client, item)
+        return super().__getattribute__(item)
