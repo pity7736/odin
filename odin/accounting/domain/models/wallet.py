@@ -11,6 +11,7 @@ class Wallet(Entity):
     _expenses: list[Expense] = fields.ListField()
     _incomes: list[Income] = fields.ListField()
     _user = fields.LinkField(to=User)
+    _id = fields.StrField(required=True)
 
     def __init__(self, **kwargs):
         kwargs.setdefault('expenses', [])

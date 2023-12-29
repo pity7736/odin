@@ -24,7 +24,7 @@ def test_create(test_client, token_value_fixture, transfer_category, wallet_repo
     assert response_data['source'] == wallet_source.name
     assert response_data['target'] == wallet_target.name
     assert response_data['amount'] == '100000'
-    assert re.match(UUID_PATTERN, response_data['uuid'])
+    assert re.match(UUID_PATTERN, response_data['id'])
 
 
 def test_create_with_non_existing_source_wallet(test_client, token_value_fixture, transfer_category):
@@ -73,7 +73,7 @@ def test_get(test_client, token_value_fixture, transfer_category, wallet_reposit
     )
     response_data = post_response.json()
     response = test_client.get(
-        f'/accounting/transfers/{response_data["uuid"]}',
+        f'/accounting/transfers/{response_data["id"]}',
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()

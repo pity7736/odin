@@ -1,3 +1,5 @@
+import uuid
+
 from nyoibo import Entity, fields
 
 from odin.accounting.domain.models import Income, Category, Wallet
@@ -20,7 +22,8 @@ class IncomeCreator(Entity):
         income = Income(
             date=self._date,
             amount=self._amount,
-            category=self._category
+            category=self._category,
+            id=uuid.uuid4()
         )
         self._add_income_to_wallet(income)
         return income

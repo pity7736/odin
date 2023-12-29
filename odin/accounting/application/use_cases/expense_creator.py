@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from decimal import Decimal
 
 from nyoibo import Entity, fields
@@ -31,6 +32,7 @@ class ExpenseCreator(Entity):
             date=self._date,
             amount=self._amount,
             category=self._category,
+            id=uuid.uuid4()
         )
         try:
             self._wallet.add_expense(expense)

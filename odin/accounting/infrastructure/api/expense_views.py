@@ -31,7 +31,7 @@ class ExpensesEndpoint(HTTPEndpoint):
             response_data = {
                 'date': expense.date.isoformat(),
                 'amount': str(expense.amount),
-                'uuid': expense.uuid,
+                'id': expense.id,
                 'category': category.name
             }
         return JSONResponse(response_data, status_code=status_code)
@@ -45,7 +45,7 @@ class ExpensesEndpoint(HTTPEndpoint):
             serialized_expenses.append({
                 'date': expense.date.isoformat(),
                 'amount': f'{expense.amount:f}',
-                'uuid': expense.uuid,
+                'id': expense.id,
                 'category': expense.category.name
             })
         return JSONResponse({'expenses': serialized_expenses})
@@ -58,12 +58,12 @@ class ExpenseEndpoint(HTTPEndpoint):
     def get(request):
         wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
         for expense in wallet.expenses:
-            if expense.uuid == request.path_params['uuid']:
+            if expense.id == request.path_params['id']:
                 return JSONResponse(
                     {
                         'date': expense.date.isoformat(),
                         'amount': f'{expense.amount:f}',
-                        'uuid': expense.uuid,
+                        'id': expense.id,
                         'category': expense.category.name
                     },
                     status_code=200

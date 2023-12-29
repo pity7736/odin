@@ -25,7 +25,7 @@ def test_create_expense(category_fixture, wallet_repository):
 
     assert expense.date == date
     assert expense.amount == amount
-    assert re.match(UUID_PATTERN, expense.uuid)
+    assert re.match(UUID_PATTERN, expense.id)
     assert expense.category == category_fixture
     assert wallet.balance == Decimal('900_000')
 

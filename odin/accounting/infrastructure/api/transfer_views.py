@@ -29,7 +29,7 @@ class TransfersEndpoint(HTTPEndpoint):
                 'source': transfer.source.name,
                 'target': transfer.target.name,
                 'amount': str(transfer.amount),
-                'uuid': transfer.uuid
+                'id': transfer.id
             }
             return JSONResponse(response, status_code=201)
 
@@ -39,12 +39,12 @@ class TransferEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     def get(request):
-        transfer = get_transfer_repository().get_by_uuid(request.path_params['uuid'])
+        transfer = get_transfer_repository().get_by_id(request.path_params['id'])
         if transfer:
             return JSONResponse({
                 'source': transfer.source.name,
                 'target': transfer.target.name,
                 'amount': f'{transfer.amount:f}',
-                'uuid': transfer.uuid
+                'id': transfer.id
             }, status_code=200)
         return JSONResponse({}, status_code=404)

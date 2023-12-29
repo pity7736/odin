@@ -8,6 +8,7 @@ class User(Entity):
     _password = fields.StrField(mutable=True)
     _first_name = fields.StrField()
     _last_name = fields.StrField()
+    _id = fields.StrField(required=True)
 
     def set_password(self, password):
         password = self.__class__._password.parse(password)
@@ -24,5 +25,5 @@ class User(Entity):
 
 
 class Token(Entity):
-    _value = fields.StrField()
+    _value = fields.StrField(required=True)
     _user = fields.LinkField(to=User)

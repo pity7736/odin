@@ -27,7 +27,7 @@ def test_create_expense(test_client, category_fixture, wallet, token_value_fixtu
     assert response_data['date'] == '2022-03-27'
     assert response_data['amount'] == '100000'
     assert response_data['category'] == category_fixture.name
-    assert re.match(UUID_PATTERN, response_data['uuid'])
+    assert re.match(UUID_PATTERN, response_data['id'])
 
 
 def test_create_expense_with_wrong_category_name(test_client, category_fixture, wallet, token_value_fixture):
@@ -106,7 +106,7 @@ def test_get_expense(test_client, category_fixture, wallet, token_value_fixture)
     )
     post_response_data = post_response.json()
     response = test_client.get(
-        f'/accounting/wallets/{wallet.name}/expenses/{post_response_data["uuid"]}',
+        f'/accounting/wallets/{wallet.name}/expenses/{post_response_data["id"]}',
         headers={'Authorization': f'token {token_value_fixture}'}
     )
     response_data = response.json()
@@ -116,7 +116,7 @@ def test_get_expense(test_client, category_fixture, wallet, token_value_fixture)
     assert response_data['date'] == post_response_data['date']
     assert response_data['amount'] == post_response_data['amount']
     assert response_data['category'] == post_response_data['category']
-    assert response_data['uuid'] == post_response_data['uuid']
+    assert response_data['id'] == post_response_data['id']
 
 
 def test_get_non_existing_expense(expense_fixture, test_client, wallet, token_value_fixture):
@@ -146,7 +146,7 @@ def test_get_all_expenses(test_client, token_value_fixture, wallet_repository):
         {
             'date': expense.date.isoformat(),
             'amount': f'{expense.amount:f}',
-            'uuid': expense.uuid,
+            'id': expense.id,
             'category': expense.category.name
         }
         for expense in wallet.expenses

@@ -1,6 +1,4 @@
-import uuid
-from typing import Optional
-from uuid import uuid4
+from typing import Optional, Any
 
 from odin.accounting.application.repositories import CategoryRepository, WalletRepository, TransferRepository
 from odin.accounting.domain.models import Category, Wallet, Expense, Income, Transfer
@@ -33,7 +31,8 @@ class InMemoryUserRepository(UserRepository):
             email=user.email,
             password=user.password,
             first_name=user.first_name,
-            last_name=user.last_name
+            last_name=user.last_name,
+            id=user.id
         )
 
     def get_by_email(self, email) -> Optional[User]:
@@ -43,24 +42,30 @@ class InMemoryUserRepository(UserRepository):
 class InMemoryCategoryRepository(CategoryRepository):
 
     def __init__(self):
-        self._categories: list[str] = []
+        self._categories: dict[str, dict[str, Any]] = {}
 
     def add(self, category):
         assert isinstance(category, Category), 'category argument must be Category instance'
         category_name = category.name.lower()
         if category_name in self._categories:
             raise ValueError(f'a category with name {category_name} already exists')
-        self._categories.append(category_name)
+        self._categories[category_name] = {
+            'name': category_name,
+            'id': category.id
+        }
 
     def get_all(self):
-        return tuple(Category(name=name) for name in self._categories)
+        return tuple(Category(
+            name=category_data['name'],
+            id=category_data['id']
+        ) for category_data in self._categories.values())
 
     def get_by_name(self, name):
         if name:
             name = name.lower()
-            for category_name in self._categories:
-                if category_name == name:
-                    return Category(name=name)
+            category_data = self._categories.get(name)
+            if category_data:
+                return Category(name=name, id=category_data['id'])
 
 
 class InMemoryWalletRepository(WalletRepository):
@@ -73,14 +78,12 @@ class InMemoryWalletRepository(WalletRepository):
     def add_expense(self, wallet, expense):
         wallet = self.get_by_name_with_expenses(wallet.name)
         wallet.add_expense(expense)
-        expense.uuid = uuid.uuid4()
         self.add(wallet)
         self._expense_repository.add(expense)
 
     def add_income(self, wallet, income):
         wallet = self.get_by_name_with_incomes(wallet.name)
         wallet.add_income(income)
-        income.uuid = uuid.uuid4()
         self.add(wallet)
         self._income_repository.add(income)
 
@@ -88,8 +91,9 @@ class InMemoryWalletRepository(WalletRepository):
         self._wallets[wallet.name] = {
             'name': wallet.name,
             'balance': wallet.balance,
-            'expenses_uuid': [expense.uuid for expense in wallet.expenses],
-            'incomes_uuid': [income.uuid for income in wallet.incomes]
+            'id': wallet.id,
+            'expenses_id': [expense.id for expense in wallet.expenses],
+            'incomes_id': [income.id for income in wallet.incomes]
         }
 
     def get_by_name(self, name):
@@ -100,7 +104,7 @@ class InMemoryWalletRepository(WalletRepository):
     def get_by_name_with_expenses(self, name):
         wallet_data = self._wallets.get(name)
         expenses = []
-        for expense_uuid in wallet_data['expenses_uuid']:
+        for expense_uuid in wallet_data['expenses_id']:
             expense = self._expense_repository.get_by(uuid=expense_uuid)
             expenses.append(expense)
         return Wallet(**wallet_data, expenses=expenses)
@@ -108,8 +112,8 @@ class InMemoryWalletRepository(WalletRepository):
     def get_by_name_with_incomes(self, name):
         wallet_data = self._wallets.get(name)
         incomes = []
-        for income_uuid in wallet_data['incomes_uuid']:
-            income = self._income_repository.get_by_uuid(uuid=income_uuid)
+        for income_uuid in wallet_data['incomes_id']:
+            income = self._income_repository.get_by_id(id=income_uuid)
             incomes.append(income)
         return Wallet(**wallet_data, incomes=incomes)
 
@@ -121,8 +125,8 @@ class InMemoryExpenseRepository:
         self._category_repository = InMemoryCategoryRepository()
 
     def add(self, expense: Expense):
-        self._expenses[expense.uuid] = {
-            'uuid': expense.uuid,
+        self._expenses[expense.id] = {
+            'id': expense.id,
             'amount': expense.amount,
             'date': expense.date,
             'category_name': expense.category.name
@@ -153,10 +157,10 @@ class InMemoryIncomeRepository:
         self._incomes = {}
 
     def add(self, income: Income):
-        self._incomes[income.uuid] = income
+        self._incomes[income.id] = income
 
-    def get_by_uuid(self, uuid: str) -> Income:
-        return self._incomes.get(uuid)
+    def get_by_id(self, id: str) -> Income:
+        return self._incomes.get(id)
 
 
 class InMemoryTransferRepository(TransferRepository):
@@ -165,14 +169,13 @@ class InMemoryTransferRepository(TransferRepository):
         self._transfers: dict[str, Transfer] = {}
 
     def add(self, transfer):
-        transfer.uuid = uuid4()
-        self._transfers[transfer.uuid] = transfer
+        self._transfers[transfer.id] = transfer
 
     def get_all(self):
         return tuple(self._transfers.values())
 
-    def get_by_uuid(self, uuid):
-        return self._transfers.get(uuid)
+    def get_by_id(self, id):
+        return self._transfers.get(id)
 
 
 class DoesNotExist(Exception):

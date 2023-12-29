@@ -27,7 +27,7 @@ def test_transfer(transfer_category, wallet_repository, transfer_repository, cat
     assert transfer.target == wallet_target
     assert transfer.amount == Decimal('100_000')
     assert transfer.date == datetime.date.today()
-    assert transfer == transfer_repository.get_by_uuid(transfer.uuid)
+    assert transfer == transfer_repository.get_by_id(transfer.id)
 
 
 def test_transfer_with_date(transfer_category, wallet_repository, transfer_repository, category_repository):

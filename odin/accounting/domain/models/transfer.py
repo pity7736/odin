@@ -12,4 +12,4 @@ class Transfer(Entity):
     _income = fields.LinkField(to=Income)
     _amount = fields.DecimalField()
     _date = fields.DateField()
-    _uuid = fields.StrField(mutable=True)
+    _id = fields.StrField(required=True)

@@ -1,3 +1,5 @@
+import uuid
+
 from nyoibo import Entity, fields
 
 from odin.accounting.domain.models import Category
@@ -12,6 +14,6 @@ class CategoryCreator(Entity):
         self._repository = category_repository
 
     def create(self) -> Category:
-        category = Category(name=self.name)
+        category = Category(name=self.name, id=uuid.uuid4())
         self._repository.add(category)
         return category

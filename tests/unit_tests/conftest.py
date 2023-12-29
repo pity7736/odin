@@ -1,3 +1,5 @@
+import uuid
+
 from pytest import fixture
 
 from odin.accounting.infrastructure.repositories.postgres_repositories import PostgresCategoryRepository, \
@@ -52,7 +54,8 @@ def user_fixture(user_repository):
         email='me@raiseexception.com',
         password='test',
         first_name='julián',
-        last_name='cortés'
+        last_name='cortés',
+        id=uuid.uuid4()
     )
     user_repository.add(user)
     return user

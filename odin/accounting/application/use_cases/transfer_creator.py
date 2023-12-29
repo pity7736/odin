@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 from nyoibo import Entity, fields
 from nyoibo.fields import Decimal
@@ -47,7 +48,8 @@ class TransferCreator(Entity):
             expense=self._create_expense(amount, date, category),
             income=self._create_income(amount, date, category),
             amount=amount,
-            date=date
+            date=date,
+            id=uuid.uuid4()
         )
         self._transfer_repository.add(transfer)
         return transfer

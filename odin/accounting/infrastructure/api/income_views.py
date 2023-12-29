@@ -31,7 +31,7 @@ class IncomesEndpoint(HTTPEndpoint):
         return JSONResponse({
                 'date': income.date.isoformat(),
                 'amount': str(income.amount),
-                'uuid': str(income.uuid)
+                'id': str(income.id)
             },
             status_code=201
         )
@@ -43,12 +43,12 @@ class IncomeEndpoint(HTTPEndpoint):
     def get(request):
         wallet = get_wallet_repository().get_by_name_with_incomes(request.path_params['wallet_name'])
         for income in wallet.incomes:
-            if income.uuid == request.path_params['uuid']:
+            if income.id == request.path_params['id']:
                 return JSONResponse(
                     {
                         'date': income.date.isoformat(),
                         'amount': f'{income.amount:f}',
-                        'uuid': income.uuid,
+                        'id': income.id,
                         'category': income.category.name
                     },
                     status_code=200

@@ -42,5 +42,5 @@ class PostgresTransferRepository(TransferRepository):
     def add(self, transfer: Transfer):
         pass
 
-    def get_by_uuid(self, uuid: str) -> tuple[Transfer]:
+    def get_by_id(self, id: str) -> tuple[Transfer]:
         pass

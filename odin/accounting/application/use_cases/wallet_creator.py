@@ -1,3 +1,5 @@
+import uuid
+
 from nyoibo import Entity, fields
 
 from odin.accounts.domain import User
@@ -18,7 +20,8 @@ class WalletCreator(Entity):
         wallet = Wallet(
             name=self._name,
             balance=self._balance,
-            user=self._user
+            user=self._user,
+            id=uuid.uuid4()
         )
         self._repository.add(wallet)
         return wallet

@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from decimal import Decimal
 
 from pytest import raises, mark
@@ -61,7 +62,8 @@ def test_add_income(category_fixture):
     income = Income(
         date=datetime.date.today(),
         amount=Decimal('100_000'),
-        category=category_fixture
+        category=category_fixture,
+        id=uuid.uuid4()
     )
     wallet.add_income(income)
 

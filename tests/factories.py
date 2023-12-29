@@ -1,6 +1,6 @@
 import datetime
+import uuid
 from decimal import Decimal
-from uuid import uuid4
 
 import factory
 
@@ -12,6 +12,7 @@ from odin.accounts.infrastructure.repositories import get_user_repository
 
 
 class CategoryFactory(factory.Factory):
+    id = factory.LazyFunction(uuid.uuid4)
     name = factory.Sequence(lambda n: f'test category{n}')
 
     class Meta:
@@ -26,7 +27,7 @@ class CategoryFactory(factory.Factory):
 
 
 class ExpenseFactory(factory.Factory):
-    uuid = factory.LazyFunction(uuid4)
+    id = factory.LazyFunction(uuid.uuid4)
     date = datetime.date(2022, 3, 30)
     amount = Decimal('100_000')
     category = factory.SubFactory(CategoryFactory)
@@ -47,7 +48,8 @@ class WalletBuilder:
             email='me@raiseexception.com',
             password='test',
             first_name='julián',
-            last_name='cortés'
+            last_name='cortés',
+            id=uuid.uuid4()
         )
 
     def name(self, name) -> 'WalletBuilder':
@@ -65,7 +67,8 @@ class WalletBuilder:
         self._expenses_data.append({
             'amount': amount,
             'date': date or datetime.date.today(),
-            'category': category
+            'category': category,
+            'id': uuid.uuid4()
         })
         return self
 
@@ -105,13 +108,14 @@ class WalletBuilder:
         return wallet
 
     def build(self) -> Wallet:
-        wallet = Wallet(name=self._name, balance=self._balance, user=self._user)
+        wallet = Wallet(name=self._name, balance=self._balance, user=self._user, id=uuid.uuid4())
         for expense_data in self._expenses_data:
             expense = Expense(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
                 category=expense_data['category'] or CategoryFactory.build(),
-                wallet=wallet
+                wallet=wallet,
+                id=uuid.uuid4()
             )
             wallet.add_expense(expense)
         return wallet

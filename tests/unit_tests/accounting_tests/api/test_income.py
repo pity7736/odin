@@ -19,7 +19,7 @@ def test_create_income(test_client, category_fixture, wallet, token_value_fixtur
     assert response.headers['content-type'] == 'application/json'
     assert response_data['amount'] == '10000000'
     assert response_data['date'] == '2022-07-31'
-    assert re.match(UUID_PATTERN, response_data['uuid'])
+    assert re.match(UUID_PATTERN, response_data['id'])
 
 
 def test_create_income_without_category(test_client, category_fixture, wallet, token_value_fixture):
@@ -47,7 +47,7 @@ def test_get_income(test_client, category_fixture, wallet, token_value_fixture):
     )
     post_response_data = post_response.json()
 
-    response = test_client.get(f'/accounting/wallets/{wallet.name}/incomes/{post_response_data["uuid"]}')
+    response = test_client.get(f'/accounting/wallets/{wallet.name}/incomes/{post_response_data["id"]}')
     response_data = response.json()
 
     assert response.status_code == 200
@@ -55,4 +55,4 @@ def test_get_income(test_client, category_fixture, wallet, token_value_fixture):
     assert response_data['amount'] == '10000000'
     assert response_data['date'] == '2022-07-31'
     assert response_data['category'] == category_fixture.name
-    assert re.match(UUID_PATTERN, response_data['uuid'])
+    assert re.match(UUID_PATTERN, response_data['id'])
