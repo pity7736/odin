@@ -4,5 +4,5 @@ from tests.factories import WalletBuilder
 
 
 @fixture
-def wallet():
+def wallet(wallet_repository):
     return WalletBuilder().create()

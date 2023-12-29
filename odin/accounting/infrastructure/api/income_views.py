@@ -2,8 +2,8 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from odin.accounting.controllers import IncomeCreator
-from odin.accounting.repositories.repository_factory import get_wallet_repository, get_category_repository
+from odin.accounting.application.use_cases import IncomeCreator
+from odin.accounting.infrastructure.repositories import get_wallet_repository, get_category_repository
 from odin.accounts.infrastructure.api.decorators import login_required
 
 
@@ -14,13 +14,15 @@ class IncomesEndpoint(HTTPEndpoint):
     async def post(request: Request):
         data = await request.json()
         category = get_category_repository().get_by_name(data.get('category'))
-        wallet = get_wallet_repository().get_by_name(request.path_params['wallet_name'])
+        wallet_repository = get_wallet_repository()
+        wallet = wallet_repository.get_by_name(request.path_params['wallet_name'])
         try:
             income_creator = IncomeCreator(
                 date=data['date'],
                 amount=data['amount'],
                 category=category,
-                wallet=wallet
+                wallet=wallet,
+                wallet_repository=wallet_repository
             )
         except ValueError:
             return JSONResponse({}, status_code=400)

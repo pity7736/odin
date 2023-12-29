@@ -1,57 +1,46 @@
-from abc import ABCMeta, abstractmethod
 from typing import Optional
 
-from odin.accounting.models import Category, Wallet, Expense, Income, Transfer
+from odin.accounting.application.repositories import CategoryRepository, WalletRepository, TransferRepository
+from odin.accounting.domain.models import Category, Wallet, Income, Expense, Transfer
 
 
-class CategoryRepository(metaclass=ABCMeta):
+class PostgresCategoryRepository(CategoryRepository):
 
-    @abstractmethod
     def add(self, category: Category):
         pass
 
-    @abstractmethod
     def get_all(self) -> tuple[Category]:
         pass
 
-    @abstractmethod
     def get_by_name(self, name: str) -> Optional[Category]:
         pass
 
 
-class WalletRepository(metaclass=ABCMeta):
+class PostgresWalletRepository(WalletRepository):
 
-    @abstractmethod
     def add(self, wallet: Wallet):
         pass
 
-    @abstractmethod
     def add_expense(self, wallet: Wallet, expense: Expense):
         pass
 
-    @abstractmethod
     def add_income(self, wallet: Wallet, income: Income):
         pass
 
-    @abstractmethod
     def get_by_name(self, name: str) -> Optional[Wallet]:
         pass
 
-    @abstractmethod
     def get_by_name_with_expenses(self, name: str) -> Optional[Wallet]:
         pass
 
-    @abstractmethod
     def get_by_name_with_incomes(self, name: str) -> Optional[Wallet]:
         pass
 
 
-class TransferRepository(metaclass=ABCMeta):
+class PostgresTransferRepository(TransferRepository):
 
-    @abstractmethod
     def add(self, transfer: Transfer):
         pass
 
-    @abstractmethod
     def get_by_uuid(self, uuid: str) -> tuple[Transfer]:
         pass

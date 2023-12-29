@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pytest import raises, mark
 
-from odin.accounting.models import Income
+from odin.accounting.domain.models import Income
 from tests.factories import WalletBuilder, ExpenseFactory
 
 
@@ -46,7 +46,7 @@ def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses
     assert len(wallet.expenses) == expected_expenses_number
 
 
-def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
+def test_add_expense_with_higher_amount_than_wallet_balance():
     wallet = WalletBuilder().balance('100_000').create()
     expense = ExpenseFactory.build(amount=Decimal('100_001'))
 
@@ -69,7 +69,7 @@ def test_add_income(category_fixture):
     assert len(wallet.incomes) == 1
 
 
-def test_check_income_type_in_add_income(db_transaction):
+def test_check_income_type_in_add_income():
     wallet = WalletBuilder().create()
     with raises(AssertionError) as error:
         wallet.add_income(100_000)

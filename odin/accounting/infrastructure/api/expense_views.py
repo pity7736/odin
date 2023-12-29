@@ -2,8 +2,8 @@ from nyoibo.exceptions import RequiredValueError, FieldValueError
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.accounting.controllers import ExpenseCreator
-from odin.accounting.repositories.repository_factory import get_wallet_repository, get_category_repository
+from odin.accounting.application.use_cases import ExpenseCreator
+from odin.accounting.infrastructure.repositories import get_wallet_repository, get_category_repository
 from odin.accounts.infrastructure.api.decorators import login_required
 
 
@@ -18,9 +18,10 @@ class ExpensesEndpoint(HTTPEndpoint):
             return JSONResponse({}, status_code=400)
 
         data['category'] = category
-        data['wallet'] = get_wallet_repository().get_by_name(request.path_params['wallet_name'])
+        wallet_repository = get_wallet_repository()
+        data['wallet'] = wallet_repository.get_by_name(request.path_params['wallet_name'])
         try:
-            expense_creator = ExpenseCreator(**data)
+            expense_creator = ExpenseCreator(**data, wallet_repository=wallet_repository)
             expense = expense_creator.create()
         except (RequiredValueError, FieldValueError, ValueError) as error:
             status_code = 400

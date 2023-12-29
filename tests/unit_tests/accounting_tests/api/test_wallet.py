@@ -16,7 +16,7 @@ def test_create_wallet(test_client, token_value_fixture):
     assert response_data['balance'] == '10000000'
 
 
-def test_create_wallet_with_existing_name(test_client, token_value_fixture):
+def test_create_wallet_with_existing_name(test_client, token_value_fixture, wallet_repository):
     test_client.post(
         '/accounting/wallets',
         json={
@@ -38,7 +38,7 @@ def test_create_wallet_with_existing_name(test_client, token_value_fixture):
     assert response.headers['content-type'] == 'application/json'
 
 
-def test_get_wallet(test_client, token_value_fixture):
+def test_get_wallet(test_client, token_value_fixture, wallet_repository):
     post_response = test_client.post(
         '/accounting/wallets',
         json={

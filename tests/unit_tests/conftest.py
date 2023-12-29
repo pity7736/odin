@@ -1,24 +1,14 @@
 from pytest import fixture
 
-from odin.accounting.repositories.in_memory_reposotiries import InMemoryWalletRepository, InMemoryCategoryRepository, \
-    InMemoryTransferRepository
-from odin.accounting.repositories.in_memory_reposotiries.in_memory_expense_repository import InMemoryExpenseRepository
-from odin.accounting.repositories.in_memory_reposotiries.in_memory_income_repository import InMemoryIncomeRepository
+from odin.accounting.infrastructure.repositories.postgres_repositories import PostgresCategoryRepository, \
+    PostgresWalletRepository, PostgresTransferRepository
 from odin.accounts.domain.models import User, Token
 from odin.accounts.infrastructure.repositories.postgres_repositories import PostgresUserRepository, \
     PostgresTokenRepository
 from odin.accounts.domain.crypto import get_random_string
-from tests.repositories import InMemoryTokenRepository, InMemoryUserRepository
-
-
-@fixture
-def db_transaction():
-    yield
-    InMemoryExpenseRepository._expenses.clear()
-    InMemoryIncomeRepository._incomes.clear()
-    InMemoryWalletRepository._wallets.clear()
-    InMemoryCategoryRepository._categories.clear()
-    InMemoryTransferRepository._transfers.clear()
+from tests.repositories import InMemoryTokenRepository, InMemoryUserRepository, InMemoryCategoryRepository, \
+    InMemoryWalletRepository, InMemoryTransferRepository
+from tests.factories import CategoryFactory
 
 
 @fixture
@@ -36,7 +26,28 @@ def token_repository(mocker):
 
 
 @fixture
-def user_fixture(db_transaction, user_repository):
+def category_repository(mocker):
+    repo = InMemoryCategoryRepository()
+    mocker.patch.object(PostgresCategoryRepository, '__new__', return_value=repo)
+    return repo
+
+
+@fixture
+def wallet_repository(mocker):
+    repo = InMemoryWalletRepository()
+    mocker.patch.object(PostgresWalletRepository, '__new__', return_value=repo)
+    return repo
+
+
+@fixture
+def transfer_repository(mocker):
+    repo = InMemoryTransferRepository()
+    mocker.patch.object(PostgresTransferRepository, '__new__', return_value=repo)
+    return repo
+
+
+@fixture
+def user_fixture(user_repository):
     user = User(
         email='me@raiseexception.com',
         password='test',
@@ -55,3 +66,13 @@ def token_value_fixture(user_fixture, test_client, token_repository):
     )
     token_repository.add(token)
     return token.value
+
+
+@fixture
+def category_fixture(category_repository):
+    return CategoryFactory.create()
+
+
+@fixture
+def transfer_category(category_repository):
+    return CategoryFactory.create(name='transfer')

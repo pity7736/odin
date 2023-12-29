@@ -1,8 +1,8 @@
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from odin.accounting.controllers import WalletCreator
-from odin.accounting.repositories.repository_factory import get_wallet_repository
+from odin.accounting.application.use_cases import WalletCreator
+from odin.accounting.infrastructure.repositories import get_wallet_repository
 from odin.accounts.infrastructure.api.decorators import login_required
 
 
@@ -19,7 +19,8 @@ class WalletsEndpoint(HTTPEndpoint):
 
         wallet_creator = WalletCreator(
             name=data['name'],
-            balance=data['balance']
+            balance=data['balance'],
+            wallet_repository=repository
         )
         wallet = wallet_creator.create()
         return JSONResponse({

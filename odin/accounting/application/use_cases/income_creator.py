@@ -1,7 +1,7 @@
 from nyoibo import Entity, fields
 
-from odin.accounting.models import Income, Category, Wallet
-from odin.accounting.repositories.repository_factory import get_wallet_repository
+from odin.accounting.domain.models import Income, Category, Wallet
+from ..repositories import WalletRepository
 
 
 class IncomeCreator(Entity):
@@ -10,10 +10,11 @@ class IncomeCreator(Entity):
     _category = fields.LinkField(to=Category, required=True)
     _wallet: Wallet = fields.LinkField(to=Wallet)
 
-    def __init__(self, **kwargs):
+    def __init__(self, wallet_repository: WalletRepository, **kwargs):
         if kwargs.get('category') is None:
             raise ValueError('category is required')
         super().__init__(**kwargs)
+        self._repository = wallet_repository
 
     def create(self) -> Income:
         income = Income(
@@ -26,5 +27,4 @@ class IncomeCreator(Entity):
 
     def _add_income_to_wallet(self, income):
         self._wallet.add_income(income)
-        wallet_repository = get_wallet_repository()
-        wallet_repository.add_income(wallet=self._wallet, income=income)
+        self._repository.add_income(wallet=self._wallet, income=income)

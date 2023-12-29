@@ -131,7 +131,7 @@ def test_get_non_existing_expense(expense_fixture, test_client, wallet, token_va
     assert response_data == {}
 
 
-def test_get_all_expenses(test_client, token_value_fixture):
+def test_get_all_expenses(test_client, token_value_fixture, wallet_repository):
     wallet_builder = WalletBuilder() \
         .add_expense(amount='100000') \
         .add_expense(amount='50000') \

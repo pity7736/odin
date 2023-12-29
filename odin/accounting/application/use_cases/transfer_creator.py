@@ -3,37 +3,44 @@ import datetime
 from nyoibo import Entity, fields
 from nyoibo.fields import Decimal
 
-from odin.accounting.models import Wallet, Transfer
+from odin.accounting.domain.models import Wallet, Transfer
 from .expense_creator import ExpenseCreator
 from .income_creator import IncomeCreator
-from ..repositories.repository_factory import get_wallet_repository, get_transfer_repository, get_category_repository
+from ..repositories import WalletRepository, TransferRepository, CategoryRepository
 
 
 class TransferCreator(Entity):
     _source = fields.LinkField(to=Wallet, private=True)
     _target = fields.LinkField(to=Wallet, private=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, wallet_repository: WalletRepository, transfer_repository: TransferRepository,
+                 category_repository: CategoryRepository, **kwargs):
         if kwargs.get('source') is None:
             raise ValueError('source is required')
 
         if kwargs.get('target') is None:
             raise ValueError('target is required')
         super().__init__(**kwargs)
+        self._wallet_repository = wallet_repository
+        self._transfer_repository = transfer_repository
+        self._category_repository = category_repository
 
     @classmethod
-    def from_wallet_names(cls, source_name: str, target_name: str):
-        repository = get_wallet_repository()
+    def from_wallet_names(cls, source_name: str, target_name: str, wallet_repository: WalletRepository,
+                          transfer_repository: TransferRepository, category_repository: CategoryRepository):
         return cls(
-            source=repository.get_by_name(source_name),
-            target=repository.get_by_name(target_name)
+            source=wallet_repository.get_by_name(source_name),
+            target=wallet_repository.get_by_name(target_name),
+            wallet_repository=wallet_repository,
+            transfer_repository=transfer_repository,
+            category_repository=category_repository
         )
 
     def transfer(self, amount: Decimal, date: datetime.date = None):
         return self._create_transfer(amount, date or datetime.date.today())
 
     def _create_transfer(self, amount: Decimal, date: datetime.date):
-        category = get_category_repository().get_by_name('transfer')
+        category = self._category_repository.get_by_name('transfer')
         transfer = Transfer(
             source=self._source,
             target=self._target,
@@ -42,7 +49,7 @@ class TransferCreator(Entity):
             amount=amount,
             date=date
         )
-        get_transfer_repository().add(transfer)
+        self._transfer_repository.add(transfer)
         return transfer
 
     def _create_expense(self, amount, date, category):
@@ -50,7 +57,8 @@ class TransferCreator(Entity):
             amount=amount,
             date=date,
             category=category,
-            wallet=self._source
+            wallet=self._source,
+            wallet_repository=self._wallet_repository
         ).create()
 
     def _create_income(self, amount, date, category):
@@ -58,5 +66,6 @@ class TransferCreator(Entity):
             amount=amount,
             date=date,
             category=category,
-            wallet=self._target
+            wallet=self._target,
+            wallet_repository=self._wallet_repository
         ).create()

@@ -5,7 +5,7 @@ from tests.factories import WalletBuilder
 from tests.utils import UUID_PATTERN
 
 
-def test_create(test_client, token_value_fixture, transfer_category):
+def test_create(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     response = test_client.post(
@@ -59,7 +59,7 @@ def test_create_with_non_existing_target_wallet(test_client, token_value_fixture
     assert response.headers['content-type'] == 'application/json'
 
 
-def test_get(test_client, token_value_fixture, transfer_category):
+def test_get(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
     wallet_source = WalletBuilder().create()
     wallet_target = WalletBuilder().name('cash').create()
     post_response = test_client.post(

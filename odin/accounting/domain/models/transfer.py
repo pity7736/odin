@@ -13,6 +13,3 @@ class Transfer(Entity):
     _amount = fields.DecimalField()
     _date = fields.DateField()
     _uuid = fields.StrField(mutable=True)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
