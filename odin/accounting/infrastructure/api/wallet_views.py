@@ -20,6 +20,7 @@ class WalletsEndpoint(HTTPEndpoint):
         wallet_creator = WalletCreator(
             name=data['name'],
             balance=data['balance'],
+            user=request.user,
             wallet_repository=repository
         )
         wallet = wallet_creator.create()

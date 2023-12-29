@@ -7,6 +7,8 @@ import factory
 from odin.accounting.application.use_cases import WalletCreator, ExpenseCreator, IncomeCreator
 from odin.accounting.domain.models import Expense, Category, Wallet
 from odin.accounting.infrastructure.repositories import get_category_repository, get_wallet_repository
+from odin.accounts.domain import User
+from odin.accounts.infrastructure.repositories import get_user_repository
 
 
 class CategoryFactory(factory.Factory):
@@ -41,6 +43,12 @@ class WalletBuilder:
         self._expenses_data = []
         self._incomes_data = []
         self._wallet_repository = get_wallet_repository()
+        self._user = User(
+            email='me@raiseexception.com',
+            password='test',
+            first_name='julián',
+            last_name='cortés'
+        )
 
     def name(self, name) -> 'WalletBuilder':
         self._name = name
@@ -49,6 +57,9 @@ class WalletBuilder:
     def balance(self, balance) -> 'WalletBuilder':
         self._balance = balance
         return self
+
+    def user(self, user: User):
+        self._user = user
 
     def add_expense(self, amount, date=None, category=None) -> 'WalletBuilder':
         self._expenses_data.append({
@@ -67,10 +78,12 @@ class WalletBuilder:
         return self
 
     def create(self) -> Wallet:
+        get_user_repository().add(self._user)
         wallet = WalletCreator(
             name=self._name,
             balance=self._balance,
-            wallet_repository=self._wallet_repository
+            user=self._user,
+            wallet_repository=self._wallet_repository,
         ).create()
         for income_data in self._incomes_data:
             IncomeCreator(
@@ -92,7 +105,7 @@ class WalletBuilder:
         return wallet
 
     def build(self) -> Wallet:
-        wallet = Wallet(name=self._name, balance=self._balance)
+        wallet = Wallet(name=self._name, balance=self._balance, user=self._user)
         for expense_data in self._expenses_data:
             expense = Expense(
                 amount=expense_data['amount'],

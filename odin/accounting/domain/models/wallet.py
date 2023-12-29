@@ -1,5 +1,6 @@
 from nyoibo import Entity, fields
 
+from odin.accounts.domain import User
 from .expense import Expense
 from .income import Income
 
@@ -9,6 +10,7 @@ class Wallet(Entity):
     _name = fields.StrField(required=True)
     _expenses: list[Expense] = fields.ListField()
     _incomes: list[Income] = fields.ListField()
+    _user = fields.LinkField(to=User)
 
     def __init__(self, **kwargs):
         kwargs.setdefault('expenses', [])
