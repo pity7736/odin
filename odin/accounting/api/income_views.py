@@ -4,7 +4,7 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import IncomeCreator
 from odin.accounting.repositories.repository_factory import get_wallet_repository, get_category_repository
-from odin.auth.decorators import login_required
+from odin.accounts.infrastructure.api.decorators import login_required
 
 
 class IncomesEndpoint(HTTPEndpoint):

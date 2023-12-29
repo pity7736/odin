@@ -2,7 +2,7 @@ import asyncio
 
 from starlette.responses import JSONResponse
 
-from odin.accounts.models import User
+from odin.accounts.domain.models import User
 
 
 def login_required(function):

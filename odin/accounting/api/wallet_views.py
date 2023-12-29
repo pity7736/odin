@@ -3,7 +3,7 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.controllers import WalletCreator
 from odin.accounting.repositories.repository_factory import get_wallet_repository
-from odin.auth.decorators import login_required
+from odin.accounts.infrastructure.api.decorators import login_required
 
 
 class WalletsEndpoint(HTTPEndpoint):

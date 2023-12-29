@@ -1,7 +1,19 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional
 
-from odin.auth.models import Token
+
+from odin.accounts.domain import User, Token
+
+
+class UserRepository(metaclass=ABCMeta):
+
+    @abstractmethod
+    def add(self, user: User):
+        pass
+
+    @abstractmethod
+    def get_by_email(self, email: str) -> Optional[User]:
+        pass
 
 
 class TokenRepository(metaclass=ABCMeta):

@@ -4,8 +4,8 @@ from starlette.authentication import AuthenticationBackend, AuthCredentials, Aut
 from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse
 
-from odin.accounts.models import User
-from odin.auth.repositories import get_token_repository
+from odin.accounts.domain.models import User
+from odin.accounts.infrastructure.repositories import get_token_repository
 
 
 def on_auth_error(request, exc):

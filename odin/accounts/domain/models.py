@@ -1,6 +1,6 @@
 from nyoibo import Entity, fields
 
-from odin.utils import make_password
+from .crypto import make_password
 
 
 class User(Entity):
@@ -21,3 +21,8 @@ class User(Entity):
         salt = self._password.split('$')[0]
         hash_password = make_password(raw_password, salt=salt)
         return hash_password == self._password
+
+
+class Token(Entity):
+    _value = fields.StrField()
+    _user = fields.LinkField(to=User)

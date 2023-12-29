@@ -1,4 +1,4 @@
-from odin.accounts.models import User
+from odin.accounts.domain.models import User
 
 
 def test_encrypt_password():
