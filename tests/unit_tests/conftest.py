@@ -13,37 +13,37 @@ from tests.factories import CategoryFactory
 
 @fixture
 def user_repository(mocker):
-    repo = InMemoryUserRepository()
-    mocker.patch.object(PostgresUserRepository, '__new__', return_value=repo)
-    return repo
+    repository = InMemoryUserRepository()
+    mocker.patch.object(PostgresUserRepository, '__new__', return_value=repository)
+    return repository
 
 
 @fixture
 def token_repository(mocker):
-    repo = InMemoryTokenRepository()
-    mocker.patch.object(PostgresTokenRepository, '__new__', return_value=repo)
-    return repo
+    repository = InMemoryTokenRepository()
+    mocker.patch.object(PostgresTokenRepository, '__new__', return_value=repository)
+    return repository
 
 
 @fixture
 def category_repository(mocker):
-    repo = InMemoryCategoryRepository()
-    mocker.patch.object(PostgresCategoryRepository, '__new__', return_value=repo)
-    return repo
+    repository = InMemoryCategoryRepository()
+    mocker.patch.object(PostgresCategoryRepository, '__new__', return_value=repository)
+    return repository
 
 
 @fixture
 def wallet_repository(mocker):
-    repo = InMemoryWalletRepository()
-    mocker.patch.object(PostgresWalletRepository, '__new__', return_value=repo)
-    return repo
+    repository = InMemoryWalletRepository()
+    mocker.patch.object(PostgresWalletRepository, '__new__', return_value=repository)
+    return repository
 
 
 @fixture
 def transfer_repository(mocker):
-    repo = InMemoryTransferRepository()
-    mocker.patch.object(PostgresTransferRepository, '__new__', return_value=repo)
-    return repo
+    repository = InMemoryTransferRepository()
+    mocker.patch.object(PostgresTransferRepository, '__new__', return_value=repository)
+    return repository
 
 
 @fixture

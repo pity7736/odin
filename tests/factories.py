@@ -40,6 +40,7 @@ class WalletBuilder:
         self._balance = '1_000_000'
         self._expenses_data = []
         self._incomes_data = []
+        self._wallet_repository = get_wallet_repository()
 
     def name(self, name) -> 'WalletBuilder':
         self._name = name
@@ -66,15 +67,18 @@ class WalletBuilder:
         return self
 
     def create(self) -> Wallet:
-        wallet_repository = get_wallet_repository()
-        wallet = WalletCreator(name=self._name, balance=self._balance, wallet_repository=wallet_repository).create()
+        wallet = WalletCreator(
+            name=self._name,
+            balance=self._balance,
+            wallet_repository=self._wallet_repository
+        ).create()
         for income_data in self._incomes_data:
             IncomeCreator(
                 amount=income_data['amount'],
                 date=income_data['date'],
                 category=income_data['category'] or CategoryFactory.create(),
                 wallet=wallet,
-                wallet_repository=wallet_repository
+                wallet_repository=self._wallet_repository
             ).create()
 
         for expense_data in self._expenses_data:
@@ -83,7 +87,7 @@ class WalletBuilder:
                 date=expense_data['date'],
                 category=expense_data['category'] or CategoryFactory.create(),
                 wallet=wallet,
-                wallet_repository=wallet_repository
+                wallet_repository=self._wallet_repository
             ).create()
         return wallet
 
