@@ -51,14 +51,20 @@ class InMemoryCategoryRepository(CategoryRepository):
             raise ValueError(f'a category with name {category_name} already exists')
         self._categories[category_name] = {
             'name': category_name,
-            'id': category.id
+            'id': category.id,
+            'user': category.user
         }
 
-    def get_all(self):
-        return tuple(Category(
-            name=category_data['name'],
-            id=category_data['id']
-        ) for category_data in self._categories.values())
+    def get_all_by_user(self, user: User) -> tuple[Category]:
+        result = []
+        for _, category_data in self._categories.items():
+            if category_data['user'] == user:
+                result.append(Category(
+                    id=category_data['id'],
+                    name=category_data['name'],
+                    user=category_data['user']
+                ))
+        return tuple(result)
 
     def get_by_name(self, name):
         if name:

@@ -1,5 +1,6 @@
 from pytest import mark
 
+from tests.factories import CategoryFactory
 
 params = (
     'test category0',
@@ -23,6 +24,7 @@ def test_create_category(category_name, test_client, token_value_fixture):
 
 @mark.parametrize('category_name', params)
 def test_get_all_categories(category_name, test_client, token_value_fixture, category_repository):
+    CategoryFactory.create(name='category_from_some_user')
     test_client.post(
         '/accounting/categories',
         json={'name': category_name},

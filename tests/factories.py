@@ -11,9 +11,21 @@ from odin.accounts.domain import User
 from odin.accounts.infrastructure.repositories import get_user_repository
 
 
+class UserFactory(factory.Factory):
+    email = factory.Faker('email')
+    first_name = factory.Faker('name')
+    last_name = factory.Faker('name')
+    id = factory.LazyFunction(uuid.uuid4)
+    password = 'some password'
+
+    class Meta:
+        model = User
+
+
 class CategoryFactory(factory.Factory):
     id = factory.LazyFunction(uuid.uuid4)
     name = factory.Sequence(lambda n: f'test category{n}')
+    user = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Category

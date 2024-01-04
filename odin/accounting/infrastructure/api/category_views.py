@@ -12,7 +12,7 @@ class CategoriesEndpoint(HTTPEndpoint):
     @login_required
     def get(request):
         categories = []
-        for category in get_category_repository().get_all():
+        for category in get_category_repository().get_all_by_user(request.user):
             categories.append({'name': category.name})
         return JSONResponse({'categories': categories})
 
@@ -20,6 +20,10 @@ class CategoriesEndpoint(HTTPEndpoint):
     @login_required
     async def post(request):
         data = await request.json()
-        creator = CategoryCreator(name=data['name'], category_repository=get_category_repository())
+        creator = CategoryCreator(
+            name=data['name'],
+            user=request.user,
+            category_repository=get_category_repository()
+        )
         category = creator.create()
         return JSONResponse({'name': category.name}, status_code=201)
