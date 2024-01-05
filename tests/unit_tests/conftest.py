@@ -21,7 +21,7 @@ def user_repository(mocker):
     return repository
 
 
-@fixture
+@fixture(autouse=True)
 def token_repository(mocker):
     repository = InMemoryTokenRepository()
     mocker.patch.object(PostgresTokenRepository, '__new__', return_value=repository)

@@ -1,16 +1,23 @@
+from odin.accounting.domain import CategoryType
+
 
 def test_login(user_fixture, test_client):
-    response = test_client.post(
+    login_response = test_client.post(
         '/auth/login',
         json={
             'email': user_fixture.email,
             'password': 'test'
         }
     )
-    response_data = response.json()
+    response_data = login_response.json()
+    token = response_data['token']
+    response = test_client.get(
+        f'/accounting/categories?type={CategoryType.EXPENSE.value}',
+        headers={'Authorization': f'token {token}'}
+    )
 
-    assert response.status_code == 201
-    assert response_data['token']
+    assert login_response.status_code == 201
+    assert response.status_code == 200
 
 
 def test_login_with_wrong_password(user_fixture, test_client):

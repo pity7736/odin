@@ -19,7 +19,7 @@ class SessionStarter:
                 value=get_random_string(length=50),
                 user=user
             )
-            self._token_repository.add(token)
+            await self._token_repository.add(token)
             return token
         else:
             raise ValueError('email or password are wrong')
