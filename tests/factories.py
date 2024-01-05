@@ -35,9 +35,12 @@ class CategoryFactory(factory.Factory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         category = super()._create(model_class, *args, **kwargs)
-        repository = get_category_repository()
-        repository.add(category)
-        return category
+
+        async def __create():
+            repository = get_category_repository()
+            await repository.add(category)
+            return category
+        return __create()
 
 
 class ExpenseFactory(factory.Factory):
@@ -94,28 +97,28 @@ class WalletBuilder:
         })
         return self
 
-    def create(self) -> Wallet:
+    async def create(self) -> Wallet:
         get_user_repository().add(self._user)
-        wallet = WalletCreator(
+        wallet = await WalletCreator(
             name=self._name,
             balance=self._balance,
             user=self._user,
             wallet_repository=self._wallet_repository,
         ).create()
         for income_data in self._incomes_data:
-            IncomeCreator(
+            await IncomeCreator(
                 amount=income_data['amount'],
                 date=income_data['date'],
-                category=income_data['category'] or CategoryFactory.create(),
+                category=income_data['category'] or await CategoryFactory.create(),
                 wallet=wallet,
                 wallet_repository=self._wallet_repository
             ).create()
 
         for expense_data in self._expenses_data:
-            ExpenseCreator(
+            await ExpenseCreator(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
-                category=expense_data['category'] or CategoryFactory.create(),
+                category=expense_data['category'] or await CategoryFactory.create(),
                 wallet=wallet,
                 wallet_repository=self._wallet_repository
             ).create()

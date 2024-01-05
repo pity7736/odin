@@ -27,7 +27,7 @@ class ExpenseCreator(Entity):
 
         self._repository = wallet_repository
 
-    def create(self) -> Expense:
+    async def create(self) -> Expense:
         expense = Expense(
             date=self._date,
             amount=self._amount,
@@ -38,5 +38,5 @@ class ExpenseCreator(Entity):
             self._wallet.add_expense(expense)
         except AssertionError as error:
             raise ValueError(str(error))
-        self._repository.add_expense(wallet=self._wallet, expense=expense)
+        await self._repository.add_expense(wallet=self._wallet, expense=expense)
         return expense

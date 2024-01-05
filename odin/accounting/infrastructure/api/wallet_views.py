@@ -14,7 +14,7 @@ class WalletsEndpoint(HTTPEndpoint):
         data = await request.json()
         repository = get_wallet_repository()
         # refactor: move this to WalletCreator
-        if repository.get_by_name(data['name']):
+        if await repository.get_by_name(data['name']):
             return JSONResponse({}, status_code=400)
 
         wallet_creator = WalletCreator(
@@ -23,7 +23,7 @@ class WalletsEndpoint(HTTPEndpoint):
             user=request.user,
             wallet_repository=repository
         )
-        wallet = wallet_creator.create()
+        wallet = await wallet_creator.create()
         return JSONResponse({
             'name': wallet.name,
             'balance': str(wallet.balance),
@@ -34,7 +34,7 @@ class WalletEndpoint(HTTPEndpoint):
 
     @staticmethod
     @login_required
-    def get(request):
+    async def get(request):
         repository = get_wallet_repository()
-        wallet = repository.get_by_name(request.path_params['wallet_name'])
+        wallet = await repository.get_by_name(request.path_params['wallet_name'])
         return JSONResponse({'name': wallet.name, 'balance': f'{wallet.balance:f}'})

@@ -1,14 +1,17 @@
 import datetime
 from decimal import Decimal
 
+from pytest import mark
+
 from odin.accounting.application.use_cases import IncomeCreator
 from tests.factories import WalletBuilder
 
 
-def test_create_income(category_fixture, wallet_repository):
+@mark.asyncio
+async def test_create_income(category_fixture, wallet_repository):
     date = datetime.date.today()
     amount = Decimal('100_000')
-    wallet = WalletBuilder().create()
+    wallet = await WalletBuilder().create()
     income_creator = IncomeCreator(
         date=date,
         amount=amount,
@@ -16,8 +19,8 @@ def test_create_income(category_fixture, wallet_repository):
         wallet=wallet,
         wallet_repository=wallet_repository
     )
-    income = income_creator.create()
-    wallet = wallet_repository.get_by_name(wallet.name)
+    income = await income_creator.create()
+    wallet = await wallet_repository.get_by_name(wallet.name)
 
     assert income.date == date
     assert income.amount == amount

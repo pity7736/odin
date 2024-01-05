@@ -11,7 +11,7 @@ class CategoriesEndpoint(HTTPEndpoint):
 
     @staticmethod
     @login_required
-    def get(request):
+    async def get(request):
         try:
             category_type_name = request.query_params['type']
         except KeyError:
@@ -26,7 +26,7 @@ class CategoriesEndpoint(HTTPEndpoint):
                 )
 
         categories = []
-        for category in get_category_repository().get_all_by_user_and_type(request.user, category_type):
+        for category in await get_category_repository().get_all_by_user_and_type(request.user, category_type):
             categories.append({'name': category.name})
         return JSONResponse({'categories': categories})
 
@@ -40,5 +40,5 @@ class CategoriesEndpoint(HTTPEndpoint):
             user=request.user,
             category_repository=get_category_repository()
         )
-        category = creator.create()
+        category = await creator.create()
         return JSONResponse({'name': category.name}, status_code=201)

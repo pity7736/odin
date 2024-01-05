@@ -76,9 +76,10 @@ def test_create_expense_with_date_in_the_future(test_client, wallet, token_value
     assert response.status_code == 400
 
 
-def test_create_expense_with_higher_amount_that_wallet_balance(test_client, category_fixture, wallet,
-                                                               token_value_fixture):
-    wallet = WalletBuilder().balance('100_000').create()
+@mark.asyncio
+async def test_create_expense_with_higher_amount_that_wallet_balance(test_client, category_fixture, wallet,
+                                                                     token_value_fixture):
+    wallet = await WalletBuilder().balance('100_000').create()
     response = test_client.post(
         f'/accounting/wallets/{wallet.name}/expenses',
         json={
@@ -119,7 +120,7 @@ def test_get_expense(test_client, category_fixture, wallet, token_value_fixture)
     assert response_data['id'] == post_response_data['id']
 
 
-def test_get_non_existing_expense(expense_fixture, test_client, wallet, token_value_fixture):
+def test_get_non_existing_expense(test_client, wallet, token_value_fixture):
     response = test_client.get(
         f'/accounting/wallets/{wallet.name}/expenses/1234',
         headers={'Authorization': f'token {token_value_fixture}'}
@@ -131,12 +132,13 @@ def test_get_non_existing_expense(expense_fixture, test_client, wallet, token_va
     assert response_data == {}
 
 
-def test_get_all_expenses(test_client, token_value_fixture, wallet_repository):
+@mark.asyncio
+async def test_get_all_expenses(test_client, token_value_fixture, wallet_repository):
     wallet_builder = WalletBuilder() \
         .add_expense(amount='100000') \
         .add_expense(amount='50000') \
         .add_expense(amount='20000')
-    wallet = wallet_builder.create()
+    wallet = await wallet_builder.create()
     response = test_client.get(
         f'/accounting/wallets/{wallet.name}/expenses',
         headers={'Authorization': f'token {token_value_fixture}'}

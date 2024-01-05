@@ -13,9 +13,9 @@ class IncomesEndpoint(HTTPEndpoint):
     @login_required
     async def post(request: Request):
         data = await request.json()
-        category = get_category_repository().get_by_name(data.get('category'))
+        category = await get_category_repository().get_by_name(data.get('category'))
         wallet_repository = get_wallet_repository()
-        wallet = wallet_repository.get_by_name(request.path_params['wallet_name'])
+        wallet = await wallet_repository.get_by_name(request.path_params['wallet_name'])
         try:
             income_creator = IncomeCreator(
                 date=data['date'],
@@ -27,7 +27,7 @@ class IncomesEndpoint(HTTPEndpoint):
         except ValueError:
             return JSONResponse({}, status_code=400)
 
-        income = income_creator.create()
+        income = await income_creator.create()
         return JSONResponse({
                 'date': income.date.isoformat(),
                 'amount': str(income.amount),
@@ -40,8 +40,8 @@ class IncomesEndpoint(HTTPEndpoint):
 class IncomeEndpoint(HTTPEndpoint):
 
     @staticmethod
-    def get(request):
-        wallet = get_wallet_repository().get_by_name_with_incomes(request.path_params['wallet_name'])
+    async def get(request):
+        wallet = await get_wallet_repository().get_by_name_with_incomes(request.path_params['wallet_name'])
         for income in wallet.incomes:
             if income.id == request.path_params['id']:
                 return JSONResponse(

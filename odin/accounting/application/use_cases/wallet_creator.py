@@ -16,12 +16,12 @@ class WalletCreator(Entity):
         super().__init__(**kwargs)
         self._repository = wallet_repository
 
-    def create(self) -> Wallet:
+    async def create(self) -> Wallet:
         wallet = Wallet(
             name=self._name,
             balance=self._balance,
             user=self._user,
             id=uuid.uuid4()
         )
-        self._repository.add(wallet)
+        await self._repository.add(wallet)
         return wallet

@@ -18,7 +18,7 @@ class TokenAuthBackend(AuthenticationBackend):
         token_value = conn.headers.get('Authorization')
         if token_value:
             repository = get_token_repository()
-            token = repository.get_by_value(token_value.split()[1])
+            token = await repository.get_by_value(token_value.split()[1])
             if token:
                 return AuthCredentials(), token.user
             raise AuthenticationError('invalid token')

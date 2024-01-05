@@ -10,7 +10,7 @@ params = (
 
 
 @mark.parametrize('category_name, category_type', params)
-def test_create_category(category_name, category_type, test_client, token_value_fixture):
+def test_create_category(category_name, category_type, test_client, token_value_fixture, category_repository):
     response = test_client.post(
         '/accounting/categories',
         json={'name': category_name, 'type': category_type},

@@ -1,8 +1,8 @@
-from pytest import fixture
+from pytest_asyncio import fixture as async_fixture
 
 from tests.factories import WalletBuilder
 
 
-@fixture
-def wallet(wallet_repository):
-    return WalletBuilder().create()
+@async_fixture
+async def wallet(wallet_repository, category_repository):
+    return await WalletBuilder().create()

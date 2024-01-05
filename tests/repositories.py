@@ -12,13 +12,13 @@ class InMemoryTokenRepository(TokenRepository):
     def __init__(self):
         self._tokens = {}
 
-    def add(self, token):
+    async def add(self, token):
         self._tokens[token.value] = token
 
-    def get_by_value(self, value):
+    async def get_by_value(self, value):
         return self._tokens.get(value)
 
-    def delete_by_value(self, value):
+    async def delete_by_value(self, value):
         self._tokens.pop(value, None)
 
 
@@ -27,7 +27,7 @@ class InMemoryUserRepository(UserRepository):
     def __init__(self):
         self._users = {}
 
-    def add(self, user):
+    async def add(self, user):
         self._users[user.email] = User(
             email=user.email,
             password=user.password,
@@ -36,7 +36,7 @@ class InMemoryUserRepository(UserRepository):
             id=user.id
         )
 
-    def get_by_email(self, email) -> Optional[User]:
+    async def get_by_email(self, email) -> Optional[User]:
         return self._users.get(email)
 
 
@@ -45,7 +45,7 @@ class InMemoryCategoryRepository(CategoryRepository):
     def __init__(self):
         self._categories: dict[str, dict[str, Any]] = {}
 
-    def add(self, category):
+    async def add(self, category):
         assert isinstance(category, Category), 'category argument must be Category instance'
         category_name = category.name.lower()
         self._categories[category_name] = {
@@ -55,7 +55,7 @@ class InMemoryCategoryRepository(CategoryRepository):
             'type': category.type
         }
 
-    def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
+    async def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
         result = []
         for _, category_data in self._categories.items():
             if category_data['user'] == user and category_data['type'] == type:
@@ -67,13 +67,13 @@ class InMemoryCategoryRepository(CategoryRepository):
                 ))
         return tuple(result)
 
-    def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
-        category = self.get_by_name(name)
+    async def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
+        category = await self.get_by_name(name)
         if category:
             if category.user == user:
                 return category
 
-    def get_by_name(self, name):
+    async def get_by_name(self, name):
         if name:
             name = name.lower()
             category_data = self._categories.get(name)
@@ -93,19 +93,19 @@ class InMemoryWalletRepository(WalletRepository):
         self._expense_repository = InMemoryExpenseRepository()
         self._income_repository = InMemoryIncomeRepository()
 
-    def add_expense(self, wallet, expense):
-        wallet = self.get_by_name_with_expenses(wallet.name)
+    async def add_expense(self, wallet, expense):
+        wallet = await self.get_by_name_with_expenses(wallet.name)
         wallet.add_expense(expense)
-        self.add(wallet)
-        self._expense_repository.add(expense)
+        await self.add(wallet)
+        await self._expense_repository.add(expense)
 
-    def add_income(self, wallet, income):
-        wallet = self.get_by_name_with_incomes(wallet.name)
+    async def add_income(self, wallet, income):
+        wallet = await self.get_by_name_with_incomes(wallet.name)
         wallet.add_income(income)
-        self.add(wallet)
+        await self.add(wallet)
         self._income_repository.add(income)
 
-    def add(self, wallet):
+    async def add(self, wallet):
         self._wallets[wallet.name] = {
             'name': wallet.name,
             'balance': wallet.balance,
@@ -114,20 +114,20 @@ class InMemoryWalletRepository(WalletRepository):
             'incomes_id': [income.id for income in wallet.incomes]
         }
 
-    def get_by_name(self, name):
+    async def get_by_name(self, name):
         wallet_data = self._wallets.get(name)
         if wallet_data:
             return Wallet(**wallet_data)
 
-    def get_by_name_with_expenses(self, name):
+    async def get_by_name_with_expenses(self, name):
         wallet_data = self._wallets.get(name)
         expenses = []
         for expense_uuid in wallet_data['expenses_id']:
-            expense = self._expense_repository.get_by(uuid=expense_uuid)
+            expense = await self._expense_repository.get_by(uuid=expense_uuid)
             expenses.append(expense)
         return Wallet(**wallet_data, expenses=expenses)
 
-    def get_by_name_with_incomes(self, name):
+    async def get_by_name_with_incomes(self, name):
         wallet_data = self._wallets.get(name)
         incomes = []
         for income_uuid in wallet_data['incomes_id']:
@@ -142,22 +142,22 @@ class InMemoryExpenseRepository:
         self._expenses: dict[str, dict[str, str]] = {}
         self._category_repository = InMemoryCategoryRepository()
 
-    def add(self, expense: Expense):
+    async def add(self, expense: Expense):
         self._expenses[expense.id] = {
             'id': expense.id,
             'amount': expense.amount,
             'date': expense.date,
             'category_name': expense.category.name
         }
-        self._add_category(expense)
+        await self._add_category(expense)
 
-    def _add_category(self, expense):
+    async def _add_category(self, expense):
         try:
-            self._category_repository.add(expense.category)
+            await self._category_repository.add(expense.category)
         except ValueError:
             pass
 
-    def get_by(self, uuid) -> Expense:
+    async def get_by(self, uuid) -> Expense:
         try:
             expense_data = self._expenses[uuid]
         except KeyError:
@@ -165,7 +165,7 @@ class InMemoryExpenseRepository:
         else:
             return Expense(
                 **expense_data,
-                category=self._category_repository.get_by_name(expense_data.get('category_name'))
+                category=await self._category_repository.get_by_name(expense_data.get('category_name'))
             )
 
 
@@ -186,13 +186,13 @@ class InMemoryTransferRepository(TransferRepository):
     def __init__(self):
         self._transfers: dict[str, Transfer] = {}
 
-    def add(self, transfer):
+    async def add(self, transfer):
         self._transfers[transfer.id] = transfer
 
     def get_all(self):
         return tuple(self._transfers.values())
 
-    def get_by_id(self, id):
+    async def get_by_id(self, id):
         return self._transfers.get(id)
 
 

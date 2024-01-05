@@ -27,35 +27,35 @@ class TransferCreator(Entity):
         self._category_repository = category_repository
 
     @classmethod
-    def from_wallet_names(cls, source_name: str, target_name: str, wallet_repository: WalletRepository,
-                          transfer_repository: TransferRepository, category_repository: CategoryRepository):
+    async def from_wallet_names(cls, source_name: str, target_name: str, wallet_repository: WalletRepository,
+                                transfer_repository: TransferRepository, category_repository: CategoryRepository):
         return cls(
-            source=wallet_repository.get_by_name(source_name),
-            target=wallet_repository.get_by_name(target_name),
+            source=await wallet_repository.get_by_name(source_name),
+            target=await wallet_repository.get_by_name(target_name),
             wallet_repository=wallet_repository,
             transfer_repository=transfer_repository,
             category_repository=category_repository
         )
 
-    def transfer(self, amount: Decimal, date: datetime.date = None):
-        return self._create_transfer(amount, date or datetime.date.today())
+    async def transfer(self, amount: Decimal, date: datetime.date = None):
+        return await self._create_transfer(amount, date or datetime.date.today())
 
-    def _create_transfer(self, amount: Decimal, date: datetime.date):
-        category = self._category_repository.get_by_name('transfer')
+    async def _create_transfer(self, amount: Decimal, date: datetime.date):
+        category = await self._category_repository.get_by_name('transfer')
         transfer = Transfer(
             source=self._source,
             target=self._target,
-            expense=self._create_expense(amount, date, category),
-            income=self._create_income(amount, date, category),
+            expense=await self._create_expense(amount, date, category),
+            income=await self._create_income(amount, date, category),
             amount=amount,
             date=date,
             id=uuid.uuid4()
         )
-        self._transfer_repository.add(transfer)
+        await self._transfer_repository.add(transfer)
         return transfer
 
-    def _create_expense(self, amount, date, category):
-        return ExpenseCreator(
+    async def _create_expense(self, amount, date, category):
+        return await ExpenseCreator(
             amount=amount,
             date=date,
             category=category,
@@ -63,8 +63,8 @@ class TransferCreator(Entity):
             wallet_repository=self._wallet_repository
         ).create()
 
-    def _create_income(self, amount, date, category):
-        return IncomeCreator(
+    async def _create_income(self, amount, date, category):
+        return await IncomeCreator(
             amount=amount,
             date=date,
             category=category,

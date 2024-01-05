@@ -13,16 +13,16 @@ class ExpensesEndpoint(HTTPEndpoint):
     @login_required
     async def post(request):
         data = await request.json()
-        category = get_category_repository().get_by_name(data.get('category'))
+        category = await get_category_repository().get_by_name(data.get('category'))
         if category is None:
             return JSONResponse({}, status_code=400)
 
         data['category'] = category
         wallet_repository = get_wallet_repository()
-        data['wallet'] = wallet_repository.get_by_name(request.path_params['wallet_name'])
+        data['wallet'] = await wallet_repository.get_by_name(request.path_params['wallet_name'])
         try:
             expense_creator = ExpenseCreator(**data, wallet_repository=wallet_repository)
-            expense = expense_creator.create()
+            expense = await expense_creator.create()
         except (RequiredValueError, FieldValueError, ValueError) as error:
             status_code = 400
             response_data = {'error': str(error)}
@@ -38,8 +38,8 @@ class ExpensesEndpoint(HTTPEndpoint):
 
     @staticmethod
     @login_required
-    def get(request):
-        wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
+    async def get(request):
+        wallet = await get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
         serialized_expenses = []
         for expense in wallet.expenses:
             serialized_expenses.append({
@@ -55,8 +55,8 @@ class ExpenseEndpoint(HTTPEndpoint):
 
     @staticmethod
     @login_required
-    def get(request):
-        wallet = get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
+    async def get(request):
+        wallet = await get_wallet_repository().get_by_name_with_expenses(request.path_params['wallet_name'])
         for expense in wallet.expenses:
             if expense.id == request.path_params['id']:
                 return JSONResponse(

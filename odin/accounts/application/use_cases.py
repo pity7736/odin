@@ -13,7 +13,7 @@ class SessionStarter:
         self._token_repository = token_repository
 
     async def start(self) -> Token:
-        user = self._user_repository.get_by_email(self._email)
+        user = await self._user_repository.get_by_email(self._email)
         if user and user.check_password(self._raw_password):
             token = Token(
                 value=get_random_string(length=50),
@@ -32,4 +32,4 @@ class SessionFinalizer:
         self._token_repository = token_repository
 
     async def finalize(self):
-        self._token_repository.delete_by_value(self._token_value)
+        await self._token_repository.delete_by_value(self._token_value)

@@ -1,13 +1,16 @@
 import re
 import uuid
 
+from pytest import mark
+
 from tests.factories import WalletBuilder
 from tests.utils import UUID_PATTERN
 
 
-def test_create(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
-    wallet_source = WalletBuilder().create()
-    wallet_target = WalletBuilder().name('cash').create()
+@mark.asyncio
+async def test_create(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
+    wallet_source = await WalletBuilder().create()
+    wallet_target = await WalletBuilder().name('cash').create()
     response = test_client.post(
         '/accounting/transfers',
         json={
@@ -27,8 +30,9 @@ def test_create(test_client, token_value_fixture, transfer_category, wallet_repo
     assert re.match(UUID_PATTERN, response_data['id'])
 
 
-def test_create_with_non_existing_source_wallet(test_client, token_value_fixture, transfer_category):
-    wallet_target = WalletBuilder().name('cash').create()
+@mark.asyncio
+async def test_create_with_non_existing_source_wallet(test_client, token_value_fixture, transfer_category):
+    wallet_target = await WalletBuilder().name('cash').create()
     response = test_client.post(
         '/accounting/transfers',
         json={
@@ -43,8 +47,9 @@ def test_create_with_non_existing_source_wallet(test_client, token_value_fixture
     assert response.headers['content-type'] == 'application/json'
 
 
-def test_create_with_non_existing_target_wallet(test_client, token_value_fixture, transfer_category):
-    source_wallet = WalletBuilder().name('cash').create()
+@mark.asyncio
+async def test_create_with_non_existing_target_wallet(test_client, token_value_fixture, transfer_category):
+    source_wallet = await WalletBuilder().name('cash').create()
     response = test_client.post(
         '/accounting/transfers',
         json={
@@ -59,9 +64,10 @@ def test_create_with_non_existing_target_wallet(test_client, token_value_fixture
     assert response.headers['content-type'] == 'application/json'
 
 
-def test_get(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
-    wallet_source = WalletBuilder().create()
-    wallet_target = WalletBuilder().name('cash').create()
+@mark.asyncio
+async def test_get(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
+    wallet_source = await WalletBuilder().create()
+    wallet_target = await WalletBuilder().name('cash').create()
     post_response = test_client.post(
         '/accounting/transfers',
         json={

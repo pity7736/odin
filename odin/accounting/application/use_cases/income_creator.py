@@ -18,16 +18,16 @@ class IncomeCreator(Entity):
         super().__init__(**kwargs)
         self._repository = wallet_repository
 
-    def create(self) -> Income:
+    async def create(self) -> Income:
         income = Income(
             date=self._date,
             amount=self._amount,
             category=self._category,
             id=uuid.uuid4()
         )
-        self._add_income_to_wallet(income)
+        await self._add_income_to_wallet(income)
         return income
 
-    def _add_income_to_wallet(self, income):
+    async def _add_income_to_wallet(self, income):
         self._wallet.add_income(income)
-        self._repository.add_income(wallet=self._wallet, income=income)
+        await self._repository.add_income(wallet=self._wallet, income=income)
