@@ -5,6 +5,7 @@ from decimal import Decimal
 import factory
 
 from odin.accounting.application.use_cases import WalletCreator, ExpenseCreator, IncomeCreator
+from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Expense, Category, Wallet
 from odin.accounting.infrastructure.repositories import get_category_repository, get_wallet_repository
 from odin.accounts.domain import User
@@ -26,6 +27,7 @@ class CategoryFactory(factory.Factory):
     id = factory.LazyFunction(uuid.uuid4)
     name = factory.Sequence(lambda n: f'test category{n}')
     user = factory.SubFactory(UserFactory)
+    type = CategoryType.EXPENSE
 
     class Meta:
         model = Category

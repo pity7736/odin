@@ -1,6 +1,7 @@
 from typing import Optional
 
 from odin.accounting.application.repositories import CategoryRepository, WalletRepository, TransferRepository
+from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Category, Wallet, Income, Expense, Transfer
 from odin.accounts.domain import User
 
@@ -10,7 +11,7 @@ class PostgresCategoryRepository(CategoryRepository):
     def add(self, category: Category):
         pass
 
-    def get_all_by_user(self, user: User) -> tuple[Category]:
+    def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
         pass
 
     def get_by_name(self, name: str) -> Optional[Category]:

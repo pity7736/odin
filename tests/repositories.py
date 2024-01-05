@@ -1,6 +1,7 @@
 from typing import Optional, Any
 
 from odin.accounting.application.repositories import CategoryRepository, WalletRepository, TransferRepository
+from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Category, Wallet, Expense, Income, Transfer
 from odin.accounts.application.repositories import TokenRepository, UserRepository
 from odin.accounts.domain import User
@@ -52,17 +53,19 @@ class InMemoryCategoryRepository(CategoryRepository):
         self._categories[category_name] = {
             'name': category_name,
             'id': category.id,
-            'user': category.user
+            'user': category.user,
+            'type': category.type
         }
 
-    def get_all_by_user(self, user: User) -> tuple[Category]:
+    def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
         result = []
         for _, category_data in self._categories.items():
-            if category_data['user'] == user:
+            if category_data['user'] == user and category_data['type'] == type:
                 result.append(Category(
                     id=category_data['id'],
                     name=category_data['name'],
-                    user=category_data['user']
+                    user=category_data['user'],
+                    type=category_data['type']
                 ))
         return tuple(result)
 
@@ -71,7 +74,12 @@ class InMemoryCategoryRepository(CategoryRepository):
             name = name.lower()
             category_data = self._categories.get(name)
             if category_data:
-                return Category(name=name, id=category_data['id'])
+                return Category(
+                    name=name,
+                    id=category_data['id'],
+                    user=category_data['user'],
+                    type=category_data['type']
+                )
 
 
 class InMemoryWalletRepository(WalletRepository):

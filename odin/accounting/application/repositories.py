@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional
 
+from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Category, Wallet, Expense, Income, Transfer
 from odin.accounts.domain import User
 
@@ -12,7 +13,7 @@ class CategoryRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_all_by_user(self, user: User) -> tuple[Category]:
+    def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
         pass
 
     @abstractmethod
