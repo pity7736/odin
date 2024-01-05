@@ -48,8 +48,6 @@ class InMemoryCategoryRepository(CategoryRepository):
     def add(self, category):
         assert isinstance(category, Category), 'category argument must be Category instance'
         category_name = category.name.lower()
-        if category_name in self._categories:
-            raise ValueError(f'a category with name {category_name} already exists')
         self._categories[category_name] = {
             'name': category_name,
             'id': category.id,
@@ -68,6 +66,12 @@ class InMemoryCategoryRepository(CategoryRepository):
                     type=category_data['type']
                 ))
         return tuple(result)
+
+    def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
+        category = self.get_by_name(name)
+        if category:
+            if category.user == user:
+                return category
 
     def get_by_name(self, name):
         if name:

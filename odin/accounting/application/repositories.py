@@ -20,6 +20,10 @@ class CategoryRepository(metaclass=ABCMeta):
     def get_by_name(self, name: str) -> Optional[Category]:
         pass
 
+    @abstractmethod
+    def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
+        pass
+
 
 class WalletRepository(metaclass=ABCMeta):
 

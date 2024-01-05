@@ -8,6 +8,9 @@ from odin.accounts.domain import User
 
 class PostgresCategoryRepository(CategoryRepository):
 
+    def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
+        pass
+
     def add(self, category: Category):
         pass
 
