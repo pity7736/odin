@@ -1,5 +1,8 @@
 from typing import Optional
 
+import asyncpg
+
+from odin import settings
 from odin.accounting.application.repositories import CategoryRepository, WalletRepository, TransferRepository
 from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Category, Wallet, Income, Expense, Transfer
@@ -8,14 +11,44 @@ from odin.accounts.domain import User
 
 class PostgresCategoryRepository(CategoryRepository):
 
-    def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
+    async def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
         pass
 
     async def add(self, category: Category):
-        pass
+        connection = await asyncpg.connect(
+            host=settings.DB_HOST,
+            user=settings.DB_USER,
+            database=settings.DB_NAME,
+            password=settings.DB_PASSWORD,
+            port=settings.DB_PORT,
+        )
+        await connection.execute(
+            'insert into categories (id, name, type, user_id) values ($1, $2, $3, $4)',
+            category.id,
+            category.name,
+            category.type.value,
+            category.user.id
+        )
+        await connection.close()
 
     async def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
-        return ()
+        connection = await asyncpg.connect(
+            host=settings.DB_HOST,
+            user=settings.DB_USER,
+            database=settings.DB_NAME,
+            password=settings.DB_PASSWORD,
+            port=settings.DB_PORT,
+        )
+        records = await connection.fetch(
+            'select id, name, type from categories where user_id = $1 and type = $2',
+            user.id,
+            type.value
+        )
+        await connection.close()
+        categories = []
+        for record in records:
+            categories.append(Category(**record))
+        return tuple(categories)
 
     def get_by_name(self, name: str) -> Optional[Category]:
         pass
