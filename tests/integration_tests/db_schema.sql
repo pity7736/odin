@@ -1,0 +1,23 @@
+BEGIN;
+
+CREATE TABLE users(
+    id UUID PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE tokens(
+    id SERIAL PRIMARY KEY,
+    value TEXT NOT NULL UNIQUE,
+    user_id UUID REFERENCES users
+);
+
+
+CREATE TABLE IF NOT EXISTS categories(
+  id UUID PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  type VARCHAR(15) NOT NULL,
+  user_id UUID REFERENCES users
+);
+
+COMMIT;

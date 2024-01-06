@@ -46,8 +46,9 @@ async def test_create_expense_with_date_in_the_future(category_fixture, wallet_r
     assert str(e.value) == 'date must be less or equal than today.'
 
 
-def test_without_category(wallet_repository):
-    wallet = WalletBuilder().create()
+@mark.asyncio
+async def test_without_category(wallet_repository):
+    wallet = await WalletBuilder().create()
     with raises(ValueError):
         ExpenseCreator(
             date=datetime.date.today(),

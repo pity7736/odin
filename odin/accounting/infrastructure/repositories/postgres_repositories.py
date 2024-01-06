@@ -14,8 +14,8 @@ class PostgresCategoryRepository(CategoryRepository):
     async def add(self, category: Category):
         pass
 
-    def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
-        pass
+    async def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
+        return ()
 
     def get_by_name(self, name: str) -> Optional[Category]:
         pass

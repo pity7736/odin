@@ -98,7 +98,7 @@ class WalletBuilder:
         return self
 
     async def create(self) -> Wallet:
-        get_user_repository().add(self._user)
+        await get_user_repository().add(self._user)
         wallet = await WalletCreator(
             name=self._name,
             balance=self._balance,

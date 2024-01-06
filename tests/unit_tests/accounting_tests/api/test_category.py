@@ -23,9 +23,10 @@ def test_create_category(category_name, category_type, test_client, token_value_
     assert response_data['name'] == category_name
 
 
+@mark.asyncio
 @mark.parametrize('category_name, category_type', params)
-def test_get_all_categories(category_name, category_type, test_client, token_value_fixture, category_repository):
-    CategoryFactory.create(name='category_from_some_user')
+async def test_get_all_categories(category_name, category_type, test_client, token_value_fixture, category_repository):
+    await CategoryFactory.create(name='category_from_some_user')
     test_client.post(
         '/accounting/categories',
         json={'name': category_name, 'type': category_type},
