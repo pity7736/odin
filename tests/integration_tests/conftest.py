@@ -10,6 +10,7 @@ from odin.accounts.domain import Token, User
 from odin.accounts.domain.crypto import get_random_string
 from odin.accounts.infrastructure.repositories.postgres_repositories import PostgresTokenRepository, \
     PostgresUserRepository
+from odin.shared.db_pool import initialize_pool, get_pool
 
 CURRENT_DIR = Path(__file__).parent
 
@@ -59,6 +60,7 @@ async def db_pool(create_db, schema):
 
 @async_fixture
 async def db_connection(db_pool):
+    await initialize_pool()
     connection = await db_pool.acquire()
     yield connection
     await connection.execute('truncate table tokens cascade')
