@@ -3,4 +3,5 @@ tasks.md
 .idea/
 .coverage
 venv/
+odin_venv/
 .env

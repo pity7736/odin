@@ -7,27 +7,26 @@ from odin.accounting.application.repositories import CategoryRepository, WalletR
 from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Category, Wallet, Income, Expense, Transfer
 from odin.accounts.domain import User
-from odin.shared.db_pool import get_pool
+from odin.shared.db_connection_manager import DBConnectionManager
 
 
 class PostgresCategoryRepository(CategoryRepository):
 
     def __init__(self):
-        self._pool = get_pool()
+        self._connection_manager = DBConnectionManager()
 
     async def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
         pass
 
     async def add(self, category: Category):
-        connection = await self._pool.acquire()
-        await connection.execute(
-            'insert into categories (id, name, type, user_id) values ($1, $2, $3, $4)',
-            category.id,
-            category.name,
-            category.type.value,
-            category.user.id
-        )
-        await self._pool.release(connection)
+        async with self._connection_manager as connection:
+            await connection.execute(
+                'insert into categories (id, name, type, user_id) values ($1, $2, $3, $4)',
+                category.id,
+                category.name,
+                category.type.value,
+                category.user.id
+            )
 
     async def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
         connection = await asyncpg.connect(

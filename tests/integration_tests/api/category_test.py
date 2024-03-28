@@ -1,9 +1,6 @@
-from pytest import mark
-
 from odin.accounting.domain import CategoryType
 
 
-@mark.asyncio
 async def test_get_all_categories(db_connection, test_client, token_value_fixture):
     category_type = CategoryType.EXPENSE.value
     category_name = 'test'
