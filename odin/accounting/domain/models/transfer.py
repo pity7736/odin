@@ -13,3 +13,8 @@ class Transfer(Entity):
     _amount = fields.DecimalField()
     _date = fields.DateField()
     _id = fields.StrField(required=True)
+
+    def __eq__(self, other: 'Transfer'):
+        if isinstance(other, Transfer):
+            return self._id == other._id
+        return False

@@ -78,5 +78,5 @@ async def category_fixture(category_repository):
 
 
 @async_fixture
-async def transfer_category(category_repository):
-    return await CategoryFactory.create(name='transfer')
+async def transfer_category(category_repository, user_fixture):
+    return await CategoryFactory.create(name='transfer', user=user_fixture)

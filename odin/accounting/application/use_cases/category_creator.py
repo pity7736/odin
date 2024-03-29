@@ -1,6 +1,6 @@
 import uuid
 
-from nyoibo import Entity, fields
+from nyoibo import fields, Entity
 
 from odin.accounting.domain import Category, CategoryType
 from odin.accounts.domain import User

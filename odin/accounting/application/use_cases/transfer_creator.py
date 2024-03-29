@@ -41,7 +41,7 @@ class TransferCreator(Entity):
         return await self._create_transfer(amount, date or datetime.date.today())
 
     async def _create_transfer(self, amount: Decimal, date: datetime.date):
-        category = await self._category_repository.get_by_name('transfer')
+        category = await self._category_repository.get_by_name_and_user('transfer', self._source.user)
         transfer = Transfer(
             source=self._source,
             target=self._target,

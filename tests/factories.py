@@ -77,8 +77,9 @@ class WalletBuilder:
         self._balance = balance
         return self
 
-    def user(self, user: User):
+    def user(self, user: User) -> 'WalletBuilder':
         self._user = user
+        return self
 
     def add_expense(self, amount, date=None, category=None) -> 'WalletBuilder':
         self._expenses_data.append({
@@ -98,7 +99,11 @@ class WalletBuilder:
         return self
 
     async def create(self) -> Wallet:
-        await get_user_repository().add(self._user)
+        user = await get_user_repository().get_by_email(self._user.email)
+        if user is None:
+            await get_user_repository().add(self._user)
+            user = self._user
+
         wallet = await WalletCreator(
             name=self._name,
             balance=self._balance,
@@ -109,7 +114,7 @@ class WalletBuilder:
             await IncomeCreator(
                 amount=income_data['amount'],
                 date=income_data['date'],
-                category=income_data['category'] or await CategoryFactory.create(),
+                category=income_data['category'] or await CategoryFactory.create(user=user),
                 wallet=wallet,
                 wallet_repository=self._wallet_repository
             ).create()
@@ -118,7 +123,7 @@ class WalletBuilder:
             await ExpenseCreator(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
-                category=expense_data['category'] or await CategoryFactory.create(),
+                category=expense_data['category'] or await CategoryFactory.create(user=user),
                 wallet=wallet,
                 wallet_repository=self._wallet_repository
             ).create()

@@ -10,6 +10,11 @@ class User(Entity):
     _last_name = fields.StrField()
     _id = fields.StrField(required=True)
 
+    def __eq__(self, other: 'User'):
+        if isinstance(other, User):
+            return self._id == other._id
+        return False
+
     def set_password(self, password):
         password = self.__class__._password.parse(password)
         # TODO: this is a dummy implementation because is not a priority right now

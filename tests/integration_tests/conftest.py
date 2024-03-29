@@ -6,6 +6,7 @@ from pytest import fixture
 from pytest_asyncio import fixture as async_fixture
 
 from odin import settings
+from odin.accounting.infrastructure.repositories.postgres_repositories import PostgresWalletRepository
 from odin.accounts.domain import Token, User
 from odin.accounts.domain.crypto import get_random_string
 from odin.accounts.infrastructure.repositories.postgres_repositories import PostgresTokenRepository, \
@@ -61,7 +62,7 @@ async def db_pool(create_db, schema):
 async def db_connection(db_pool):
     connection = await db_pool.acquire()
     yield connection
-    await connection.execute('truncate table tokens cascade')
+    await connection.execute('truncate table tokens, categories, users cascade')
     await db_pool.release(connection)
 
 
@@ -73,6 +74,11 @@ def token_repository():
 @fixture
 def user_repository():
     return PostgresUserRepository()
+
+
+@fixture
+def wallet_repository():
+    return PostgresWalletRepository()
 
 
 @async_fixture

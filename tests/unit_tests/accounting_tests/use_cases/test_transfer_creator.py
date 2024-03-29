@@ -8,9 +8,10 @@ from tests.factories import WalletBuilder
 
 
 @mark.asyncio
-async def test_transfer(transfer_category, wallet_repository, transfer_repository, category_repository):
-    wallet_source = await WalletBuilder().create()
-    wallet_target = await WalletBuilder().name('cash').create()
+async def test_transfer(transfer_category, wallet_repository, transfer_repository, category_repository,
+                        user_fixture):
+    wallet_source = await WalletBuilder().user(user_fixture).create()
+    wallet_target = await WalletBuilder().user(user_fixture).name('cash').create()
     transfer_creator = TransferCreator(
         source=wallet_source,
         target=wallet_target,
@@ -32,9 +33,10 @@ async def test_transfer(transfer_category, wallet_repository, transfer_repositor
 
 
 @mark.asyncio
-async def test_transfer_with_date(transfer_category, wallet_repository, transfer_repository, category_repository):
-    wallet_source = await WalletBuilder().create()
-    wallet_target = await WalletBuilder().name('cash').create()
+async def test_transfer_with_date(transfer_category, wallet_repository, transfer_repository, category_repository,
+                                  user_fixture):
+    wallet_source = await WalletBuilder().user(user_fixture).create()
+    wallet_target = await WalletBuilder().user(user_fixture).name('cash').create()
     transfer = TransferCreator(
         source=wallet_source,
         target=wallet_target,

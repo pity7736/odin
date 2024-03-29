@@ -8,7 +8,7 @@ class DBConnectionManager:
     def __init__(self):
         self._connection: asyncpg.Connection = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> asyncpg.Connection:
         self._connection = await asyncpg.connect(
             host=settings.DB_HOST,
             user=settings.DB_USER,

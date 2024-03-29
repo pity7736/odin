@@ -111,7 +111,8 @@ class InMemoryWalletRepository(WalletRepository):
             'balance': wallet.balance,
             'id': wallet.id,
             'expenses_id': [expense.id for expense in wallet.expenses],
-            'incomes_id': [income.id for income in wallet.incomes]
+            'incomes_id': [income.id for income in wallet.incomes],
+            'user': wallet.user
         }
 
     async def get_by_name(self, name):

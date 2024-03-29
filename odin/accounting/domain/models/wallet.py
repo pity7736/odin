@@ -19,7 +19,9 @@ class Wallet(Entity):
         super().__init__(**kwargs)
 
     def __eq__(self, other: 'Wallet'):
-        return self._name == other._name
+        if isinstance(other, Wallet):
+            return self._name == other._name
+        return False
 
     def add_expense(self, expense: Expense):
         assert isinstance(expense, Expense), 'expense argument must be Expense instance'

@@ -59,5 +59,5 @@ class TransferRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def get_by_id(self, id: str) -> tuple[Transfer]:
+    async def get_by_id(self, id: str) -> Optional[Transfer]:
         pass

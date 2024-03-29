@@ -8,9 +8,10 @@ from tests.utils import UUID_PATTERN
 
 
 @mark.asyncio
-async def test_create(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
-    wallet_source = await WalletBuilder().create()
-    wallet_target = await WalletBuilder().name('cash').create()
+async def test_create(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository,
+                      user_fixture):
+    wallet_source = await WalletBuilder().user(user_fixture).create()
+    wallet_target = await WalletBuilder().user(user_fixture).name('cash').create()
     response = test_client.post(
         '/accounting/transfers',
         json={
@@ -65,9 +66,10 @@ async def test_create_with_non_existing_target_wallet(test_client, token_value_f
 
 
 @mark.asyncio
-async def test_get(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository):
-    wallet_source = await WalletBuilder().create()
-    wallet_target = await WalletBuilder().name('cash').create()
+async def test_get(test_client, token_value_fixture, transfer_category, wallet_repository, transfer_repository,
+                   user_fixture):
+    wallet_source = await WalletBuilder().user(user_fixture).create()
+    wallet_target = await WalletBuilder().user(user_fixture).name('cash').create()
     post_response = test_client.post(
         '/accounting/transfers',
         json={
