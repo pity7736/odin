@@ -2,8 +2,7 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
 from odin.accounting.application.use_cases import TransferCreator
-from odin.accounting.infrastructure.repositories import get_transfer_repository, get_wallet_repository, \
-    get_category_repository
+from odin.accounting.infrastructure.repositories import RepositoryFactory
 from odin.accounts.infrastructure.api.decorators import login_required
 
 
@@ -13,13 +12,14 @@ class TransfersEndpoint(HTTPEndpoint):
     @login_required
     async def post(request):
         data = await request.json()
+        repository_factory = RepositoryFactory()
         try:
-            transfer_creator = await TransferCreator.from_wallet_names(
-                source_name=data['source'],
-                target_name=data['target'],
-                wallet_repository=get_wallet_repository(),
-                transfer_repository=get_transfer_repository(),
-                category_repository=get_category_repository()
+            transfer_creator = await TransferCreator.from_wallet_ids(
+                source_id=data['source'],
+                target_id=data['target'],
+                wallet_repository=repository_factory.get_wallet_repository(),
+                transfer_repository=repository_factory.get_transfer_repository(),
+                category_repository=repository_factory.get_category_repository()
             )
         except ValueError:
             return JSONResponse({}, status_code=400)
@@ -39,7 +39,7 @@ class TransferEndpoint(HTTPEndpoint):
     @staticmethod
     @login_required
     async def get(request):
-        transfer = await get_transfer_repository().get_by_id(request.path_params['id'])
+        transfer = await RepositoryFactory().get_transfer_repository().get_by_id(request.path_params['id'])
         if transfer:
             return JSONResponse({
                 'source': transfer.source.name,

@@ -27,11 +27,11 @@ class TransferCreator(Entity):
         self._category_repository = category_repository
 
     @classmethod
-    async def from_wallet_names(cls, source_name: str, target_name: str, wallet_repository: WalletRepository,
-                                transfer_repository: TransferRepository, category_repository: CategoryRepository):
+    async def from_wallet_ids(cls, source_id: str, target_id: str, wallet_repository: WalletRepository,
+                              transfer_repository: TransferRepository, category_repository: CategoryRepository):
         return cls(
-            source=await wallet_repository.get_by_name(source_name),
-            target=await wallet_repository.get_by_name(target_name),
+            source=await wallet_repository.get_by_id(source_id),
+            target=await wallet_repository.get_by_id(target_id),
             wallet_repository=wallet_repository,
             transfer_repository=transfer_repository,
             category_repository=category_repository
@@ -41,7 +41,7 @@ class TransferCreator(Entity):
         return await self._create_transfer(amount, date or datetime.date.today())
 
     async def _create_transfer(self, amount: Decimal, date: datetime.date):
-        category = await self._category_repository.get_by_name_and_user('transfer', self._source.user)
+        category = await self._category_repository.get_by_name('transfer')
         transfer = Transfer(
             source=self._source,
             target=self._target,

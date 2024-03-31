@@ -8,4 +8,4 @@ class Category(Entity):
     _id = fields.StrField(required=True)
     _name = fields.StrField(required=True)
     _user = fields.LinkField(to=User)
-    _type = fields.StrField(required=True, choices=CategoryType)
+    _type = fields.StrField(choices=CategoryType)

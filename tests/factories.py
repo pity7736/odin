@@ -7,7 +7,7 @@ import factory
 from odin.accounting.application.use_cases import WalletCreator, ExpenseCreator, IncomeCreator
 from odin.accounting.domain import CategoryType
 from odin.accounting.domain.models import Expense, Category, Wallet
-from odin.accounting.infrastructure.repositories import get_category_repository, get_wallet_repository
+from odin.accounting.infrastructure.repositories import RepositoryFactory
 from odin.accounts.domain import User
 from odin.accounts.infrastructure.repositories import get_user_repository
 
@@ -37,7 +37,7 @@ class CategoryFactory(factory.Factory):
         category = super()._create(model_class, *args, **kwargs)
 
         async def __create():
-            repository = get_category_repository()
+            repository = RepositoryFactory().get_category_repository()
             await repository.add(category)
             return category
         return __create()
@@ -60,7 +60,7 @@ class WalletBuilder:
         self._balance = '1_000_000'
         self._expenses_data = []
         self._incomes_data = []
-        self._wallet_repository = get_wallet_repository()
+        self._wallet_repository = RepositoryFactory().get_wallet_repository()
         self._user = User(
             email='me@raiseexception.com',
             password='test',

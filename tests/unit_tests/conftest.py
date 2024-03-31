@@ -1,16 +1,17 @@
 import uuid
+from unittest.mock import AsyncMock
 
 from pytest import fixture
 from pytest_asyncio import fixture as async_fixture
 
+from odin.accounting.infrastructure.repositories import RepositoryFactory
 from odin.accounting.infrastructure.repositories.postgres_repositories import PostgresCategoryRepository, \
     PostgresWalletRepository, PostgresTransferRepository
 from odin.accounts.domain.models import User, Token
 from odin.accounts.infrastructure.repositories.postgres_repositories import PostgresUserRepository, \
     PostgresTokenRepository
 from odin.accounts.domain.crypto import get_random_string
-from tests.repositories import InMemoryTokenRepository, InMemoryUserRepository, InMemoryCategoryRepository, \
-    InMemoryWalletRepository, InMemoryTransferRepository
+from tests.repositories import InMemoryTokenRepository, InMemoryUserRepository
 from tests.factories import CategoryFactory
 
 
@@ -30,22 +31,22 @@ def token_repository(mocker):
 
 @fixture(autouse=True)
 def category_repository(mocker):
-    repository = InMemoryCategoryRepository()
-    mocker.patch.object(PostgresCategoryRepository, '__new__', return_value=repository)
+    repository = AsyncMock(spec_set=PostgresCategoryRepository)
+    mocker.patch.object(RepositoryFactory, 'get_category_repository', return_value=repository)
     return repository
 
 
 @fixture(autouse=True)
 def wallet_repository(mocker):
-    repository = InMemoryWalletRepository()
-    mocker.patch.object(PostgresWalletRepository, '__new__', return_value=repository)
+    repository = AsyncMock(spec_set=PostgresWalletRepository)
+    mocker.patch.object(RepositoryFactory, 'get_wallet_repository', return_value=repository)
     return repository
 
 
 @fixture(autouse=True)
 def transfer_repository(mocker):
-    repository = InMemoryTransferRepository()
-    mocker.patch.object(PostgresTransferRepository, '__new__', return_value=repository)
+    repository = AsyncMock(spec_set=PostgresTransferRepository)
+    mocker.patch.object(RepositoryFactory, 'get_transfer_repository', return_value=repository)
     return repository
 
 
@@ -73,8 +74,8 @@ async def token_value_fixture(user_fixture, test_client, token_repository):
 
 
 @async_fixture
-async def category_fixture(category_repository):
-    return await CategoryFactory.create()
+async def category_fixture(category_repository, user_fixture):
+    return await CategoryFactory.create(user=user_fixture)
 
 
 @async_fixture

@@ -3,7 +3,7 @@ from starlette.responses import JSONResponse
 
 from odin.accounting.application.use_cases import CategoryCreator
 from odin.accounting.domain import CategoryType
-from odin.accounting.infrastructure.repositories import get_category_repository
+from odin.accounting.infrastructure.repositories import RepositoryFactory
 from odin.accounts.infrastructure.api.decorators import login_required
 
 
@@ -26,7 +26,10 @@ class CategoriesEndpoint(HTTPEndpoint):
                 )
 
         categories = []
-        for category in await get_category_repository().get_all_by_user_and_type(request.user, category_type):
+        for category in await RepositoryFactory().get_category_repository().get_all_by_user_and_type(
+                request.user,
+                category_type
+        ):
             categories.append({'name': category.name})
         return JSONResponse({'categories': categories})
 
@@ -38,7 +41,7 @@ class CategoriesEndpoint(HTTPEndpoint):
             name=data['name'],
             type=data['type'],
             user=request.user,
-            category_repository=get_category_repository()
+            category_repository=RepositoryFactory().get_category_repository()
         )
         category = await creator.create()
         return JSONResponse({'name': category.name}, status_code=201)

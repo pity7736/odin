@@ -8,11 +8,11 @@ routes = (
     Route('/transfers', transfer_views.TransfersEndpoint),
     Route('/transfers/{id}', transfer_views.TransferEndpoint),
     Route('/wallets', wallet_views.WalletsEndpoint),
-    Route('/wallets/{wallet_name}', wallet_views.WalletEndpoint),
-    Route('/wallets/{wallet_name}/expenses', expense_views.ExpensesEndpoint),
-    Route('/wallets/{wallet_name}/expenses/{id}', expense_views.ExpenseEndpoint),
-    Route('/wallets/{wallet_name}/incomes', income_views.IncomesEndpoint),
-    Route('/wallets/{wallet_name}/incomes/{id}', income_views.IncomeEndpoint),
+    Route('/wallets/{wallet_id}', wallet_views.WalletEndpoint),
+    Route('/wallets/{wallet_id}/expenses', expense_views.ExpensesEndpoint),
+    Route('/wallets/{wallet_id}/expenses/{id}', expense_views.ExpenseEndpoint),
+    Route('/wallets/{wallet_id}/incomes', income_views.IncomesEndpoint),
+    Route('/wallets/{wallet_id}/incomes/{id}', income_views.IncomeEndpoint),
 )
 
 accounting_api = Starlette(routes=routes)

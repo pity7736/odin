@@ -4,5 +4,5 @@ from tests.factories import WalletBuilder
 
 
 @async_fixture
-async def wallet(wallet_repository, category_repository):
+async def wallet_fixture(wallet_repository, category_repository):
     return await WalletBuilder().create()

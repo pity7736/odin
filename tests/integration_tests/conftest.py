@@ -6,11 +6,13 @@ from pytest import fixture
 from pytest_asyncio import fixture as async_fixture
 
 from odin import settings
-from odin.accounting.infrastructure.repositories.postgres_repositories import PostgresWalletRepository
+from odin.accounting.infrastructure.repositories.postgres_repositories import PostgresWalletRepository, \
+    PostgresCategoryRepository, PostgresTransferRepository
 from odin.accounts.domain import Token, User
 from odin.accounts.domain.crypto import get_random_string
 from odin.accounts.infrastructure.repositories.postgres_repositories import PostgresTokenRepository, \
     PostgresUserRepository
+from tests.factories import CategoryFactory, WalletBuilder
 
 CURRENT_DIR = Path(__file__).parent
 
@@ -23,22 +25,19 @@ def schema():
 
 
 @async_fixture(scope='session')
-async def create_db():
-    db_name = settings.DB_NAME
+async def create_db(db_name_setting):
     connection = await asyncpg.connect(
         host=settings.DB_HOST,
         user=settings.DB_USER,
-        database=db_name,
+        database=db_name_setting,
         password=settings.DB_PASSWORD,
         port=settings.DB_PORT,
     )
-    settings.DB_NAME = f'{db_name}_tests'
     await connection.execute(f'DROP DATABASE IF EXISTS {settings.DB_NAME}')
     await connection.execute(f'CREATE DATABASE {settings.DB_NAME} WITH OWNER odin')
     yield
     await connection.execute(f'DROP DATABASE {settings.DB_NAME}')
     await connection.close()
-    settings.DB_NAME = db_name
 
 
 @async_fixture(scope='session')
@@ -81,6 +80,16 @@ def wallet_repository():
     return PostgresWalletRepository()
 
 
+@fixture
+def category_repository():
+    return PostgresCategoryRepository()
+
+
+@fixture
+def transfer_repository(mocker):
+    return PostgresTransferRepository()
+
+
 @async_fixture
 async def user_fixture(user_repository):
     user = User(
@@ -102,3 +111,18 @@ async def token_value_fixture(user_fixture, test_client, token_repository):
     )
     await token_repository.add(token)
     return token.value
+
+
+@async_fixture
+async def category_fixture(category_repository, user_fixture):
+    return await CategoryFactory.create(user=user_fixture)
+
+
+@async_fixture
+async def wallet_fixture(wallet_repository, user_fixture):
+    return await WalletBuilder().user(user_fixture).create()
+
+
+@async_fixture
+async def transfer_category(category_repository):
+    return await CategoryFactory.create(name='transfer', user=None)

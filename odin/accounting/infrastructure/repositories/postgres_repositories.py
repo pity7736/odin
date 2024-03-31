@@ -24,6 +24,16 @@ class PostgresCategoryRepository(CategoryRepository):
         if record:
             return Category(**record)
 
+    async def get_by_id_and_user(self, id: str, user: User) -> Optional[Category]:
+        async with self._connection_manager as connection:
+            record = await connection.fetchrow(
+                'select id, name, type from categories where id = $1 and user_id = $2',
+                id,
+                user.id
+            )
+        if record:
+            return Category(**record)
+
     async def add(self, category: Category):
         async with self._connection_manager as connection:
             await connection.execute(
@@ -31,7 +41,7 @@ class PostgresCategoryRepository(CategoryRepository):
                 category.id,
                 category.name,
                 category.type.value,
-                category.user.id
+                getattr(category.user, 'id', None)
             )
 
     async def get_all_by_user_and_type(self, user: User, type: CategoryType) -> tuple[Category]:
@@ -46,8 +56,14 @@ class PostgresCategoryRepository(CategoryRepository):
             categories.append(Category(**record))
         return tuple(categories)
 
-    def get_by_name(self, name: str) -> Optional[Category]:
-        pass
+    async def get_by_name(self, name: str) -> Optional[Category]:
+        async with self._connection_manager as connection:
+            record = await connection.fetchrow(
+                'select id, name, type from categories where name = $1 and user_id is null',
+                name,
+            )
+        if record:
+            return Category(**record)
 
 
 class PostgresWalletRepository(WalletRepository):
@@ -101,6 +117,61 @@ class PostgresWalletRepository(WalletRepository):
         if record:
             return Wallet(**record)
 
+    async def get_by_id(self, id: str) -> Optional[Wallet]:
+        async with self._connection_manager as connection:
+            record = await connection.fetchrow(
+                f'''
+                    select id, name, balance
+                    from {self._table_name}
+                    where id = $1
+                ''',
+                id
+            )
+        if record:
+            return Wallet(**record)
+
+    async def get_expenses_by_wallet_id(self, wallet_id: str) -> list[Expense]:
+        async with self._connection_manager as connection:
+            records = await connection.fetch(
+                '''
+                    select
+                        m.id as m_id, amount, date, c.id as c_id, c.name
+                    from movements as m
+                    join categories as c on (m.category_id = c.id)
+                    where wallet_id = $1 and m.movement_type = 'E'
+                ''',
+                wallet_id,
+            )
+            expenses = []
+            for record in records:
+                expenses.append(Expense(
+                    id=record['m_id'],
+                    category=Category(id=record['c_id'], name=record['name']),
+                    **record
+                ))
+            return expenses
+
+    async def get_incomes_by_wallet_id(self, wallet_id: str) -> list[Income]:
+        async with self._connection_manager as connection:
+            records = await connection.fetch(
+                '''
+                    select
+                        m.id as m_id, amount, date, c.id as c_id, c.name
+                    from movements as m
+                    join categories as c on (m.category_id = c.id)
+                    where wallet_id = $1 and m.movement_type = 'I'
+                ''',
+                wallet_id,
+            )
+            incomes = []
+            for record in records:
+                incomes.append(Income(
+                    id=record['m_id'],
+                    category=Category(id=record['c_id'], name=record['name']),
+                    **record
+                ))
+            return incomes
+
     async def get_by_name_with_expenses(self, name: str) -> Optional[Wallet]:
         async with self._connection_manager as connection:
             records = await connection.fetch(
@@ -129,6 +200,29 @@ class PostgresWalletRepository(WalletRepository):
                 name=name,
                 expenses=expenses
             )
+
+    async def get_expense_by_wallet_and_expense_id(self, wallet_id: str, expense_id) -> Optional[Expense]:
+        async with self._connection_manager as connection:
+            record = await connection.fetchrow(
+                '''
+                    select
+                        m.id as m_id, amount, date, c.id as c_id, c.name
+                    from movements as m
+                    join categories as c on (m.category_id = c.id)
+                    where wallet_id = $1 and m.id = $2
+                ''',
+                wallet_id,
+                expense_id
+            )
+            if record:
+                return Expense(
+                    id=record['m_id'],
+                    category=Category(id=record['c_id'], name=record['name']),
+                    **record
+                )
+
+    async def get_income_by_wallet_and_income_id(self, wallet_id: str, income_id) -> Optional[Income]:
+        pass
 
     async def get_by_name_with_incomes(self, name: str) -> Optional[Wallet]:
         async with self._connection_manager as connection:

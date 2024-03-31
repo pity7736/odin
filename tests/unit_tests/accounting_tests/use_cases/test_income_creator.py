@@ -20,7 +20,6 @@ async def test_create_income(category_fixture, wallet_repository):
         wallet_repository=wallet_repository
     )
     income = await income_creator.create()
-    wallet = await wallet_repository.get_by_name(wallet.name)
 
     assert income.date == date
     assert income.amount == amount

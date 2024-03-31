@@ -26,6 +26,7 @@ async def test_create_category_with_same_name_and_user(category_repository):
 async def test_create_category_with_same_name_and_different_user(category_repository):
     user = UserFactory.create()
     await CategoryFactory.create(user=user, name='test')
+    category_repository.get_by_name_and_user.return_value = None
     category_creator = CategoryCreator(
         name='test',
         user=UserFactory.create(),

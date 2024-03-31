@@ -24,6 +24,10 @@ class CategoryRepository(metaclass=ABCMeta):
     async def get_by_name_and_user(self, name: str, user: User) -> Optional[Category]:
         pass
 
+    @abstractmethod
+    async def get_by_id_and_user(self, id: str, user: User) -> Optional[Category]:
+        pass
+
 
 class WalletRepository(metaclass=ABCMeta):
 
@@ -44,7 +48,27 @@ class WalletRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    async def get_by_id(self, id: str) -> Optional[Wallet]:
+        pass
+
+    @abstractmethod
     async def get_by_name_with_expenses(self, name: str) -> Optional[Wallet]:
+        pass
+
+    @abstractmethod
+    async def get_expenses_by_wallet_id(self, wallet_id: str) -> list[Expense]:
+        pass
+
+    @abstractmethod
+    async def get_incomes_by_wallet_id(self, wallet_id: str) -> list[Income]:
+        pass
+
+    @abstractmethod
+    async def get_expense_by_wallet_and_expense_id(self, wallet_id: str, expense_id) -> Optional[Wallet]:
+        pass
+
+    @abstractmethod
+    async def get_income_by_wallet_and_income_id(self, wallet_id: str, income_id) -> Optional[Income]:
         pass
 
     @abstractmethod

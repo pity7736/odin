@@ -39,4 +39,5 @@ class ExpenseCreator(Entity):
         except AssertionError as error:
             raise ValueError(str(error))
         await self._repository.add_expense(wallet=self._wallet, expense=expense)
+
         return expense

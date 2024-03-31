@@ -1,1 +1,1 @@
-from .repository_factory import get_wallet_repository, get_category_repository, get_transfer_repository  # noqa: F401
+from .repository_factory import RepositoryFactory  # noqa: F401

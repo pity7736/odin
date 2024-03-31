@@ -17,11 +17,12 @@ class User(Entity):
 
     def set_password(self, password):
         password = self.__class__._password.parse(password)
-        # TODO: this is a dummy implementation because is not a priority right now
-        if '$' in password:
-            self._password = password
-        else:
-            self._password = make_password(password)
+        if password:
+            # TODO: this is a dummy implementation because is not a priority right now
+            if '$' in password:
+                self._password = password
+            else:
+                self._password = make_password(password)
 
     def check_password(self, raw_password):
         salt = self._password.split('$')[0]

@@ -22,7 +22,6 @@ async def test_create_expense(category_fixture, wallet_repository):
         wallet_repository=wallet_repository
     )
     expense = await expense_creator.create()
-    wallet = await wallet_repository.get_by_name(wallet.name)
 
     assert expense.date == date
     assert expense.amount == amount
