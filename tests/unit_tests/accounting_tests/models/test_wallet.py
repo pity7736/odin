@@ -1,14 +1,16 @@
 import datetime
+import uuid
 from decimal import Decimal
 
 from pytest import raises, mark
 
-from odin.accounting.models import Income
+from odin.accounting.domain.models import Income
 from tests.factories import WalletBuilder, ExpenseFactory
 
 
-def test_assert_is_expense_instance(category_fixture):
-    wallet = WalletBuilder().create()
+@mark.asyncio
+async def test_assert_is_expense_instance(category_fixture):
+    wallet = await WalletBuilder().create()
     with raises(AssertionError) as error:
         wallet.add_expense(Decimal('100_000'))
 
@@ -46,8 +48,9 @@ def test_add_expense(wallet_builder, amount, expected_balance, expected_expenses
     assert len(wallet.expenses) == expected_expenses_number
 
 
-def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
-    wallet = WalletBuilder().balance('100_000').create()
+@mark.asyncio
+async def test_add_expense_with_higher_amount_than_wallet_balance():
+    wallet = await WalletBuilder().balance('100_000').create()
     expense = ExpenseFactory.build(amount=Decimal('100_001'))
 
     with raises(AssertionError) as error:
@@ -56,12 +59,14 @@ def test_add_expense_with_higher_amount_than_wallet_balance(db_transaction):
     assert str(error.value) == 'expense amount must be lower than wallet balance'
 
 
-def test_add_income(category_fixture):
-    wallet = WalletBuilder().create()
+@mark.asyncio
+async def test_add_income(category_fixture):
+    wallet = await WalletBuilder().create()
     income = Income(
         date=datetime.date.today(),
         amount=Decimal('100_000'),
-        category=category_fixture
+        category=category_fixture,
+        id=uuid.uuid4()
     )
     wallet.add_income(income)
 
@@ -69,8 +74,9 @@ def test_add_income(category_fixture):
     assert len(wallet.incomes) == 1
 
 
-def test_check_income_type_in_add_income(db_transaction):
-    wallet = WalletBuilder().create()
+@mark.asyncio
+async def test_check_income_type_in_add_income():
+    wallet = await WalletBuilder().create()
     with raises(AssertionError) as error:
         wallet.add_income(100_000)
 

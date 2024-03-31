@@ -1,16 +1,33 @@
 import datetime
+import uuid
 from decimal import Decimal
-from uuid import uuid4
 
 import factory
 
-from odin.accounting.controllers import WalletCreator, ExpenseCreator, IncomeCreator
-from odin.accounting.models import Expense, Category, Wallet
-from odin.accounting.repositories.repository_factory import get_category_repository
+from odin.accounting.application.use_cases import WalletCreator, ExpenseCreator, IncomeCreator
+from odin.accounting.domain import CategoryType
+from odin.accounting.domain.models import Expense, Category, Wallet
+from odin.accounting.infrastructure.repositories import RepositoryFactory
+from odin.accounts.domain import User
+from odin.accounts.infrastructure.repositories import get_user_repository
+
+
+class UserFactory(factory.Factory):
+    email = factory.Faker('email')
+    first_name = factory.Faker('name')
+    last_name = factory.Faker('name')
+    id = factory.LazyFunction(uuid.uuid4)
+    password = 'some password'
+
+    class Meta:
+        model = User
 
 
 class CategoryFactory(factory.Factory):
+    id = factory.LazyFunction(uuid.uuid4)
     name = factory.Sequence(lambda n: f'test category{n}')
+    user = factory.SubFactory(UserFactory)
+    type = CategoryType.EXPENSE
 
     class Meta:
         model = Category
@@ -18,13 +35,16 @@ class CategoryFactory(factory.Factory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         category = super()._create(model_class, *args, **kwargs)
-        repository = get_category_repository()
-        repository.add(category)
-        return category
+
+        async def __create():
+            repository = RepositoryFactory().get_category_repository()
+            await repository.add(category)
+            return category
+        return __create()
 
 
 class ExpenseFactory(factory.Factory):
-    uuid = factory.LazyFunction(uuid4)
+    id = factory.LazyFunction(uuid.uuid4)
     date = datetime.date(2022, 3, 30)
     amount = Decimal('100_000')
     category = factory.SubFactory(CategoryFactory)
@@ -40,6 +60,14 @@ class WalletBuilder:
         self._balance = '1_000_000'
         self._expenses_data = []
         self._incomes_data = []
+        self._wallet_repository = RepositoryFactory().get_wallet_repository()
+        self._user = User(
+            email='me@raiseexception.com',
+            password='test',
+            first_name='julián',
+            last_name='cortés',
+            id=uuid.uuid4()
+        )
 
     def name(self, name) -> 'WalletBuilder':
         self._name = name
@@ -49,11 +77,16 @@ class WalletBuilder:
         self._balance = balance
         return self
 
+    def user(self, user: User) -> 'WalletBuilder':
+        self._user = user
+        return self
+
     def add_expense(self, amount, date=None, category=None) -> 'WalletBuilder':
         self._expenses_data.append({
             'amount': amount,
             'date': date or datetime.date.today(),
-            'category': category
+            'category': category,
+            'id': uuid.uuid4()
         })
         return self
 
@@ -65,33 +98,46 @@ class WalletBuilder:
         })
         return self
 
-    def create(self) -> Wallet:
-        wallet = WalletCreator(name=self._name, balance=self._balance).create()
+    async def create(self) -> Wallet:
+        user = await get_user_repository().get_by_email(self._user.email)
+        if user is None:
+            await get_user_repository().add(self._user)
+            user = self._user
+
+        wallet = await WalletCreator(
+            name=self._name,
+            balance=self._balance,
+            user=self._user,
+            wallet_repository=self._wallet_repository,
+        ).create()
         for income_data in self._incomes_data:
-            IncomeCreator(
+            await IncomeCreator(
                 amount=income_data['amount'],
                 date=income_data['date'],
-                category=income_data['category'] or CategoryFactory.create(),
-                wallet=wallet
+                category=income_data['category'] or await CategoryFactory.create(user=user),
+                wallet=wallet,
+                wallet_repository=self._wallet_repository
             ).create()
 
         for expense_data in self._expenses_data:
-            ExpenseCreator(
+            await ExpenseCreator(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
-                category=expense_data['category'] or CategoryFactory.create(),
-                wallet=wallet
+                category=expense_data['category'] or await CategoryFactory.create(user=user),
+                wallet=wallet,
+                wallet_repository=self._wallet_repository
             ).create()
         return wallet
 
     def build(self) -> Wallet:
-        wallet = Wallet(name=self._name, balance=self._balance)
+        wallet = Wallet(name=self._name, balance=self._balance, user=self._user, id=uuid.uuid4())
         for expense_data in self._expenses_data:
             expense = Expense(
                 amount=expense_data['amount'],
                 date=expense_data['date'],
                 category=expense_data['category'] or CategoryFactory.build(),
-                wallet=wallet
+                wallet=wallet,
+                id=uuid.uuid4()
             )
             wallet.add_expense(expense)
         return wallet
