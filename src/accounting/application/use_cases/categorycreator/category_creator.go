@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	categorycommand "raiseexception.dev/odin/src/accounting/application/commands/category"
+	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
 )

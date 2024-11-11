@@ -1,5 +1,10 @@
 package constants
 
+import (
+	"fmt"
+	"strings"
+)
+
 type CategoryType int8
 
 const (
@@ -7,3 +12,22 @@ const (
 	EXPENSE CategoryType = iota
 	INCOME
 )
+
+func NewFromString(value string) (CategoryType, error) {
+	value = strings.ToLower(value)
+	switch value {
+	case "expense":
+		return EXPENSE, nil
+	case "income":
+		return INCOME, nil
+	default:
+		return 0, fmt.Errorf("%s is an invalid category type", value)
+	}
+}
+
+func (c CategoryType) String() string {
+	if c == EXPENSE {
+		return "expense"
+	}
+	return "income"
+}

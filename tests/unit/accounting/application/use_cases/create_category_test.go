@@ -10,19 +10,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	categorycommand "raiseexception.dev/odin/src/accounting/application/commands/category"
-	categorycreator "raiseexception.dev/odin/src/accounting/application/use_cases/category_creator"
+	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
+	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
 	"raiseexception.dev/odin/src/shared/domain/user"
 	"raiseexception.dev/odin/tests/unit/mocks"
 )
 
 type setup struct {
-	repository *mocks.MockCategoryRepository
-	command categorycommand.CategoryCreatorCommand
+	repository   *mocks.MockCategoryRepository
+	command      categorycommand.CategoryCreatorCommand
 	categoryName string
 	categoryType constants.CategoryType
-	user *user.User
+	user         *user.User
 }
 
 func newSetup(t *testing.T) setup {
@@ -32,11 +32,11 @@ func newSetup(t *testing.T) setup {
 	categoryType := constants.EXPENSE
 	command := categorycommand.New(categoryName, categoryType, *user)
 	return setup{
-		repository: repository,
-		command: command,
+		repository:   repository,
+		command:      command,
 		categoryName: categoryName,
 		categoryType: categoryType,
-		user: user,
+		user:         user,
 	}
 }
 
@@ -57,7 +57,7 @@ func Test(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, id.String(), category.ID())
 		assert.Equal(t, setup.categoryName, category.Name())
-		assert.Equal(t, setup.categoryName, category.Type())
+		assert.Equal(t, setup.categoryType, category.Type())
 		assert.Equal(t, *user, category.User())
 		setup.repository.AssertCalled(t, "Add", ctx, category)
 	})

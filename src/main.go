@@ -1,11 +1,11 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"raiseexception.dev/odin/src/shared/infrastructure/api"
+	"raiseexception.dev/odin/src/shared/infrastructure/repositoryfactory"
+)
 
 func main() {
-	app := fiber.New()
-	app.Get("/ping", func(c *fiber.Ctx) error {
-		return c.SendString("pong")
-	})
-	app.Listen(":8000")
+	app := api.NewFiberApplication(repositoryfactory.New())
+	app.Start()
 }
