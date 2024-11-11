@@ -1,0 +1,8 @@
+with-expecter: true
+dir: tests/unit/mocks
+all: true
+outpkg: mocks
+packages:
+  raiseexception.dev/odin/src/accounting/domain/repositories:
+    interfaces:
+      CategoryRepository:
