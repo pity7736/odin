@@ -1,4 +1,4 @@
-package category_test
+package category_api_test
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package categoryhandler
+package categoryrequestbody
 
 import (
 	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
@@ -6,13 +6,13 @@ import (
 	"raiseexception.dev/odin/src/shared/domain/user"
 )
 
-type categoryBody struct {
+type CategoryRequestBody struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 	User string `json:"user"`
 }
 
-func (c categoryBody) CreateCategoryCreatorCommand() categorycommand.CategoryCreatorCommand {
+func (c CategoryRequestBody) CreateCategoryCreatorCommand() categorycommand.CategoryCreatorCommand {
 	categoryType, _ := constants.NewFromString(c.Type)
 	command := categorycommand.New(
 		c.Name,

@@ -1,4 +1,4 @@
-package create_category__test
+package create_category_test
 
 import (
 	"context"
@@ -58,7 +58,7 @@ func Test(t *testing.T) {
 		assert.Equal(t, id.String(), category.ID())
 		assert.Equal(t, setup.categoryName, category.Name())
 		assert.Equal(t, setup.categoryType, category.Type())
-		assert.Equal(t, *user, category.User())
+		assert.Equal(t, user, category.User())
 		setup.repository.AssertCalled(t, "Add", ctx, category)
 	})
 
