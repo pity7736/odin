@@ -7,3 +7,7 @@ type User struct {
 func New(email string) *User {
 	return &User{email: email}
 }
+
+func (u *User) Email() string {
+	return u.email
+}

@@ -13,17 +13,16 @@ type factory struct {
 }
 
 func New(t *testing.T) *factory {
-	categoryRepository := mocks.NewMockCategoryRepository(t)
-	return &factory{
-		t:                  t,
-		categoryRepository: categoryRepository,
-	}
+	return &factory{t: t}
 }
 
 func (f *factory) GetCategoryRepository() repositories.CategoryRepository {
-	return f.categoryRepository
+	return f.GetCategoryRepositoryMock()
 }
 
 func (f *factory) GetCategoryRepositoryMock() *mocks.MockCategoryRepository {
+	if f.categoryRepository == nil {
+		f.categoryRepository = mocks.NewMockCategoryRepository(f.t)
+	}
 	return f.categoryRepository
 }

@@ -8,10 +8,10 @@ import (
 type CategoryCreatorCommand struct {
 	name         string
 	categoryType constants.CategoryType
-	user         user.User
+	user         *user.User
 }
 
-func New(name string, categoryType constants.CategoryType, user user.User) CategoryCreatorCommand {
+func New(name string, categoryType constants.CategoryType, user *user.User) CategoryCreatorCommand {
 	return CategoryCreatorCommand{name: name, categoryType: categoryType, user: user}
 }
 
@@ -23,6 +23,6 @@ func (c CategoryCreatorCommand) Type() constants.CategoryType {
 	return c.categoryType
 }
 
-func (c CategoryCreatorCommand) User() user.User {
+func (c CategoryCreatorCommand) User() *user.User {
 	return c.user
 }

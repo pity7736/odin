@@ -30,7 +30,7 @@ func newSetup(t *testing.T) setup {
 	categoryName := "test"
 	user := getUser()
 	categoryType := constants.EXPENSE
-	command := categorycommand.New(categoryName, categoryType, *user)
+	command := categorycommand.New(categoryName, categoryType, user)
 	return setup{
 		repository:   repository,
 		command:      command,

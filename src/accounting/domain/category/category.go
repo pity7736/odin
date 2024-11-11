@@ -9,10 +9,10 @@ type Category struct {
 	name string
 	id   string
 	t    constants.CategoryType
-	user user.User
+	user *user.User
 }
 
-func New(id, name string, t constants.CategoryType, user user.User) *Category {
+func New(id, name string, t constants.CategoryType, user *user.User) *Category {
 	return &Category{
 		name: name,
 		id:   id,
@@ -33,6 +33,6 @@ func (c *Category) Type() constants.CategoryType {
 	return c.t
 }
 
-func (c *Category) User() user.User {
+func (c *Category) User() *user.User {
 	return c.user
 }

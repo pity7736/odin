@@ -17,7 +17,7 @@ func (c categoryBody) CreateCategoryCreatorCommand() categorycommand.CategoryCre
 	command := categorycommand.New(
 		c.Name,
 		categoryType,
-		*user.New(c.User),
+		user.New(c.User),
 	)
 	return command
 }
