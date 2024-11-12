@@ -70,6 +70,54 @@ func (_c *MockCategoryRepository_Add_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// GetAll provides a mock function with given fields: ctx
+func (_m *MockCategoryRepository) GetAll(ctx context.Context) []*category.Category {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 []*category.Category
+	if rf, ok := ret.Get(0).(func(context.Context) []*category.Category); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*category.Category)
+		}
+	}
+
+	return r0
+}
+
+// MockCategoryRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type MockCategoryRepository_GetAll_Call struct {
+	*mock.Call
+}
+
+// GetAll is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockCategoryRepository_Expecter) GetAll(ctx interface{}) *MockCategoryRepository_GetAll_Call {
+	return &MockCategoryRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx)}
+}
+
+func (_c *MockCategoryRepository_GetAll_Call) Run(run func(ctx context.Context)) *MockCategoryRepository_GetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockCategoryRepository_GetAll_Call) Return(_a0 []*category.Category) *MockCategoryRepository_GetAll_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockCategoryRepository_GetAll_Call) RunAndReturn(run func(context.Context) []*category.Category) *MockCategoryRepository_GetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockCategoryRepository creates a new instance of MockCategoryRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockCategoryRepository(t interface {

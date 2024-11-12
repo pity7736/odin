@@ -13,7 +13,8 @@ import (
 
 type CategoryHandler interface {
 	CreateCommand() categorycommand.CategoryCreatorCommand
-	HandleResponse(category *category.Category)
+	HandleOneResponse(category *category.Category)
+	HandleManyResponse(categories []*category.Category)
 }
 
 type categoryHandler struct {
@@ -25,13 +26,20 @@ func New(repository repositories.CategoryRepository) *categoryHandler {
 	return &categoryHandler{repository: repository}
 }
 
-func (c *categoryHandler) Handle(ctx *fiber.Ctx) error {
+func (c *categoryHandler) Post(ctx *fiber.Ctx) error {
 	c.setHandler(ctx)
 	command := c.handler.CreateCommand()
 	categoryCreator := categorycreator.New(command, c.repository)
 	category, _ := categoryCreator.Create(ctx.Context())
-	c.handler.HandleResponse(category)
+	c.handler.HandleOneResponse(category)
 	ctx.Status(http.StatusCreated)
+	return nil
+}
+
+func (c *categoryHandler) Get(ctx *fiber.Ctx) error {
+	c.setHandler(ctx)
+	categories := c.repository.GetAll(ctx.Context())
+	c.handler.HandleManyResponse(categories)
 	return nil
 }
 
