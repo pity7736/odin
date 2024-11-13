@@ -7,20 +7,20 @@ import (
 	"raiseexception.dev/odin/tests/unit/mocks"
 )
 
-type factory struct {
+type Factory struct {
 	t                  *testing.T
 	categoryRepository *mocks.MockCategoryRepository
 }
 
-func New(t *testing.T) *factory {
-	return &factory{t: t}
+func New(t *testing.T) *Factory {
+	return &Factory{t: t}
 }
 
-func (f *factory) GetCategoryRepository() repositories.CategoryRepository {
+func (f *Factory) GetCategoryRepository() repositories.CategoryRepository {
 	return f.GetCategoryRepositoryMock()
 }
 
-func (f *factory) GetCategoryRepositoryMock() *mocks.MockCategoryRepository {
+func (f *Factory) GetCategoryRepositoryMock() *mocks.MockCategoryRepository {
 	if f.categoryRepository == nil {
 		f.categoryRepository = mocks.NewMockCategoryRepository(f.t)
 	}

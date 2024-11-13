@@ -14,6 +14,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
 	"raiseexception.dev/odin/src/shared/domain/user"
+	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/mocks"
 )
 
@@ -28,7 +29,7 @@ type setup struct {
 func newSetup(t *testing.T) setup {
 	repository := mocks.NewMockCategoryRepository(t)
 	categoryName := "test"
-	user := getUser()
+	user := userbuilder.New().Build()
 	categoryType := constants.EXPENSE
 	command := categorycommand.New(categoryName, categoryType, user)
 	return setup{
@@ -84,8 +85,4 @@ func Test(t *testing.T) {
 		assert.Equal(t, errors.New("error generating uuid"), err)
 		setup.repository.AssertNotCalled(t, "Add")
 	})
-}
-
-func getUser() *user.User {
-	return user.New("test@raiseexception.dev")
 }

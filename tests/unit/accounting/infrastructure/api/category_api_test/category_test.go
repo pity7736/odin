@@ -2,107 +2,114 @@ package category_api_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
-	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/category"
-	"raiseexception.dev/odin/src/accounting/domain/constants"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
-	"raiseexception.dev/odin/src/shared/domain/user"
 	"raiseexception.dev/odin/src/shared/infrastructure/api"
+	"raiseexception.dev/odin/tests/builders/categorybuilder"
+	"raiseexception.dev/odin/tests/unit/mocks"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
+
+type setup struct {
+	factory    *testrepositoryfactory.Factory
+	repository *mocks.MockCategoryRepository
+	app        api.Application
+}
+
+func newSetup(t *testing.T) setup {
+	factory := testrepositoryfactory.New(t)
+	return setup{
+		factory:    factory,
+		repository: factory.GetCategoryRepositoryMock(),
+		app:        api.NewFiberApplication(factory),
+	}
+}
 
 func TestRestSuccess(t *testing.T) {
 
 	t.Run("create category", func(t *testing.T) {
-		factory := testrepositoryfactory.New(t)
-		repository := factory.GetCategoryRepositoryMock()
-		app := api.NewFiberApplication(factory)
-		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		categoryName := "test"
-		categoryType := constants.EXPENSE.String()
-		user := "test@raiseexception.dev"
+		setup := newSetup(t)
+		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		category := categorybuilder.New().WithDefaultUser().Build()
 		body := fmt.Sprintf(
 			`{"name": "%s", "type": "%s", "user": "%s"}`,
-			categoryName,
-			categoryType,
-			user,
+			category.Name(),
+			category.Type(),
+			category.User().Email(),
 		)
-		request := httptest.NewRequest("POST", "/v1/categories", bytes.NewReader([]byte(body)))
-		request.Header.Add("Content-Type", "application/json")
-
-		response, _ := app.Test(request)
-
 		var responseBody map[string]any
-		data := make([]byte, response.ContentLength)
-		response.Body.Read(data)
-		json.Unmarshal(data, &responseBody)
 
+		response := makeRequestAndGetResponse[map[string]any](
+			setup,
+			"POST",
+			"/v1/categories",
+			&body,
+			&responseBody,
+		)
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
-		assert.Equal(t, categoryName, responseBody["name"])
-		assert.Equal(t, categoryType, responseBody["type"])
+		assert.Equal(t, category.Name(), responseBody["name"])
+		assert.Equal(t, category.Type().String(), responseBody["type"])
 		assert.NotNil(t, responseBody["id"])
-		assert.Equal(t, user, responseBody["user"])
-		repository.AssertCalled(t, "Add", mock.Anything, mock.Anything)
+		assert.Equal(t, category.User().Email(), responseBody["user"])
+		setup.repository.AssertCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
 	t.Run("get categories when is empty", func(t *testing.T) {
-		factory := testrepositoryfactory.New(t)
-		repository := factory.GetCategoryRepositoryMock()
-		app := api.NewFiberApplication(factory)
-		repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
-
-		request := httptest.NewRequest("GET", "/v1/categories", nil)
-		request.Header.Add("Content-Type", "application/json")
-		response, _ := app.Test(request)
-
+		setup := newSetup(t)
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
 		var responseBody restcategoryhandler.CategoriesResponse
-		data := make([]byte, response.ContentLength)
-		response.Body.Read(data)
-		json.Unmarshal(data, &responseBody)
+		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
+			setup,
+			"GET",
+			"/v1/categories",
+			nil,
+			&responseBody,
+		)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, 0, len(responseBody.Categories))
 	})
 
 	t.Run("get categories", func(t *testing.T) {
-		factory := testrepositoryfactory.New(t)
-		repository := factory.GetCategoryRepositoryMock()
-		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		categoryName := "test"
-		user := getUser()
-		categoryType := constants.EXPENSE
-		command := categorycommand.New(categoryName, categoryType, user)
-		categoryCreator := categorycreator.New(command, repository)
+		setup := newSetup(t)
+		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		builder := categorybuilder.New()
 		categories := make([]*category.Category, 0, 1)
-		category, _ := categoryCreator.Create(context.TODO())
-		categories = append(categories, category)
-		app := api.NewFiberApplication(factory)
-		repository.EXPECT().GetAll(mock.Anything).Return(categories)
-
-		request := httptest.NewRequest("GET", "/v1/categories", nil)
-		request.Header.Add("Content-Type", "application/json")
-		response, _ := app.Test(request)
-
+		categories = append(categories, builder.WithDefaultUser().Create(setup.repository))
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
 		var responseBody restcategoryhandler.CategoriesResponse
-		data := make([]byte, response.ContentLength)
-		response.Body.Read(data)
-		json.Unmarshal(data, &responseBody)
+		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
+			setup,
+			"GET",
+			"/v1/categories",
+			nil,
+			&responseBody,
+		)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, 1, len(responseBody.Categories))
 	})
 }
 
-func getUser() *user.User {
-	return user.New("test@raiseexception.dev")
+func makeRequestAndGetResponse[R any](setup setup, method, path string, payload *string, responseBody *R) *http.Response {
+	var body io.Reader
+	if payload != nil {
+		body = bytes.NewReader([]byte(*payload))
+	}
+	request := httptest.NewRequest(method, path, body)
+	request.Header.Add("Content-Type", "application/json")
+	response, _ := setup.app.Test(request)
+	data := make([]byte, response.ContentLength)
+	response.Body.Read(data)
+	json.Unmarshal(data, &responseBody)
+	return response
 }
