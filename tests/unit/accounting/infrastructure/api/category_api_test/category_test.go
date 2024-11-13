@@ -34,6 +34,8 @@ func newSetup(t *testing.T) setup {
 	}
 }
 
+const categoryPath = "/v1/categories"
+
 func TestRestSuccess(t *testing.T) {
 
 	t.Run("create category", func(t *testing.T) {
@@ -51,7 +53,7 @@ func TestRestSuccess(t *testing.T) {
 		response := makeRequestAndGetResponse[map[string]any](
 			setup,
 			"POST",
-			"/v1/categories",
+			categoryPath,
 			&body,
 			&responseBody,
 		)
@@ -70,7 +72,7 @@ func TestRestSuccess(t *testing.T) {
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
 			"GET",
-			"/v1/categories",
+			categoryPath,
 			nil,
 			&responseBody,
 		)
@@ -90,7 +92,7 @@ func TestRestSuccess(t *testing.T) {
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
 			"GET",
-			"/v1/categories",
+			categoryPath,
 			nil,
 			&responseBody,
 		)
