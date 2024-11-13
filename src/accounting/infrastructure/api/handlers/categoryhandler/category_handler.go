@@ -8,6 +8,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 )
 
@@ -44,5 +45,9 @@ func (c *categoryHandler) GetAll(ctx *fiber.Ctx) error {
 }
 
 func (c *categoryHandler) setHandler(ctx *fiber.Ctx) {
-	c.handler = restcategoryhandler.New(ctx)
+	if ctx.Get("content-type") == fiber.MIMEApplicationJSON {
+		c.handler = restcategoryhandler.New(ctx)
+	} else {
+		c.handler = htmxcategoryhandler.New(ctx)
+	}
 }

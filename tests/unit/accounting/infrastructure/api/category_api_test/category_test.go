@@ -7,8 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"raiseexception.dev/odin/src/accounting/domain/category"
@@ -36,7 +38,7 @@ func newSetup(t *testing.T) setup {
 
 const categoryPath = "/v1/categories"
 
-func TestRestSuccess(t *testing.T) {
+func TestRest(t *testing.T) {
 
 	t.Run("create category", func(t *testing.T) {
 		setup := newSetup(t)
@@ -58,6 +60,7 @@ func TestRestSuccess(t *testing.T) {
 			&responseBody,
 		)
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
 		assert.Equal(t, category.Name(), responseBody["name"])
 		assert.Equal(t, category.Type().String(), responseBody["type"])
 		assert.NotNil(t, responseBody["id"])
@@ -78,6 +81,7 @@ func TestRestSuccess(t *testing.T) {
 		)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
 		assert.Equal(t, 0, len(responseBody.Categories))
 	})
 
@@ -98,6 +102,7 @@ func TestRestSuccess(t *testing.T) {
 		)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
 		assert.Equal(t, 1, len(responseBody.Categories))
 	})
 }
@@ -114,4 +119,43 @@ func makeRequestAndGetResponse[R any](setup setup, method, path string, payload 
 	response.Body.Read(data)
 	json.Unmarshal(data, &responseBody)
 	return response
+}
+
+func TestHTMX(t *testing.T) {
+
+	t.Run("get categories when is empty", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
+		request := httptest.NewRequest("GET", categoryPath, nil)
+
+		response, _ := setup.app.Test(request)
+		data := make([]byte, response.ContentLength)
+		response.Body.Read(data)
+		responseBody := string(data)
+
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
+		assert.True(t, strings.Contains(responseBody, "<p>no hay categorías</p>"))
+		assert.False(t, strings.Contains(responseBody, "<ul>"))
+	})
+
+	t.Run("get categories", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		builder := categorybuilder.New()
+		categories := make([]*category.Category, 0, 1)
+		category := builder.WithDefaultUser().Create(setup.repository)
+		categories = append(categories, category)
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
+		request := httptest.NewRequest("GET", categoryPath, nil)
+
+		response, _ := setup.app.Test(request)
+		data := make([]byte, response.ContentLength)
+		response.Body.Read(data)
+		responseBody := string(data)
+
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
+		assert.True(t, strings.Contains(responseBody, category.Name()))
+	})
 }

@@ -10,3 +10,12 @@
         </form>
     </div>
 {{ end }}
+
+{{ define "categories_page"}}
+    <p>Crear categoría</p>
+    {{ template "form" }}
+
+    <div hx-get="/v1/categories" hx-trigger="load">
+        
+    </div>
+{{ end }}

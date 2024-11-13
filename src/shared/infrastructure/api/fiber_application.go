@@ -16,13 +16,19 @@ type fibberApplication struct {
 }
 
 func NewFiberApplication(repositoryFactory repositoryfactory.RepositoryFactory) Application {
-	engine := html.New("./src/shared/infrastruture/templates", ".html")
+	engine := html.New("/Users/julian.cortes/development/odin/src/shared/infrastructure/templates", ".html")
 	app := fiber.New(fiber.Config{
 		Views:       engine,
 		ViewsLayout: "base",
 	})
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
+	})
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("index", nil)
+	})
+	app.Get(categoriesPath, func(c *fiber.Ctx) error {
+		return c.Render("categories_page", nil)
 	})
 	v1 := app.Group("/v1")
 	v1.Post(categoriesPath, func(c *fiber.Ctx) error {
