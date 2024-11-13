@@ -9,6 +9,8 @@ import (
 	"raiseexception.dev/odin/src/shared/infrastructure/repositoryfactory"
 )
 
+const categoriesPath = "/categories"
+
 type fibberApplication struct {
 	app *fiber.App
 }
@@ -22,9 +24,13 @@ func NewFiberApplication(repositoryFactory repositoryfactory.RepositoryFactory) 
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
-	categoryhandler := categoryhandler.New(repositoryFactory.GetCategoryRepository())
-	app.Post("/v1/categories", categoryhandler.Post)
-	app.Get("/v1/categories", categoryhandler.Get)
+	v1 := app.Group("/v1")
+	v1.Post(categoriesPath, func(c *fiber.Ctx) error {
+		return categoryhandler.New(repositoryFactory.GetCategoryRepository()).Create(c)
+	})
+	v1.Get(categoriesPath, func(c *fiber.Ctx) error {
+		return categoryhandler.New(repositoryFactory.GetCategoryRepository()).GetAll(c)
+	})
 	return &fibberApplication{app: app}
 }
 

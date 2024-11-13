@@ -8,7 +8,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
-	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler/restcategoryhandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 )
 
 type CategoryHandler interface {
@@ -26,7 +26,7 @@ func New(repository repositories.CategoryRepository) *categoryHandler {
 	return &categoryHandler{repository: repository}
 }
 
-func (c *categoryHandler) Post(ctx *fiber.Ctx) error {
+func (c *categoryHandler) Create(ctx *fiber.Ctx) error {
 	c.setHandler(ctx)
 	command := c.handler.CreateCommand()
 	categoryCreator := categorycreator.New(command, c.repository)
@@ -36,7 +36,7 @@ func (c *categoryHandler) Post(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (c *categoryHandler) Get(ctx *fiber.Ctx) error {
+func (c *categoryHandler) GetAll(ctx *fiber.Ctx) error {
 	c.setHandler(ctx)
 	categories := c.repository.GetAll(ctx.Context())
 	c.handler.HandleManyResponse(categories)

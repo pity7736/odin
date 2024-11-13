@@ -15,7 +15,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
-	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler/restcategoryhandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 	"raiseexception.dev/odin/src/shared/domain/user"
 	"raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"

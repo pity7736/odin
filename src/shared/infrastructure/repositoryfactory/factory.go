@@ -9,12 +9,14 @@ type RepositoryFactory interface {
 	GetCategoryRepository() repositories.CategoryRepository
 }
 
-type repositoryFactory struct{}
+type repositoryFactory struct {
+	categoryRepository repositories.CategoryRepository
+}
 
 func New() RepositoryFactory {
-	return &repositoryFactory{}
+	return &repositoryFactory{categoryRepository: pgrepositories.NewPGCategoryRepository()}
 }
 
 func (r *repositoryFactory) GetCategoryRepository() repositories.CategoryRepository {
-	return pgrepositories.NewPGCategoryRepository()
+	return r.categoryRepository
 }
