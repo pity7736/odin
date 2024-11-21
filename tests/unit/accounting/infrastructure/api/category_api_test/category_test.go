@@ -44,7 +44,7 @@ func TestRest(t *testing.T) {
 	t.Run("create category", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		category := categorybuilder.New().WithDefaultUser().Build()
+		category := categorybuilder.New().Build()
 		body := fmt.Sprintf(
 			`{"name": "%s", "type": "%s"}`,
 			category.Name(),
@@ -89,7 +89,7 @@ func TestRest(t *testing.T) {
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		builder := categorybuilder.New()
 		categories := make([]*category.Category, 0, 1)
-		categories = append(categories, builder.WithDefaultUser().Create(setup.repository))
+		categories = append(categories, builder.Create(setup.repository))
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
 		var responseBody restcategoryhandler.CategoriesResponse
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
@@ -107,7 +107,7 @@ func TestRest(t *testing.T) {
 
 	t.Run("create category with wrong data", func(t *testing.T) {
 		setup := newSetup(t)
-		category := categorybuilder.New().WithDefaultUser().Build()
+		category := categorybuilder.New().Build()
 		testCases := []struct {
 			testCaseName string
 			categoryName string
@@ -191,9 +191,8 @@ func TestHTMX(t *testing.T) {
 	t.Run("get categories", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		builder := categorybuilder.New()
 		categories := make([]*category.Category, 0, 1)
-		category := builder.WithDefaultUser().Create(setup.repository)
+		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
 		request := httptest.NewRequest("GET", categoryPath, nil)
