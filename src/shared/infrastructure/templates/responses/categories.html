@@ -1,0 +1,13 @@
+{{ define "categoaoeuoeuries" }}
+    {{ if . }}
+        <ul>
+            {{ range . }}
+                <li>{{ .Name }}</li>
+                <li>{{ .Type }}</li>
+                <li>{{ .ID }}</li>
+            {{ end }}
+        </ul>
+    {{ else }}
+        <p>no hay categorías</p>
+    {{ end }}
+{{ end }}

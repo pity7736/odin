@@ -1,0 +1,37 @@
+{{ define "form" }}
+    <p>Crear categoría</p>
+    <div>
+        <form hx-post="/v1/categories" hx-target="#categories-view" {{ if .Categories }} hx-swap="beforebegin" {{ else }} hx-vals='{"first": "true"}' {{ end }} style="margin-bottom: 10px" hx-on::after-request="this.reset()">
+            <label for="name">Nombre</label>
+            <input id="name" name="name" placeholder="name">
+            <label for="type">Tipo</label>
+            <select id="type" name="type">
+                <option value="" selected>---</option>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+            </select>
+            <button type="submit">Crear</button>
+        </form>
+    </div>
+{{ end }}
+
+{{ define "categories"}}
+    {{ template "form" . }}
+    <div id="categories-view" style="display: flex; flex-direction: column;">
+        {{ if .Categories }}
+            {{ range .Categories }}
+                {{ template "category" . }}
+            {{ end }}
+        {{ else }}
+            <p>no hay categorías</p>
+        {{ end }}
+    </div>
+{{ end }}
+
+{{ define "category" }}
+    <div style="margin-top: 10px">
+        Name: <span>{{ .Name }}</span>
+        Type: <span>{{ .Type }}</span>
+        ID: <span>{{ .ID }}</span>
+    </div>
+{{ end }}
