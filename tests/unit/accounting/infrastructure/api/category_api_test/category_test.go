@@ -105,7 +105,7 @@ func TestRest(t *testing.T) {
 		assert.Equal(t, 1, len(responseBody.Categories))
 	})
 
-	t.Run("create category with empty data", func(t *testing.T) {
+	t.Run("create category with wrong data", func(t *testing.T) {
 		setup := newSetup(t)
 		category := categorybuilder.New().WithDefaultUser().Build()
 		testCases := []struct {
@@ -122,6 +122,11 @@ func TestRest(t *testing.T) {
 				"when type is empty",
 				"test",
 				"",
+			},
+			{
+				"when type is invalid",
+				"test",
+				"eaoeu",
 			},
 		}
 		for _, testCase := range testCases {

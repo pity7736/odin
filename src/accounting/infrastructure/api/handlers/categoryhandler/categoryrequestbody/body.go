@@ -12,8 +12,11 @@ type CategoryRequestBody struct {
 }
 
 func (self CategoryRequestBody) CreateCategoryCreatorCommand(userID string) (*categorycommand.CategoryCreatorCommand, error) {
-	if self.Name != "" && self.Type != "" {
-		categoryType, _ := constants.NewFromString(self.Type)
+	if self.Name != "" {
+		categoryType, err := constants.NewFromString(self.Type)
+		if err != nil {
+			return nil, err
+		}
 		command := categorycommand.New(
 			self.Name,
 			categoryType,
