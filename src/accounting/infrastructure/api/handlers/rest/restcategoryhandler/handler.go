@@ -27,10 +27,10 @@ func (r *restCategoryHandler) HandleManyResponse(categories []*category.Category
 
 func (r *restCategoryHandler) getCategoryResponse(category *category.Category) CategoryResponse {
 	return CategoryResponse{
-		Id:   category.ID(),
-		Name: category.Name(),
-		Type: category.Type().String(),
-		User: category.User().Email(),
+		Id:     category.ID(),
+		Name:   category.Name(),
+		Type:   category.Type().String(),
+		UserID: category.UserID(),
 	}
 }
 
@@ -39,10 +39,10 @@ func (r *restCategoryHandler) ContentType() string {
 }
 
 type CategoryResponse struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-	User string `json:"user"`
+	Id     string `json:"id"`
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	UserID string `json:"user_id"`
 }
 
 type CategoriesResponse struct {

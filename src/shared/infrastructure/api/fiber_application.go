@@ -26,6 +26,10 @@ func NewFiberApplication(repositoryFactory repositoryfactory.RepositoryFactory) 
 		ViewsLayout: "base",
 	})
 	app.Use(logger.New())
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("userID", c.Get("Authorization"))
+		return c.Next()
+	})
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})

@@ -14,18 +14,21 @@ import (
 )
 
 type builder struct {
-	name string
-	id   string
-	t    constants.CategoryType
-	user *user.User
+	name   string
+	id     string
+	t      constants.CategoryType
+	user   *user.User
+	userID string
 }
 
 func New() *builder {
 	id, _ := uuid.NewV7()
+	userID, _ := uuid.NewV7()
 	return &builder{
-		name: "test",
-		id:   id.String(),
-		t:    constants.EXPENSE,
+		name:   "test",
+		id:     id.String(),
+		t:      constants.EXPENSE,
+		userID: userID.String(),
 	}
 }
 
@@ -39,12 +42,12 @@ func (b *builder) Build() *category.Category {
 		b.id,
 		b.name,
 		b.t,
-		b.user,
+		b.userID,
 	)
 }
 
 func (b *builder) Create(repository repositories.CategoryRepository) *category.Category {
-	command := categorycommand.New(b.name, b.t, b.user)
+	command := categorycommand.New(b.name, b.t, b.userID)
 	categoryCreator := categorycreator.New(command, repository)
 	category, _ := categoryCreator.Create(context.TODO())
 	return category

@@ -28,7 +28,7 @@ func (cc CategoryCreator) Create(ctx context.Context) (*category.Category, error
 		id.String(),
 		cc.command.Name(),
 		cc.command.Type(),
-		cc.command.User(),
+		cc.command.UserID(),
 	)
 	err := cc.repository.Add(ctx, category)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -45,10 +46,9 @@ func TestRest(t *testing.T) {
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		category := categorybuilder.New().WithDefaultUser().Build()
 		body := fmt.Sprintf(
-			`{"name": "%s", "type": "%s", "user": "%s"}`,
+			`{"name": "%s", "type": "%s"}`,
 			category.Name(),
 			category.Type(),
-			category.User().Email(),
 		)
 		var responseBody map[string]any
 
@@ -64,7 +64,6 @@ func TestRest(t *testing.T) {
 		assert.Equal(t, category.Name(), responseBody["name"])
 		assert.Equal(t, category.Type().String(), responseBody["type"])
 		assert.NotNil(t, responseBody["id"])
-		assert.Equal(t, category.User().Email(), responseBody["user"])
 		setup.repository.AssertCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
@@ -129,10 +128,9 @@ func TestRest(t *testing.T) {
 			// TODO: send appropriate error message
 			t.Run(testCase.testCaseName, func(t *testing.T) {
 				body := fmt.Sprintf(
-					`{"name": "%s", "type": "%s", "user": "%s"}`,
-					"",
-					category.Type(),
-					category.User().Email(),
+					`{"name": "%s", "type": "%s"}`,
+					testCase.categoryName,
+					testCase.categoryType,
 				)
 				var responseBody map[string]any
 
@@ -158,6 +156,8 @@ func makeRequestAndGetResponse[R any](setup setup, method, path string, payload 
 	}
 	request := httptest.NewRequest(method, path, body)
 	request.Header.Add("Content-Type", "application/json")
+	userID, _ := uuid.NewV7()
+	request.Header.Add("Authorization", userID.String())
 	response, _ := setup.app.Test(request)
 	data := make([]byte, response.ContentLength)
 	response.Body.Read(data)

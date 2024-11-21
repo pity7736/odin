@@ -31,7 +31,7 @@ func newSetup(t *testing.T) setup {
 	categoryName := "test"
 	user := userbuilder.New().Build()
 	categoryType := constants.EXPENSE
-	command := categorycommand.New(categoryName, categoryType, user)
+	command := categorycommand.New(categoryName, categoryType, user.ID())
 	return setup{
 		repository:   repository,
 		command:      command,
@@ -50,7 +50,6 @@ func Test(t *testing.T) {
 		id, _ := uuid.NewV7()
 		patches := gomonkey.ApplyFuncReturn(uuid.NewV7, id, nil)
 		defer patches.Reset()
-		user := user.New("test@raiseexception.dev")
 		setup.repository.On("Add", ctx, mock.Anything).Return(nil)
 		categoryCreator := categorycreator.New(setup.command, setup.repository)
 		category, err := categoryCreator.Create(ctx)
@@ -59,7 +58,7 @@ func Test(t *testing.T) {
 		assert.Equal(t, id.String(), category.ID())
 		assert.Equal(t, setup.categoryName, category.Name())
 		assert.Equal(t, setup.categoryType, category.Type())
-		assert.Equal(t, user, category.User())
+		assert.Equal(t, setup.user.ID(), category.UserID())
 		setup.repository.AssertCalled(t, "Add", ctx, category)
 	})
 

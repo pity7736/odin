@@ -32,5 +32,4 @@ func (h *htmxCategoryHandler) ContentType() string {
 
 type Data struct {
 	Categories []*category.Category
-	Category   *category.Category
 }

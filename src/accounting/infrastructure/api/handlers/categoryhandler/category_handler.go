@@ -49,7 +49,7 @@ func (c *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.Catego
 	if err != nil {
 		return nil, err
 	}
-	return body.CreateCategoryCreatorCommand()
+	return body.CreateCategoryCreatorCommand(ctx.Locals("userID").(string))
 }
 
 func (c *categoryHandler) GetAll(ctx *fiber.Ctx) error {

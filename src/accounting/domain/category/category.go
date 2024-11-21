@@ -2,37 +2,36 @@ package category
 
 import (
 	"raiseexception.dev/odin/src/accounting/domain/constants"
-	"raiseexception.dev/odin/src/shared/domain/user"
 )
 
 type Category struct {
-	name string
-	id   string
-	t    constants.CategoryType
-	user *user.User
+	name   string
+	id     string
+	t      constants.CategoryType
+	userID string
 }
 
-func New(id, name string, t constants.CategoryType, user *user.User) *Category {
+func New(id, name string, t constants.CategoryType, userID string) *Category {
 	return &Category{
-		name: name,
-		id:   id,
-		t:    t,
-		user: user,
+		name:   name,
+		id:     id,
+		t:      t,
+		userID: userID,
 	}
 }
 
-func (c *Category) Name() string {
-	return c.name
+func (self *Category) Name() string {
+	return self.name
 }
 
-func (c *Category) ID() string {
-	return c.id
+func (self *Category) ID() string {
+	return self.id
 }
 
-func (c *Category) Type() constants.CategoryType {
-	return c.t
+func (self *Category) Type() constants.CategoryType {
+	return self.t
 }
 
-func (c *Category) User() *user.User {
-	return c.user
+func (self *Category) UserID() string {
+	return self.userID
 }
