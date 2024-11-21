@@ -25,8 +25,8 @@ func NewFromString(value string) (CategoryType, error) {
 	}
 }
 
-func (c CategoryType) String() string {
-	if c == EXPENSE {
+func (self CategoryType) String() string {
+	if self == EXPENSE {
 		return "expense"
 	}
 	return "income"

@@ -17,6 +17,6 @@ func New() RepositoryFactory {
 	return &repositoryFactory{categoryRepository: pgrepositories.NewPGCategoryRepository()}
 }
 
-func (r *repositoryFactory) GetCategoryRepository() repositories.CategoryRepository {
-	return r.categoryRepository
+func (self *repositoryFactory) GetCategoryRepository() repositories.CategoryRepository {
+	return self.categoryRepository
 }

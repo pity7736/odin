@@ -13,19 +13,19 @@ func New(ctx *fiber.Ctx) *restCategoryHandler {
 	return &restCategoryHandler{ctx: ctx}
 }
 
-func (r *restCategoryHandler) HandleOneResponse(category *category.Category) {
-	r.ctx.JSON(r.getCategoryResponse(category))
+func (self *restCategoryHandler) HandleOneResponse(category *category.Category) {
+	self.ctx.JSON(self.getCategoryResponse(category))
 }
 
-func (r *restCategoryHandler) HandleManyResponse(categories []*category.Category) {
+func (self *restCategoryHandler) HandleManyResponse(categories []*category.Category) {
 	result := make([]CategoryResponse, 0, len(categories))
 	for _, category := range categories {
-		result = append(result, r.getCategoryResponse(category))
+		result = append(result, self.getCategoryResponse(category))
 	}
-	r.ctx.JSON(CategoriesResponse{Categories: result})
+	self.ctx.JSON(CategoriesResponse{Categories: result})
 }
 
-func (r *restCategoryHandler) getCategoryResponse(category *category.Category) CategoryResponse {
+func (self *restCategoryHandler) getCategoryResponse(category *category.Category) CategoryResponse {
 	return CategoryResponse{
 		Id:     category.ID(),
 		Name:   category.Name(),
@@ -34,7 +34,7 @@ func (r *restCategoryHandler) getCategoryResponse(category *category.Category) C
 	}
 }
 
-func (r *restCategoryHandler) ContentType() string {
+func (self *restCategoryHandler) ContentType() string {
 	return fiber.MIMEApplicationJSON
 }
 

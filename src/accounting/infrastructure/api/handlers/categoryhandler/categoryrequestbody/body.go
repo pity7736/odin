@@ -11,11 +11,11 @@ type CategoryRequestBody struct {
 	Type string `json:"type"`
 }
 
-func (c CategoryRequestBody) CreateCategoryCreatorCommand(userID string) (*categorycommand.CategoryCreatorCommand, error) {
-	if c.Name != "" && c.Type != "" {
-		categoryType, _ := constants.NewFromString(c.Type)
+func (self CategoryRequestBody) CreateCategoryCreatorCommand(userID string) (*categorycommand.CategoryCreatorCommand, error) {
+	if self.Name != "" && self.Type != "" {
+		categoryType, _ := constants.NewFromString(self.Type)
 		command := categorycommand.New(
-			c.Name,
+			self.Name,
 			categoryType,
 			userID,
 		)

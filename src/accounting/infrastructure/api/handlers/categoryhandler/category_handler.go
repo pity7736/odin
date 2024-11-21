@@ -28,22 +28,22 @@ func New(repository repositories.CategoryRepository) *categoryHandler {
 	return &categoryHandler{repository: repository}
 }
 
-func (c *categoryHandler) Create(ctx *fiber.Ctx) error {
-	c.setHandler(ctx)
-	ctx.Set("Content-Type", c.handler.ContentType())
-	command, errCmd := c.createCommand(ctx)
+func (self *categoryHandler) Create(ctx *fiber.Ctx) error {
+	self.setHandler(ctx)
+	ctx.Set("Content-Type", self.handler.ContentType())
+	command, errCmd := self.createCommand(ctx)
 	if errCmd != nil {
 		ctx.Status(http.StatusBadRequest)
 		return errCmd
 	}
-	categoryCreator := categorycreator.New(*command, c.repository)
+	categoryCreator := categorycreator.New(*command, self.repository)
 	category, _ := categoryCreator.Create(ctx.Context())
-	c.handler.HandleOneResponse(category)
+	self.handler.HandleOneResponse(category)
 	ctx.Status(http.StatusCreated)
 	return nil
 }
 
-func (c *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.CategoryCreatorCommand, error) {
+func (self *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.CategoryCreatorCommand, error) {
 	var body categoryrequestbody.CategoryRequestBody
 	err := ctx.BodyParser(&body)
 	if err != nil {
@@ -52,17 +52,17 @@ func (c *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.Catego
 	return body.CreateCategoryCreatorCommand(ctx.Locals("userID").(string))
 }
 
-func (c *categoryHandler) GetAll(ctx *fiber.Ctx) error {
-	c.setHandler(ctx)
-	categories := c.repository.GetAll(ctx.Context())
-	c.handler.HandleManyResponse(categories)
+func (self *categoryHandler) GetAll(ctx *fiber.Ctx) error {
+	self.setHandler(ctx)
+	categories := self.repository.GetAll(ctx.Context())
+	self.handler.HandleManyResponse(categories)
 	return nil
 }
 
-func (c *categoryHandler) setHandler(ctx *fiber.Ctx) {
+func (self *categoryHandler) setHandler(ctx *fiber.Ctx) {
 	if ctx.Get("content-type") == fiber.MIMEApplicationJSON {
-		c.handler = restcategoryhandler.New(ctx)
+		self.handler = restcategoryhandler.New(ctx)
 	} else {
-		c.handler = htmxcategoryhandler.New(ctx)
+		self.handler = htmxcategoryhandler.New(ctx)
 	}
 }

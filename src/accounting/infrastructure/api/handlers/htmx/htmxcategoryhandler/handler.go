@@ -14,19 +14,19 @@ func New(ctx *fiber.Ctx) *htmxCategoryHandler {
 	return &htmxCategoryHandler{ctx: ctx}
 }
 
-func (h *htmxCategoryHandler) HandleOneResponse(category *category.Category) {
-	isFirst, _ := strconv.ParseBool(h.ctx.FormValue("first", "false"))
+func (self *htmxCategoryHandler) HandleOneResponse(category *category.Category) {
+	isFirst, _ := strconv.ParseBool(self.ctx.FormValue("first", "false"))
 	if isFirst {
-		h.ctx.Set("HX-Refresh", "true")
+		self.ctx.Set("HX-Refresh", "true")
 	}
-	h.ctx.Render("category", category, "")
+	self.ctx.Render("category", category, "")
 }
 
-func (h *htmxCategoryHandler) HandleManyResponse(categories []*category.Category) {
-	h.ctx.Render("categories", Data{Categories: categories})
+func (self *htmxCategoryHandler) HandleManyResponse(categories []*category.Category) {
+	self.ctx.Render("categories", Data{Categories: categories})
 }
 
-func (h *htmxCategoryHandler) ContentType() string {
+func (self *htmxCategoryHandler) ContentType() string {
 	return fiber.MIMETextHTMLCharsetUTF8
 }
 

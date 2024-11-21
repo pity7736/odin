@@ -14,14 +14,14 @@ func New(name string, categoryType constants.CategoryType, userID string) Catego
 	return CategoryCreatorCommand{name: name, categoryType: categoryType, userID: userID}
 }
 
-func (c CategoryCreatorCommand) Name() string {
-	return c.name
+func (self CategoryCreatorCommand) Name() string {
+	return self.name
 }
 
-func (c CategoryCreatorCommand) Type() constants.CategoryType {
-	return c.categoryType
+func (self CategoryCreatorCommand) Type() constants.CategoryType {
+	return self.categoryType
 }
 
-func (c CategoryCreatorCommand) UserID() string {
-	return c.userID
+func (self CategoryCreatorCommand) UserID() string {
+	return self.userID
 }

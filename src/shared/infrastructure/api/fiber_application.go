@@ -47,10 +47,10 @@ func NewFiberApplication(repositoryFactory repositoryfactory.RepositoryFactory) 
 	return &fibberApplication{app: app}
 }
 
-func (a *fibberApplication) Start() error {
-	return a.app.Listen(":8000")
+func (self *fibberApplication) Start() error {
+	return self.app.Listen(":8000")
 }
 
-func (a *fibberApplication) Test(request *http.Request) (*http.Response, error) {
-	return a.app.Test(request)
+func (self *fibberApplication) Test(request *http.Request) (*http.Response, error) {
+	return self.app.Test(request)
 }
