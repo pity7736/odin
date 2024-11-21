@@ -10,7 +10,6 @@ import (
 	"raiseexception.dev/odin/src/accounting/domain/constants"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
 	"raiseexception.dev/odin/src/shared/domain/user"
-	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
 type builder struct {
@@ -30,11 +29,6 @@ func New() *builder {
 		t:      constants.EXPENSE,
 		userID: userID.String(),
 	}
-}
-
-func (b *builder) WithDefaultUser() *builder {
-	b.user = userbuilder.New().Build()
-	return b
 }
 
 func (b *builder) Build() *category.Category {
