@@ -1,7 +1,7 @@
 {{ define "form" }}
     <p>Crear categoría</p>
     <div>
-        <form hx-post="/v1/categories" hx-target="#categories-view" {{ if .Categories }} hx-swap="beforebegin" {{ else }} hx-vals='{"first": "true"}' {{ end }} style="margin-bottom: 10px" hx-on:click="this.reset()">
+        <form hx-post="/v1/categories" hx-target="#categories-view" {{ if .Categories }} hx-swap="beforebegin" {{ else }} hx-vals='{"first": "true"}' {{ end }} style="margin-bottom: 10px" hx-on::after-request="this.reset()">
             <label for="name">Nombre</label>
             <input id="name" name="name" placeholder="name">
             <label for="type">Tipo</label>

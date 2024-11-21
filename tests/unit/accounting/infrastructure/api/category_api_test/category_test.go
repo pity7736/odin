@@ -105,6 +105,50 @@ func TestRest(t *testing.T) {
 		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
 		assert.Equal(t, 1, len(responseBody.Categories))
 	})
+
+	t.Run("create category with empty data", func(t *testing.T) {
+		setup := newSetup(t)
+		category := categorybuilder.New().WithDefaultUser().Build()
+		testCases := []struct {
+			testCaseName string
+			categoryName string
+			categoryType string
+		}{
+			{
+				"when name is empty",
+				"",
+				category.Type().String(),
+			},
+			{
+				"when type is empty",
+				"test",
+				"",
+			},
+		}
+		for _, testCase := range testCases {
+			// TODO: send appropriate error message
+			t.Run(testCase.testCaseName, func(t *testing.T) {
+				body := fmt.Sprintf(
+					`{"name": "%s", "type": "%s", "user": "%s"}`,
+					"",
+					category.Type(),
+					category.User().Email(),
+				)
+				var responseBody map[string]any
+
+				response := makeRequestAndGetResponse[map[string]any](
+					setup,
+					"POST",
+					categoryPath,
+					&body,
+					&responseBody,
+				)
+				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+				assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
+				setup.repository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+			})
+		}
+	})
 }
 
 func makeRequestAndGetResponse[R any](setup setup, method, path string, payload *string, responseBody *R) *http.Response {

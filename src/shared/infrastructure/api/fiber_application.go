@@ -34,7 +34,8 @@ func NewFiberApplication(repositoryFactory repositoryfactory.RepositoryFactory) 
 	})
 	v1 := app.Group("/v1")
 	v1.Post(categoriesPath, func(c *fiber.Ctx) error {
-		return categoryhandler.New(repositoryFactory.GetCategoryRepository()).Create(c)
+		categoryhandler.New(repositoryFactory.GetCategoryRepository()).Create(c)
+		return nil
 	})
 	v1.Get(categoriesPath, func(c *fiber.Ctx) error {
 		return categoryhandler.New(repositoryFactory.GetCategoryRepository()).GetAll(c)

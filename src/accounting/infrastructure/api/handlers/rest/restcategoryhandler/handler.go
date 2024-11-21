@@ -2,9 +2,7 @@ package restcategoryhandler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
 	"raiseexception.dev/odin/src/accounting/domain/category"
-	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler/categoryrequestbody"
 )
 
 type restCategoryHandler struct {
@@ -13,12 +11,6 @@ type restCategoryHandler struct {
 
 func New(ctx *fiber.Ctx) *restCategoryHandler {
 	return &restCategoryHandler{ctx: ctx}
-}
-
-func (r *restCategoryHandler) CreateCommand() categorycommand.CategoryCreatorCommand {
-	var body categoryrequestbody.CategoryRequestBody
-	r.ctx.BodyParser(&body)
-	return body.CreateCategoryCreatorCommand()
 }
 
 func (r *restCategoryHandler) HandleOneResponse(category *category.Category) {
@@ -40,6 +32,10 @@ func (r *restCategoryHandler) getCategoryResponse(category *category.Category) C
 		Type: category.Type().String(),
 		User: category.User().Email(),
 	}
+}
+
+func (r *restCategoryHandler) ContentType() string {
+	return fiber.MIMEApplicationJSON
 }
 
 type CategoryResponse struct {
