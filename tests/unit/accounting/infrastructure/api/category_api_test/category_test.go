@@ -69,7 +69,7 @@ func TestRest(t *testing.T) {
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
 		var responseBody restcategoryhandler.CategoriesResponse
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
@@ -88,7 +88,7 @@ func TestRest(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		builder := categorybuilder.New()
-		categories := make([]*category.Category, 0, 1)
+		categories := make([]*categorymodel.Category, 0, 1)
 		categories = append(categories, builder.Create(setup.repository))
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
 		var responseBody restcategoryhandler.CategoriesResponse
@@ -174,7 +174,7 @@ func TestHTMX(t *testing.T) {
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
 		request := httptest.NewRequest("GET", categoryPath, nil)
 
 		response, _ := setup.app.Test(request)
@@ -191,7 +191,7 @@ func TestHTMX(t *testing.T) {
 	t.Run("get categories", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		categories := make([]*category.Category, 0, 1)
+		categories := make([]*categorymodel.Category, 0, 1)
 		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)

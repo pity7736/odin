@@ -7,6 +7,6 @@ import (
 )
 
 type CategoryRepository interface {
-	Add(ctx context.Context, category *category.Category) error
-	GetAll(ctx context.Context) []*category.Category
+	Add(ctx context.Context, category *categorymodel.Category) error
+	GetAll(ctx context.Context) []*categorymodel.Category
 }

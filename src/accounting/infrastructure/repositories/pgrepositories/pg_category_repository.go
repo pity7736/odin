@@ -7,20 +7,20 @@ import (
 )
 
 type PGCategoryRepository struct {
-	categories map[string]*category.Category
+	categories map[string]*categorymodel.Category
 }
 
 func NewPGCategoryRepository() *PGCategoryRepository {
-	return &PGCategoryRepository{categories: make(map[string]*category.Category)}
+	return &PGCategoryRepository{categories: make(map[string]*categorymodel.Category)}
 }
 
-func (self *PGCategoryRepository) Add(ctx context.Context, category *category.Category) error {
+func (self *PGCategoryRepository) Add(ctx context.Context, category *categorymodel.Category) error {
 	self.categories[category.ID()] = category
 	return nil
 }
 
-func (self *PGCategoryRepository) GetAll(ctx context.Context) []*category.Category {
-	result := make([]*category.Category, 0, len(self.categories))
+func (self *PGCategoryRepository) GetAll(ctx context.Context) []*categorymodel.Category {
+	result := make([]*categorymodel.Category, 0, len(self.categories))
 	for _, category := range self.categories {
 		result = append(result, category)
 	}

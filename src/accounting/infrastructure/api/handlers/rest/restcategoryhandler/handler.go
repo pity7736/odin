@@ -13,11 +13,11 @@ func New(ctx *fiber.Ctx) *restCategoryHandler {
 	return &restCategoryHandler{ctx: ctx}
 }
 
-func (self *restCategoryHandler) HandleOneResponse(category *category.Category) {
+func (self *restCategoryHandler) HandleOneResponse(category *categorymodel.Category) {
 	self.ctx.JSON(self.getCategoryResponse(category))
 }
 
-func (self *restCategoryHandler) HandleManyResponse(categories []*category.Category) {
+func (self *restCategoryHandler) HandleManyResponse(categories []*categorymodel.Category) {
 	result := make([]CategoryResponse, 0, len(categories))
 	for _, category := range categories {
 		result = append(result, self.getCategoryResponse(category))
@@ -25,7 +25,7 @@ func (self *restCategoryHandler) HandleManyResponse(categories []*category.Categ
 	self.ctx.JSON(CategoriesResponse{Categories: result})
 }
 
-func (self *restCategoryHandler) getCategoryResponse(category *category.Category) CategoryResponse {
+func (self *restCategoryHandler) getCategoryResponse(category *categorymodel.Category) CategoryResponse {
 	return CategoryResponse{
 		Id:     category.ID(),
 		Name:   category.Name(),

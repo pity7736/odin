@@ -31,8 +31,8 @@ func New() *builder {
 	}
 }
 
-func (b *builder) Build() *category.Category {
-	return category.New(
+func (b *builder) Build() *categorymodel.Category {
+	return categorymodel.New(
 		b.id,
 		b.name,
 		b.t,
@@ -40,7 +40,7 @@ func (b *builder) Build() *category.Category {
 	)
 }
 
-func (b *builder) Create(repository repositories.CategoryRepository) *category.Category {
+func (b *builder) Create(repository repositories.CategoryRepository) *categorymodel.Category {
 	command := categorycommand.New(b.name, b.t, b.userID)
 	categoryCreator := categorycreator.New(command, repository)
 	category, _ := categoryCreator.Create(context.TODO())

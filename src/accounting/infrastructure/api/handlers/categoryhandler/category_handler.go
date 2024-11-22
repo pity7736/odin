@@ -14,8 +14,8 @@ import (
 )
 
 type CategoryHandler interface {
-	HandleOneResponse(category *category.Category)
-	HandleManyResponse(categories []*category.Category)
+	HandleOneResponse(category *categorymodel.Category)
+	HandleManyResponse(categories []*categorymodel.Category)
 	ContentType() string
 }
 
