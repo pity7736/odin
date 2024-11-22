@@ -31,17 +31,17 @@ func New() *builder {
 	}
 }
 
-func (b *builder) Build() *categorymodel.Category {
+func (self *builder) Build() *categorymodel.Category {
 	return categorymodel.New(
-		b.id,
-		b.name,
-		b.t,
-		b.userID,
+		self.id,
+		self.name,
+		self.t,
+		self.userID,
 	)
 }
 
-func (b *builder) Create(repository repositories.CategoryRepository) *categorymodel.Category {
-	command := categorycommand.New(b.name, b.t, b.userID)
+func (self *builder) Create(repository repositories.CategoryRepository) *categorymodel.Category {
+	command := categorycommand.New(self.name, self.t, self.userID)
 	categoryCreator := categorycreator.New(command, repository)
 	category, _ := categoryCreator.Create(context.TODO())
 	return category
