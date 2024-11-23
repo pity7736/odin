@@ -37,7 +37,7 @@ func newSetup(t *testing.T) setup {
 	}
 }
 
-const categoryPath = "/v1/categories"
+const apiCategoryPath = "/api/v1/categories"
 
 func TestRest(t *testing.T) {
 
@@ -55,7 +55,7 @@ func TestRest(t *testing.T) {
 		response := makeRequestAndGetResponse[map[string]any](
 			setup,
 			"POST",
-			categoryPath,
+			apiCategoryPath,
 			&body,
 			&responseBody,
 		)
@@ -74,7 +74,7 @@ func TestRest(t *testing.T) {
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
 			"GET",
-			categoryPath,
+			apiCategoryPath,
 			nil,
 			&responseBody,
 		)
@@ -95,7 +95,7 @@ func TestRest(t *testing.T) {
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
 			"GET",
-			categoryPath,
+			apiCategoryPath,
 			nil,
 			&responseBody,
 		)
@@ -142,7 +142,7 @@ func TestRest(t *testing.T) {
 				response := makeRequestAndGetResponse[map[string]any](
 					setup,
 					"POST",
-					categoryPath,
+					apiCategoryPath,
 					&body,
 					&responseBody,
 				)
@@ -169,6 +169,8 @@ func makeRequestAndGetResponse[R any](setup setup, method, path string, payload 
 	json.Unmarshal(data, &responseBody)
 	return response
 }
+
+const categoryPath = "/categories"
 
 func TestHTMX(t *testing.T) {
 

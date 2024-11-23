@@ -3,13 +3,14 @@ package restcategoryhandler
 import (
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounting/domain/category"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
 )
 
 type restCategoryHandler struct {
 	ctx *fiber.Ctx
 }
 
-func New(ctx *fiber.Ctx) *restCategoryHandler {
+func New(ctx *fiber.Ctx) categoryhandler.CategoryHandler {
 	return &restCategoryHandler{ctx: ctx}
 }
 

@@ -6,6 +6,8 @@ import (
 	"github.com/gofiber/template/html/v2"
 	"net/http"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
 )
 
@@ -35,13 +37,34 @@ func NewFiberApplication(repositoryFactory accountingrepositoryfactory.Repositor
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", nil)
 	})
-	v1 := app.Group("/v1")
-	v1.Post(categoriesPath, func(c *fiber.Ctx) error {
-		categoryhandler.New(repositoryFactory.GetCategoryRepository()).Create(c)
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+	v1.Post(categoriesPath, func(ctx *fiber.Ctx) error {
+		categoryhandler.New(
+			repositoryFactory.GetCategoryRepository(),
+			restcategoryhandler.New(ctx),
+		).Create(ctx)
 		return nil
 	})
-	v1.Get(categoriesPath, func(c *fiber.Ctx) error {
-		return categoryhandler.New(repositoryFactory.GetCategoryRepository()).GetAll(c)
+	v1.Get(categoriesPath, func(ctx *fiber.Ctx) error {
+		return categoryhandler.New(
+			repositoryFactory.GetCategoryRepository(),
+			restcategoryhandler.New(ctx),
+		).GetAll(ctx)
+	})
+	app.Post(categoriesPath, func(ctx *fiber.Ctx) error {
+		categoryhandler.New(
+			repositoryFactory.GetCategoryRepository(),
+			htmxcategoryhandler.New(ctx),
+		).Create(ctx)
+		return nil
+	})
+	app.Get(categoriesPath, func(ctx *fiber.Ctx) error {
+		categoryhandler.New(
+			repositoryFactory.GetCategoryRepository(),
+			htmxcategoryhandler.New(ctx),
+		).GetAll(ctx)
+		return nil
 	})
 	return &fibberApplication{app: app}
 }
