@@ -1,13 +1,12 @@
-package api
+package app
 
 import (
-	"net/http"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
+	"net/http"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
-	"raiseexception.dev/odin/src/shared/infrastructure/repositoryfactory"
+	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
 )
 
 const categoriesPath = "/categories"
@@ -16,7 +15,7 @@ type fibberApplication struct {
 	app *fiber.App
 }
 
-func NewFiberApplication(repositoryFactory repositoryfactory.RepositoryFactory) Application {
+func NewFiberApplication(repositoryFactory accountingrepositoryfactory.RepositoryFactory) Application {
 	engine := html.New(
 		"/Users/julian.cortes/development/odin/src/shared/infrastructure/templates",
 		".gohtml",

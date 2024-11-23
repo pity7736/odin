@@ -1,11 +1,11 @@
 package main
 
 import (
-	"raiseexception.dev/odin/src/shared/infrastructure/api"
-	"raiseexception.dev/odin/src/shared/infrastructure/repositoryfactory"
+	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
+	"raiseexception.dev/odin/src/app"
 )
 
 func main() {
-	app := api.NewFiberApplication(repositoryfactory.New())
+	app := app.NewFiberApplication(accountingrepositoryfactory.New())
 	app.Start()
 }
