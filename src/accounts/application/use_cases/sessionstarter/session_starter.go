@@ -4,6 +4,7 @@ import (
 	"errors"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
 )
 
 type SessionStarter struct {
@@ -14,13 +15,12 @@ type SessionStarter struct {
 }
 
 func New(email, password string,
-	sessionRepository repositories.SessionRepository,
-	userRepository repositories.UserRepository) *SessionStarter {
+	factory accountsrepositoryfactory.AccountsRepositoryFactory) *SessionStarter {
 	return &SessionStarter{
 		email:             email,
 		password:          password,
-		sessionRepository: sessionRepository,
-		userRepository:    userRepository,
+		sessionRepository: factory.GetSessionRepository(),
+		userRepository:    factory.GetUserRepository(),
 	}
 }
 
