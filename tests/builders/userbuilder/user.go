@@ -2,19 +2,24 @@ package userbuilder
 
 import (
 	"github.com/google/uuid"
-	"raiseexception.dev/odin/src/shared/domain/user"
+	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
-type builder struct {
-	email string
-	id    string
+type Builder struct {
+	email    string
+	id       string
+	password string
 }
 
-func New() *builder {
+func New() *Builder {
 	id, _ := uuid.NewV7()
-	return &builder{email: "test@raiseexception.dev", id: id.String()}
+	return &Builder{
+		email:    "test@raiseexception.dev",
+		id:       id.String(),
+		password: "some secure password",
+	}
 }
 
-func (b *builder) Build() *user.User {
-	return user.New(b.email, b.id)
+func (self *Builder) Build() *usermodel.User {
+	return usermodel.New(self.email, self.id, self.password)
 }

@@ -19,12 +19,12 @@ func New(command categorycommand.CategoryCreatorCommand, repository repositories
 	return CategoryCreator{command: command, repository: repository}
 }
 
-func (self CategoryCreator) Create(ctx context.Context) (*category.Category, error) {
+func (self CategoryCreator) Create(ctx context.Context) (*categorymodel.Category, error) {
 	id, uuidError := uuid.NewV7()
 	if uuidError != nil {
 		return nil, errors.New("error generating uuid")
 	}
-	category := category.New(
+	category := categorymodel.New(
 		id.String(),
 		self.command.Name(),
 		self.command.Type(),
