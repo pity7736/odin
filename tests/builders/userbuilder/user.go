@@ -1,7 +1,9 @@
 package userbuilder
 
 import (
+	"context"
 	"github.com/google/uuid"
+	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
@@ -18,6 +20,12 @@ func New() *Builder {
 		id:       id.String(),
 		password: "some secure password",
 	}
+}
+
+func (self *Builder) Create(repository repositories.UserRepository) *usermodel.User {
+	user := self.Build()
+	repository.Add(context.TODO(), user)
+	return user
 }
 
 func (self *Builder) Build() *usermodel.User {

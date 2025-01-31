@@ -33,7 +33,7 @@ func newSetup(t *testing.T) setup {
 	return setup{
 		factory:    factory,
 		repository: factory.GetCategoryRepositoryMock(),
-		app:        app.NewFiberApplication(factory),
+		app:        app.NewFiberApplication(factory, factory),
 	}
 }
 

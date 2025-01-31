@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	category "raiseexception.dev/odin/src/accounting/domain/category"
+	categorymodel "raiseexception.dev/odin/src/accounting/domain/category"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -23,17 +23,17 @@ func (_m *MockCategoryRepository) EXPECT() *MockCategoryRepository_Expecter {
 	return &MockCategoryRepository_Expecter{mock: &_m.Mock}
 }
 
-// Add provides a mock function with given fields: ctx, _a1
-func (_m *MockCategoryRepository) Add(ctx context.Context, _a1 *category.Category) error {
-	ret := _m.Called(ctx, _a1)
+// Add provides a mock function with given fields: ctx, category
+func (_m *MockCategoryRepository) Add(ctx context.Context, category *categorymodel.Category) error {
+	ret := _m.Called(ctx, category)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *category.Category) error); ok {
-		r0 = rf(ctx, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *categorymodel.Category) error); ok {
+		r0 = rf(ctx, category)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -48,14 +48,14 @@ type MockCategoryRepository_Add_Call struct {
 
 // Add is a helper method to define mock.On call
 //   - ctx context.Context
-//   - _a1 *category.Category
-func (_e *MockCategoryRepository_Expecter) Add(ctx interface{}, _a1 interface{}) *MockCategoryRepository_Add_Call {
-	return &MockCategoryRepository_Add_Call{Call: _e.mock.On("Add", ctx, _a1)}
+//   - category *categorymodel.Category
+func (_e *MockCategoryRepository_Expecter) Add(ctx interface{}, category interface{}) *MockCategoryRepository_Add_Call {
+	return &MockCategoryRepository_Add_Call{Call: _e.mock.On("Add", ctx, category)}
 }
 
-func (_c *MockCategoryRepository_Add_Call) Run(run func(ctx context.Context, _a1 *category.Category)) *MockCategoryRepository_Add_Call {
+func (_c *MockCategoryRepository_Add_Call) Run(run func(ctx context.Context, category *categorymodel.Category)) *MockCategoryRepository_Add_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*category.Category))
+		run(args[0].(context.Context), args[1].(*categorymodel.Category))
 	})
 	return _c
 }
@@ -65,25 +65,25 @@ func (_c *MockCategoryRepository_Add_Call) Return(_a0 error) *MockCategoryReposi
 	return _c
 }
 
-func (_c *MockCategoryRepository_Add_Call) RunAndReturn(run func(context.Context, *category.Category) error) *MockCategoryRepository_Add_Call {
+func (_c *MockCategoryRepository_Add_Call) RunAndReturn(run func(context.Context, *categorymodel.Category) error) *MockCategoryRepository_Add_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAll provides a mock function with given fields: ctx
-func (_m *MockCategoryRepository) GetAll(ctx context.Context) []*category.Category {
+func (_m *MockCategoryRepository) GetAll(ctx context.Context) []*categorymodel.Category {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
 	}
 
-	var r0 []*category.Category
-	if rf, ok := ret.Get(0).(func(context.Context) []*category.Category); ok {
+	var r0 []*categorymodel.Category
+	if rf, ok := ret.Get(0).(func(context.Context) []*categorymodel.Category); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*category.Category)
+			r0 = ret.Get(0).([]*categorymodel.Category)
 		}
 	}
 
@@ -108,12 +108,12 @@ func (_c *MockCategoryRepository_GetAll_Call) Run(run func(ctx context.Context))
 	return _c
 }
 
-func (_c *MockCategoryRepository_GetAll_Call) Return(_a0 []*category.Category) *MockCategoryRepository_GetAll_Call {
+func (_c *MockCategoryRepository_GetAll_Call) Return(_a0 []*categorymodel.Category) *MockCategoryRepository_GetAll_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockCategoryRepository_GetAll_Call) RunAndReturn(run func(context.Context) []*category.Category) *MockCategoryRepository_GetAll_Call {
+func (_c *MockCategoryRepository_GetAll_Call) RunAndReturn(run func(context.Context) []*categorymodel.Category) *MockCategoryRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }

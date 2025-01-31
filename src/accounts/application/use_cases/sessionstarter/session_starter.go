@@ -1,6 +1,7 @@
 package sessionstarter
 
 import (
+	"context"
 	"errors"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
@@ -24,24 +25,24 @@ func New(email, password string,
 	}
 }
 
-func (self *SessionStarter) Start() (string, error) {
-	user, err := self.userRepository.GetByEmail(self.email)
+func (self *SessionStarter) Start(ctx context.Context) (string, error) {
+	user, err := self.userRepository.GetByEmail(ctx, self.email)
 	if err != nil {
 		return "", err
 	}
-	return self.start(user)
+	return self.start(ctx, user)
 }
 
-func (self *SessionStarter) start(user *usermodel.User) (string, error) {
+func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (string, error) {
 	if user != nil && user.CheckPassword(self.password) {
-		return self.createToken()
+		return self.createToken(ctx)
 	}
 	return "", errors.New("email or password are wrong")
 }
 
-func (self *SessionStarter) createToken() (string, error) {
-	token := "token"
-	err := self.sessionRepository.Add(token)
+func (self *SessionStarter) createToken(ctx context.Context) (string, error) {
+	token := "token" // TODO: create a real token
+	err := self.sessionRepository.Add(ctx, token)
 	if err != nil {
 		return "", err
 	}

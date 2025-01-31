@@ -1,5 +1,7 @@
 package repositories
 
+import "context"
+
 type SessionRepository interface {
-	Add(token string) error
+	Add(ctx context.Context, token string) error
 }

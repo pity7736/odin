@@ -1,6 +1,7 @@
 package login_test
 
 import (
+	"context"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,39 +17,39 @@ func TestLogin(t *testing.T) {
 		user := userbuilder.New().Build()
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(user.Email()).Return(user, nil)
+		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
 		sessionRepository := factory.GetSessionRepositoryMock()
-		sessionRepository.EXPECT().Add(mock.Anything).Return(nil)
+		sessionRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(nil)
 		sessionStarter := sessionstarter.New(
 			user.Email(),
 			user.Password(),
 			factory,
 		)
-		token, err := sessionStarter.Start()
+		token, err := sessionStarter.Start(context.TODO())
 
 		assert.Nil(t, err)
 		assert.NotEmpty(t, token)
-		sessionRepository.AssertCalled(t, "Add", mock.Anything)
+		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
 	t.Run("Should not be able to login when repository return error", func(t *testing.T) {
 		user := userbuilder.New().Build()
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(user.Email()).Return(user, nil)
+		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
 		repoErr := errors.New("error saving token to sessionRepository")
 		sessionRepository := factory.GetSessionRepositoryMock()
-		sessionRepository.EXPECT().Add(mock.Anything).Return(repoErr)
+		sessionRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(repoErr)
 		sessionStarter := sessionstarter.New(
 			user.Email(),
 			user.Password(),
 			factory,
 		)
-		token, err := sessionStarter.Start()
+		token, err := sessionStarter.Start(context.TODO())
 
 		assert.Equal(t, repoErr, err)
 		assert.Empty(t, token)
-		sessionRepository.AssertCalled(t, "Add", mock.Anything)
+		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
 	t.Run("Should not be able to login", func(t *testing.T) {
@@ -77,19 +78,19 @@ func TestLogin(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
 				userRepository := factory.GetUserRepositoryMock()
-				userRepository.EXPECT().GetByEmail(testCase.email).Return(testCase.expectedUser, nil)
+				userRepository.EXPECT().GetByEmail(context.TODO(), testCase.email).Return(testCase.expectedUser, nil)
 				repoErr := errors.New("email or password are wrong")
 				sessionStarter := sessionstarter.New(
 					testCase.email,
 					testCase.password,
 					factory,
 				)
-				token, err := sessionStarter.Start()
+				token, err := sessionStarter.Start(context.TODO())
 
 				assert.Equal(t, repoErr, err)
 				assert.Empty(t, token)
-				userRepository.AssertCalled(t, "GetByEmail", testCase.email)
-				sessionRepository.AssertNotCalled(t, "Add", mock.Anything)
+				userRepository.AssertCalled(t, "GetByEmail", context.TODO(), testCase.email)
+				sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
 			})
 		}
 	})
@@ -99,17 +100,17 @@ func TestLogin(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
 		repoErr := errors.New("error getting user")
-		userRepository.EXPECT().GetByEmail(user.Email()).Return(nil, repoErr)
+		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(nil, repoErr)
 		sessionRepository := factory.GetSessionRepositoryMock()
 		sessionStarter := sessionstarter.New(
 			user.Email(),
 			user.Password(),
 			factory,
 		)
-		token, err := sessionStarter.Start()
+		token, err := sessionStarter.Start(context.TODO())
 
 		assert.Equal(t, repoErr, err)
 		assert.Empty(t, token)
-		sessionRepository.AssertNotCalled(t, "Add", mock.Anything)
+		sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 }
