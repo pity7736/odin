@@ -1,4 +1,4 @@
-package category
+package categorymodel
 
 import (
 	"raiseexception.dev/odin/src/accounting/domain/constants"

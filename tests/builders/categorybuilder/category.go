@@ -2,6 +2,7 @@ package categorybuilder
 
 import (
 	"context"
+	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 
 	"github.com/google/uuid"
 	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
@@ -9,14 +10,13 @@ import (
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
-	"raiseexception.dev/odin/src/shared/domain/user"
 )
 
 type builder struct {
 	name   string
 	id     string
 	t      constants.CategoryType
-	user   *user.User
+	user   *usermodel.User
 	userID string
 }
 
@@ -31,17 +31,17 @@ func New() *builder {
 	}
 }
 
-func (b *builder) Build() *category.Category {
-	return category.New(
-		b.id,
-		b.name,
-		b.t,
-		b.userID,
+func (self *builder) Build() *categorymodel.Category {
+	return categorymodel.New(
+		self.id,
+		self.name,
+		self.t,
+		self.userID,
 	)
 }
 
-func (b *builder) Create(repository repositories.CategoryRepository) *category.Category {
-	command := categorycommand.New(b.name, b.t, b.userID)
+func (self *builder) Create(repository repositories.CategoryRepository) *categorymodel.Category {
+	command := categorycommand.New(self.name, self.t, self.userID)
 	categoryCreator := categorycreator.New(command, repository)
 	category, _ := categoryCreator.Create(context.TODO())
 	return category

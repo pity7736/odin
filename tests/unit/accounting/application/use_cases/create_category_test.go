@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -13,7 +14,6 @@ import (
 	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
-	"raiseexception.dev/odin/src/shared/domain/user"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/mocks"
 )
@@ -23,7 +23,7 @@ type setup struct {
 	command      categorycommand.CategoryCreatorCommand
 	categoryName string
 	categoryType constants.CategoryType
-	user         *user.User
+	user         *usermodel.User
 }
 
 func newSetup(t *testing.T) setup {

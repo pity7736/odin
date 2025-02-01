@@ -1,4 +1,4 @@
-package repositoryfactory
+package accountingrepositoryfactory
 
 import (
 	"raiseexception.dev/odin/src/accounting/domain/repositories"

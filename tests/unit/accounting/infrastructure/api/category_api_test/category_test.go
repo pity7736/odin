@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"raiseexception.dev/odin/src/app"
 	"strings"
 	"testing"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
-	"raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/builders/categorybuilder"
 	"raiseexception.dev/odin/tests/unit/mocks"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
@@ -25,7 +25,7 @@ import (
 type setup struct {
 	factory    *testrepositoryfactory.Factory
 	repository *mocks.MockCategoryRepository
-	app        api.Application
+	app        app.Application
 }
 
 func newSetup(t *testing.T) setup {
@@ -33,11 +33,11 @@ func newSetup(t *testing.T) setup {
 	return setup{
 		factory:    factory,
 		repository: factory.GetCategoryRepositoryMock(),
-		app:        api.NewFiberApplication(factory),
+		app:        app.NewFiberApplication(factory, factory),
 	}
 }
 
-const categoryPath = "/v1/categories"
+const apiCategoryPath = "/api/v1/categories"
 
 func TestRest(t *testing.T) {
 
@@ -55,7 +55,7 @@ func TestRest(t *testing.T) {
 		response := makeRequestAndGetResponse[map[string]any](
 			setup,
 			"POST",
-			categoryPath,
+			apiCategoryPath,
 			&body,
 			&responseBody,
 		)
@@ -69,12 +69,12 @@ func TestRest(t *testing.T) {
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
 		var responseBody restcategoryhandler.CategoriesResponse
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
 			"GET",
-			categoryPath,
+			apiCategoryPath,
 			nil,
 			&responseBody,
 		)
@@ -88,14 +88,14 @@ func TestRest(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		builder := categorybuilder.New()
-		categories := make([]*category.Category, 0, 1)
+		categories := make([]*categorymodel.Category, 0, 1)
 		categories = append(categories, builder.Create(setup.repository))
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
 		var responseBody restcategoryhandler.CategoriesResponse
 		response := makeRequestAndGetResponse[restcategoryhandler.CategoriesResponse](
 			setup,
 			"GET",
-			categoryPath,
+			apiCategoryPath,
 			nil,
 			&responseBody,
 		)
@@ -142,7 +142,7 @@ func TestRest(t *testing.T) {
 				response := makeRequestAndGetResponse[map[string]any](
 					setup,
 					"POST",
-					categoryPath,
+					apiCategoryPath,
 					&body,
 					&responseBody,
 				)
@@ -170,11 +170,13 @@ func makeRequestAndGetResponse[R any](setup setup, method, path string, payload 
 	return response
 }
 
+const categoryPath = "/categories"
+
 func TestHTMX(t *testing.T) {
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*category.Category, 0))
+		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
 		request := httptest.NewRequest("GET", categoryPath, nil)
 
 		response, _ := setup.app.Test(request)
@@ -191,7 +193,7 @@ func TestHTMX(t *testing.T) {
 	t.Run("get categories", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		categories := make([]*category.Category, 0, 1)
+		categories := make([]*categorymodel.Category, 0, 1)
 		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
