@@ -1,6 +1,7 @@
 package loginhandler
 
 import (
+	"errors"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
@@ -17,27 +18,41 @@ func New(factory accountsrepositoryfactory.AccountsRepositoryFactory) *Handler {
 
 func (self *Handler) Login(ctx *fiber.Ctx) error {
 	var body loginBody
-	if err := ctx.BodyParser(&body); err != nil {
+	if err := self.validateRequestBody(ctx, &body); err != nil {
 		ctx.Status(http.StatusBadRequest)
-		ctx.JSON(fiber.Map{"error": "wrong body"})
+		ctx.JSON(response{Token: "", Error: err.Error()})
 		return nil
+	}
+	return self.login(ctx, &body)
+}
+
+func (self *Handler) validateRequestBody(ctx *fiber.Ctx, body *loginBody) error {
+	if err := ctx.BodyParser(body); err != nil {
+		return errors.New("wrong body")
 	}
 	if body.Email == "" {
-		ctx.Status(http.StatusBadRequest)
-		ctx.JSON(fiber.Map{"error": "email is required"})
-		return nil
+		return errors.New("email is required")
 	}
 	if body.Password == "" {
-		ctx.Status(http.StatusBadRequest)
-		ctx.JSON(fiber.Map{"error": "password is required"})
-		return nil
-	}
-	sessionStarter := sessionstarter.New(body.Email, body.Password, self.factory)
-	_, err := sessionStarter.Start(ctx.Context())
-	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.JSON(fiber.Map{"error": err.Error()})
-		return nil
+		return errors.New("password is required")
 	}
 	return nil
+}
+
+func (self *Handler) login(ctx *fiber.Ctx, body *loginBody) error {
+	sessionStarter := sessionstarter.New(body.Email, body.Password, self.factory)
+	token, err := sessionStarter.Start(ctx.Context())
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.JSON(response{Token: "", Error: err.Error()})
+		return nil
+	}
+	ctx.JSON(response{Token: token, Error: ""})
+	ctx.Status(http.StatusCreated)
+	return nil
+}
+
+type response struct {
+	Token string `json:"token"`
+	Error string `json:"error"`
 }

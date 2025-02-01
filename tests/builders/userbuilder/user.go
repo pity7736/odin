@@ -29,5 +29,5 @@ func (self *Builder) Create(repository repositories.UserRepository) *usermodel.U
 }
 
 func (self *Builder) Build() *usermodel.User {
-	return usermodel.New(self.email, self.id, self.password)
+	return usermodel.New(self.id, self.email, self.password)
 }

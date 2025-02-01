@@ -2,6 +2,7 @@ package pgrepositories
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
@@ -10,7 +11,10 @@ type PGUserRepository struct {
 }
 
 func NewPGUserRepository() *PGUserRepository {
-	return &PGUserRepository{users: make(map[string]*usermodel.User)}
+	users := make(map[string]*usermodel.User, 1)
+	id, _ := uuid.NewV7()
+	users["some@email.com"] = usermodel.New(id.String(), "some@email.com", "password")
+	return &PGUserRepository{users: users}
 }
 
 func (self *PGUserRepository) GetByEmail(ctx context.Context, email string) (*usermodel.User, error) {

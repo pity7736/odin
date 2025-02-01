@@ -3,15 +3,16 @@ package login_api_test
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/http"
+
+	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
-	"testing"
-
-	"raiseexception.dev/odin/src/app"
 )
 
 func TestRest(t *testing.T) {
@@ -31,6 +32,7 @@ func TestRest(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "email or password are wrong", responseData["error"])
+		assert.Empty(t, responseData["token"])
 		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
 	})
 
@@ -82,9 +84,31 @@ func TestRest(t *testing.T) {
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, testCase.expectedError, responseData["error"])
+				assert.Empty(t, responseData["token"])
 				repository.AssertNotCalled(t, "GetByEmail")
 			})
 		}
+	})
+
+	t.Run("when email and password are correct", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := app.NewFiberApplication(factory, factory)
+		user := userbuilder.New().Build()
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), user.Password())
+		var responseData map[string]string
+		userRepositoryMock := factory.GetUserRepositoryMock()
+		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
+		sessionRepositoryMock := factory.GetSessionRepositoryMock()
+		token := "token"
+		sessionRepositoryMock.EXPECT().Add(mock.Anything, token).Return(nil)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
+		response := getResponseFromRequestBuilder(application, requestBuilder)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Empty(t, responseData["error"])
+		assert.Equal(t, token, responseData["token"])
+		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
 	})
 }
 

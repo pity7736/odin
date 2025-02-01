@@ -6,7 +6,7 @@ type User struct {
 	password string
 }
 
-func New(email, id, password string) *User {
+func New(id, email, password string) *User {
 	return &User{email: email, id: id, password: password}
 }
 
