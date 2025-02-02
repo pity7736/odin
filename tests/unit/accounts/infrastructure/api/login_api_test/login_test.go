@@ -99,15 +99,14 @@ func TestRest(t *testing.T) {
 		userRepositoryMock := factory.GetUserRepositoryMock()
 		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
 		sessionRepositoryMock := factory.GetSessionRepositoryMock()
-		token := "token"
-		sessionRepositoryMock.EXPECT().Add(mock.Anything, token).Return(nil)
+		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
 		response := getResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Empty(t, responseData["error"])
-		assert.Equal(t, token, responseData["token"])
+		assert.NotEmpty(t, responseData["token"])
 		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
 	})
 }

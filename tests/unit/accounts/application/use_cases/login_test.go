@@ -25,10 +25,10 @@ func TestLogin(t *testing.T) {
 			user.Password(),
 			factory,
 		)
-		token, err := sessionStarter.Start(context.TODO())
+		session, err := sessionStarter.Start(context.TODO())
 
 		assert.Nil(t, err)
-		assert.NotEmpty(t, token)
+		assert.NotEmpty(t, session.Token())
 		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
@@ -45,10 +45,10 @@ func TestLogin(t *testing.T) {
 			user.Password(),
 			factory,
 		)
-		token, err := sessionStarter.Start(context.TODO())
+		session, err := sessionStarter.Start(context.TODO())
 
 		assert.Equal(t, repoErr, err)
-		assert.Empty(t, token)
+		assert.Nil(t, session)
 		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
@@ -85,10 +85,10 @@ func TestLogin(t *testing.T) {
 					testCase.password,
 					factory,
 				)
-				token, err := sessionStarter.Start(context.TODO())
+				session, err := sessionStarter.Start(context.TODO())
 
 				assert.Equal(t, repoErr, err)
-				assert.Empty(t, token)
+				assert.Nil(t, session)
 				userRepository.AssertCalled(t, "GetByEmail", context.TODO(), testCase.email)
 				sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
 			})
@@ -107,10 +107,10 @@ func TestLogin(t *testing.T) {
 			user.Password(),
 			factory,
 		)
-		token, err := sessionStarter.Start(context.TODO())
+		session, err := sessionStarter.Start(context.TODO())
 
 		assert.Equal(t, repoErr, err)
-		assert.Empty(t, token)
+		assert.Nil(t, session)
 		sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 }
