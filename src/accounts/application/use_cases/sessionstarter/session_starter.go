@@ -36,12 +36,12 @@ func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, e
 
 func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
 	if user != nil && user.CheckPassword(self.password) {
-		return self.createToken(ctx)
+		return self.createSession(ctx)
 	}
 	return nil, errors.New("email or password are wrong")
 }
 
-func (self *SessionStarter) createToken(ctx context.Context) (*sessionmodel.Session, error) {
+func (self *SessionStarter) createSession(ctx context.Context) (*sessionmodel.Session, error) {
 	err := self.sessionRepository.Add(ctx, sessionmodel.New())
 	if err != nil {
 		return nil, err
