@@ -41,13 +41,13 @@ func (self *Handler) validateRequestBody(ctx *fiber.Ctx, body *loginBody) error 
 
 func (self *Handler) login(ctx *fiber.Ctx, body *loginBody) error {
 	sessionStarter := sessionstarter.New(body.Email, body.Password, self.factory)
-	token, err := sessionStarter.Start(ctx.Context())
+	session, err := sessionStarter.Start(ctx.Context())
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.JSON(response{Token: "", Error: err.Error()})
 		return nil
 	}
-	ctx.JSON(response{Token: token, Error: ""})
+	ctx.JSON(response{Token: session.Token(), Error: ""})
 	ctx.Status(http.StatusCreated)
 	return nil
 }

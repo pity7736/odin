@@ -2,17 +2,18 @@ package pgrepositories
 
 import (
 	"context"
+	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 )
 
 type PGSessionRepository struct {
-	tokens []string
+	sessions []*sessionmodel.Session
 }
 
 func NewPGSessionRepository() *PGSessionRepository {
-	return &PGSessionRepository{tokens: make([]string, 0)}
+	return &PGSessionRepository{sessions: make([]*sessionmodel.Session, 0)}
 }
 
-func (self *PGSessionRepository) Add(ctx context.Context, token string) error {
-	self.tokens = append(self.tokens, token)
+func (self *PGSessionRepository) Add(ctx context.Context, session *sessionmodel.Session) error {
+	self.sessions = append(self.sessions, session)
 	return nil
 }
