@@ -4,13 +4,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
 )
 
 type HtmxLoginHandler struct {
 	ctx *fiber.Ctx
 }
 
-func New(ctx *fiber.Ctx) *HtmxLoginHandler {
+func New(ctx *fiber.Ctx) loginhandler.LoginHandler {
 	return &HtmxLoginHandler{ctx: ctx}
 }
 

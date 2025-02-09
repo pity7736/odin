@@ -2,14 +2,16 @@ package restloginhandler
 
 import (
 	"github.com/gofiber/fiber/v2"
+
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
 )
 
 type RestLoginHandler struct {
 	ctx *fiber.Ctx
 }
 
-func New(ctx *fiber.Ctx) *RestLoginHandler {
+func New(ctx *fiber.Ctx) loginhandler.LoginHandler {
 	return &RestLoginHandler{ctx: ctx}
 }
 
