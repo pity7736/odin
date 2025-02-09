@@ -2,6 +2,7 @@ package restcategoryhandler
 
 import (
 	"github.com/gofiber/fiber/v2"
+
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
 )

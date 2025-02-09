@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
 	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
+	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/mocks"
 )

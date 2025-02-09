@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
