@@ -1,4 +1,4 @@
-{{ define "form" }}
+{{ define "login_form" }}
     <p>Login</p>
     <form hx-post="/auth/login" hx-target="#login_error">
         <label for="email">Email:</label>
@@ -10,7 +10,7 @@
 {{ end }}
 
 {{ define "login" }}
-    {{ template "form" }}
+    {{ template "login_form" }}
     <div id="login_error">
         {{ template "login_error" . }}
     </div>

@@ -1,7 +1,7 @@
-{{ define "form" }}
+{{ define "category_form" }}
     <p>Crear categoría</p>
     <div>
-        <form hx-post="/categories" hx-target="#categories-view" {{ if .Categories }} hx-swap="beforebegin" {{ else }} hx-vals='{"first": "true"}' {{ end }} style="margin-bottom: 10px" hx-on::after-request="this.reset()">
+        <form hx-post="/categories" hx-target="#categories-view" {{ if .Categories }} hx-swap="afterbegin" {{ else }} hx-vals='{"first": "true"}' {{ end }} style="margin-bottom: 10px" hx-on::after-request="this.reset()">
             <label for="name">Nombre</label>
             <input id="name" name="name" placeholder="name">
             <label for="type">Tipo</label>
@@ -16,7 +16,7 @@
 {{ end }}
 
 {{ define "categories"}}
-    {{ template "form" . }}
+    {{ template "category_form" . }}
     <div id="categories-view" style="display: flex; flex-direction: column;">
         {{ if .Categories }}
             {{ range .Categories }}
