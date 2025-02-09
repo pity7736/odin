@@ -2,8 +2,10 @@ package loginhandler
 
 import (
 	"errors"
-	"github.com/gofiber/fiber/v2"
 	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
 	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
 )
@@ -17,7 +19,7 @@ func New(factory accountsrepositoryfactory.AccountsRepositoryFactory) *Handler {
 }
 
 func (self *Handler) Login(ctx *fiber.Ctx) error {
-	var body loginBody
+	var body LoginBody
 	if err := self.validateRequestBody(ctx, &body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.JSON(response{Token: "", Error: err.Error()})
@@ -26,7 +28,7 @@ func (self *Handler) Login(ctx *fiber.Ctx) error {
 	return self.login(ctx, &body)
 }
 
-func (self *Handler) validateRequestBody(ctx *fiber.Ctx, body *loginBody) error {
+func (self *Handler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return errors.New("wrong body")
 	}
@@ -39,7 +41,7 @@ func (self *Handler) validateRequestBody(ctx *fiber.Ctx, body *loginBody) error 
 	return nil
 }
 
-func (self *Handler) login(ctx *fiber.Ctx, body *loginBody) error {
+func (self *Handler) login(ctx *fiber.Ctx, body *LoginBody) error {
 	sessionStarter := sessionstarter.New(body.Email, body.Password, self.factory)
 	session, err := sessionStarter.Start(ctx.Context())
 	if err != nil {

@@ -1,0 +1,10 @@
+{{ define "login" }}
+    <p>Login</p>
+    <form hx-post="/auth/login">
+        <label for="email">Email:</label>
+        <input id="email" type="email" name="email" required>
+        <label for="password">Password:</label>
+        <input id="password" type="password" name="password" required>
+        <button type="submit">Iniciar sesión</button>
+    </form>
+{{ end }}

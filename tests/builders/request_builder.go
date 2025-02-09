@@ -43,12 +43,23 @@ func (self *RequestBuilder) WithResponseData(data any) *RequestBuilder {
 	return self
 }
 
+func (self *RequestBuilder) WithContentType(contentType string) *RequestBuilder {
+	self.contentType = contentType
+	return self
+}
+
 func (self *RequestBuilder) Build() *http.Request {
 	request := httptest.NewRequest(self.method, self.path, self.payload)
-	request.Header.Add("Content-Type", self.contentType)
+	if self.contentType != "" {
+		request.Header.Set("Content-Type", self.contentType)
+	}
 	return request
 }
 
 func (self *RequestBuilder) ResponseData() any {
 	return self.responseData
+}
+
+func (self *RequestBuilder) IsContentType(contentType string) bool {
+	return contentType == self.contentType
 }
