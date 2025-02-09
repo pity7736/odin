@@ -187,7 +187,7 @@ func TestHTMX(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
-		//assert.True(t, strings.Contains(responseBody, "hx-vals='{\"first\": \"true\"}'"))
+		assert.True(t, strings.Contains(responseBody, "hx-vals='{\"first\": \"true\"}'"))
 		assert.True(t, strings.Contains(responseBody, "<p>no hay categorías</p>"))
 	})
 
