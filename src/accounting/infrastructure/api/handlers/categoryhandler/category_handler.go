@@ -2,13 +2,14 @@ package categoryhandler
 
 import (
 	"net/http"
-	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler/categoryrequestbody"
 
 	"github.com/gofiber/fiber/v2"
+
 	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
 	"raiseexception.dev/odin/src/accounting/application/use_cases/categorycreator"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler/categoryrequestbody"
 )
 
 type CategoryHandler interface {

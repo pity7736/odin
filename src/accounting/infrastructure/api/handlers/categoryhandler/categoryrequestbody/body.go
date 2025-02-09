@@ -2,6 +2,7 @@ package categoryrequestbody
 
 import (
 	"errors"
+
 	"raiseexception.dev/odin/src/accounting/application/commands/categorycommand"
 	"raiseexception.dev/odin/src/accounting/domain/constants"
 )

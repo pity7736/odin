@@ -2,7 +2,9 @@ package pgrepositories
 
 import (
 	"context"
+
 	"github.com/google/uuid"
+
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 

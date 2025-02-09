@@ -1,10 +1,10 @@
 package testrepositoryfactory
 
 import (
-	accountsrepositories "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"testing"
 
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	accountsrepositories "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/tests/unit/mocks"
 )
 
