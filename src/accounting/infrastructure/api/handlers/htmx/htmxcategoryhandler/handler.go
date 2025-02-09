@@ -1,10 +1,11 @@
 package htmxcategoryhandler
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
-	"strconv"
 )
 
 type htmxCategoryHandler struct {
@@ -24,13 +25,13 @@ func (self *htmxCategoryHandler) HandleOneResponse(category *categorymodel.Categ
 }
 
 func (self *htmxCategoryHandler) HandleManyResponse(categories []*categorymodel.Category) {
-	self.ctx.Render("categories", Data{Categories: categories})
+	self.ctx.Render("categories", data{Categories: categories})
 }
 
 func (self *htmxCategoryHandler) ContentType() string {
 	return fiber.MIMETextHTMLCharsetUTF8
 }
 
-type Data struct {
+type data struct {
 	Categories []*categorymodel.Category
 }

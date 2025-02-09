@@ -1,0 +1,23 @@
+{{ define "form" }}
+    <p>Login</p>
+    <form hx-post="/auth/login" hx-target="#login_error">
+        <label for="email">Email:</label>
+        <input id="email" type="email" name="email" required>
+        <label for="password">Password:</label>
+        <input id="password" type="password" name="password" required>
+        <button type="submit">Iniciar sesión</button>
+    </form>
+{{ end }}
+
+{{ define "login" }}
+    {{ template "form" }}
+    <div id="login_error">
+        {{ template "login_error" . }}
+    </div>
+{{ end }}
+
+{{ define "login_error" }}
+    {{ if .Error }}
+        <p>{{ .Error }}</p>
+    {{ end }}
+{{ end }}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestRest(t *testing.T) {
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
-		response := getResponseFromRequestBuilder(application, requestBuilder)
+		response := getJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "email or password are wrong", responseData["error"])
@@ -80,7 +81,7 @@ func TestRest(t *testing.T) {
 					WithPath("/api/v1/auth/login").
 					WithPayload(testCase.body).
 					WithResponseData(&responseData)
-				response := getResponseFromRequestBuilder(application, requestBuilder)
+				response := getJsonResponseFromRequestBuilder(application, requestBuilder)
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, testCase.expectedError, responseData["error"])
@@ -102,7 +103,7 @@ func TestRest(t *testing.T) {
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
-		response := getResponseFromRequestBuilder(application, requestBuilder)
+		response := getJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Empty(t, responseData["error"])
@@ -111,7 +112,76 @@ func TestRest(t *testing.T) {
 	})
 }
 
-func getResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) *http.Response {
+func TestHTMX(t *testing.T) {
+	t.Run("get login form", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := app.NewFiberApplication(factory, factory)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath("/auth/login").
+			WithMethod("GET").
+			WithContentType("")
+		response, responseData := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.True(t, strings.Contains(responseData, `<p>Login</p>`))
+		assert.True(t, strings.Contains(responseData, `<form hx-post="/auth/login" hx-target="#login_error">`))
+		assert.True(t, strings.Contains(responseData, `<label for="email">Email:</label>`))
+		assert.True(t, strings.Contains(responseData, `<input id="email" type="email" name="email" required>`))
+		assert.True(t, strings.Contains(responseData, `<label for="password">Password:</label>`))
+		assert.True(t, strings.Contains(responseData, `<input id="password" type="password" name="password" required>`))
+		assert.True(t, strings.Contains(responseData, `<button type="submit">Iniciar sesión</button>`))
+		assert.True(t, strings.Contains(responseData, `</form>`))
+	})
+
+	t.Run("non existing email", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := app.NewFiberApplication(factory, factory)
+		user := userbuilder.New().Build()
+		email := "some@email.com"
+		body := fmt.Sprintf("email=%s&password=%s", email, user.Password())
+		repository := factory.GetUserRepositoryMock()
+		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath("/auth/login").
+			WithPayload(body).
+			WithContentType("application/x-www-form-urlencoded")
+		response, responseData := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.True(t, strings.Contains(responseData, "email or password are wrong"))
+		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
+	})
+
+	t.Run("when email and password are correct", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := app.NewFiberApplication(factory, factory)
+		user := userbuilder.New().Build()
+		body := fmt.Sprintf("email=%s&password=%s", user.Email(), user.Password())
+		userRepositoryMock := factory.GetUserRepositoryMock()
+		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
+		sessionRepositoryMock := factory.GetSessionRepositoryMock()
+		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath("/auth/login").
+			WithPayload(body).
+			WithContentType("application/x-www-form-urlencoded")
+		response, _ := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+		sessionCookie := response.Cookies()[0]
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotEmpty(t, sessionCookie.Value)
+		assert.True(t, sessionCookie.Secure)
+		assert.True(t, sessionCookie.HttpOnly)
+		assert.Equal(t, http.SameSiteStrictMode, sessionCookie.SameSite)
+		assert.Equal(t, "/", response.Header.Get("HX-Redirect"))
+		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
+	})
+}
+
+func getJsonResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) *http.Response {
 	response, err := application.Test(requestBuilder.Build())
 	if err != nil {
 		panic(fmt.Errorf("error making request: %w", err))
@@ -126,4 +196,15 @@ func getResponseFromRequestBuilder(application app.Application, requestBuilder *
 		}
 	}
 	return response
+}
+
+func getHtmlResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) (*http.Response, string) {
+	response, err := application.Test(requestBuilder.Build())
+	if err != nil {
+		panic(fmt.Errorf("error making request: %w", err))
+	}
+	defer response.Body.Close()
+	data := make([]byte, response.ContentLength)
+	response.Body.Read(data)
+	return response, string(data)
 }

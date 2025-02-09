@@ -12,6 +12,6 @@ func New() *Session {
 	return &Session{token: utils.RandomString(tokenLength)}
 }
 
-func (s *Session) Token() string {
-	return s.token
+func (self *Session) Token() string {
+	return self.token
 }
