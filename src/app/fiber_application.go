@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,9 +10,10 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
-	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
 	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxloginhandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restloginhandler"
 )
 
 const categoriesPath = "/categories"
@@ -75,34 +75,20 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		return nil
 	})
 	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(accountsRepositoryFactory).Login(ctx)
+		return loginhandler.New(
+			accountsRepositoryFactory,
+			restloginhandler.New(ctx),
+		).Login(ctx)
 	})
 	app.Get("/auth/login", func(ctx *fiber.Ctx) error {
-		ctx.Render("login", nil)
+		ctx.Render("login", htmxloginhandler.RequestError{Error: ""})
 		return nil
 	})
 	app.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		var body loginhandler.LoginBody
-		if err := ctx.BodyParser(&body); err != nil {
-			return fmt.Errorf("wrong body. error %w", err)
-		}
-		sessionStarter := sessionstarter.New(body.Email, body.Password, accountsRepositoryFactory)
-		session, err := sessionStarter.Start(ctx.Context())
-		if err != nil {
-			ctx.Status(http.StatusBadRequest)
-			return nil
-		}
-		cookie := fiber.Cookie{
-			Name:     "__Secure-odin-session",
-			Value:    session.Token(),
-			Secure:   true,
-			HTTPOnly: true,
-			SameSite: "strict",
-		}
-		ctx.Cookie(&cookie)
-		ctx.Set("HX-Redirect", "/")
-		ctx.Status(http.StatusCreated)
-		return nil
+		return loginhandler.New(
+			accountsRepositoryFactory,
+			htmxloginhandler.New(ctx),
+		).Login(ctx)
 	})
 	return &fibberApplication{app: app}
 }

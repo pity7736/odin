@@ -125,13 +125,33 @@ func TestHTMX(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, `<p>Login</p>`))
-		assert.True(t, strings.Contains(responseData, `<form hx-post="/auth/login">`))
+		assert.True(t, strings.Contains(responseData, `<form hx-post="/auth/login" hx-target="#login_error">`))
 		assert.True(t, strings.Contains(responseData, `<label for="email">Email:</label>`))
 		assert.True(t, strings.Contains(responseData, `<input id="email" type="email" name="email" required>`))
 		assert.True(t, strings.Contains(responseData, `<label for="password">Password:</label>`))
 		assert.True(t, strings.Contains(responseData, `<input id="password" type="password" name="password" required>`))
 		assert.True(t, strings.Contains(responseData, `<button type="submit">Iniciar sesión</button>`))
 		assert.True(t, strings.Contains(responseData, `</form>`))
+	})
+
+	t.Run("non existing email", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := app.NewFiberApplication(factory, factory)
+		user := userbuilder.New().Build()
+		email := "some@email.com"
+		body := fmt.Sprintf("email=%s&password=%s", email, user.Password())
+		repository := factory.GetUserRepositoryMock()
+		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath("/auth/login").
+			WithPayload(body).
+			WithContentType("application/x-www-form-urlencoded")
+		response, responseData := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.True(t, strings.Contains(responseData, "email or password are wrong"))
+		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
 	})
 
 	t.Run("when email and password are correct", func(t *testing.T) {
