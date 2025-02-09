@@ -1,7 +1,6 @@
 package login_api_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
+	"raiseexception.dev/odin/tests/testutils"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
@@ -29,7 +29,7 @@ func TestRest(t *testing.T) {
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
-		response := getJsonResponseFromRequestBuilder(application, requestBuilder)
+		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "email or password are wrong", responseData["error"])
@@ -81,7 +81,7 @@ func TestRest(t *testing.T) {
 					WithPath("/api/v1/auth/login").
 					WithPayload(testCase.body).
 					WithResponseData(&responseData)
-				response := getJsonResponseFromRequestBuilder(application, requestBuilder)
+				response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, testCase.expectedError, responseData["error"])
@@ -103,7 +103,7 @@ func TestRest(t *testing.T) {
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
-		response := getJsonResponseFromRequestBuilder(application, requestBuilder)
+		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Empty(t, responseData["error"])
@@ -121,7 +121,7 @@ func TestHTMX(t *testing.T) {
 			WithPath("/auth/login").
 			WithMethod("GET").
 			WithContentType("")
-		response, responseData := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, `<p>Login</p>`))
@@ -147,7 +147,7 @@ func TestHTMX(t *testing.T) {
 			WithPath("/auth/login").
 			WithPayload(body).
 			WithContentType("application/x-www-form-urlencoded")
-		response, responseData := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, "email or password are wrong"))
@@ -168,7 +168,7 @@ func TestHTMX(t *testing.T) {
 			WithPath("/auth/login").
 			WithPayload(body).
 			WithContentType("application/x-www-form-urlencoded")
-		response, _ := getHtmlResponseFromRequestBuilder(application, requestBuilder)
+		response, _ := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
 		sessionCookie := response.Cookies()[0]
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
@@ -179,32 +179,4 @@ func TestHTMX(t *testing.T) {
 		assert.Equal(t, "/", response.Header.Get("HX-Redirect"))
 		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
 	})
-}
-
-func getJsonResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) *http.Response {
-	response, err := application.Test(requestBuilder.Build())
-	if err != nil {
-		panic(fmt.Errorf("error making request: %w", err))
-	}
-	defer response.Body.Close()
-	if requestBuilder.ResponseData() != nil {
-		data := make([]byte, response.ContentLength)
-		response.Body.Read(data)
-		err = json.Unmarshal(data, requestBuilder.ResponseData())
-		if err != nil {
-			panic(fmt.Errorf("error unmarshalling response body: %w", err))
-		}
-	}
-	return response
-}
-
-func getHtmlResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) (*http.Response, string) {
-	response, err := application.Test(requestBuilder.Build())
-	if err != nil {
-		panic(fmt.Errorf("error making request: %w", err))
-	}
-	defer response.Body.Close()
-	data := make([]byte, response.ContentLength)
-	response.Body.Read(data)
-	return response, string(data)
 }
