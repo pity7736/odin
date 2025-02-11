@@ -31,6 +31,7 @@ func TestLogin(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.NotEmpty(t, session.Token())
+		assert.Equal(t, user.ID(), session.UserID())
 		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 

@@ -9,6 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/tests/builders/userbuilder"
 
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
@@ -21,17 +23,21 @@ import (
 )
 
 type setup struct {
-	factory    *testrepositoryfactory.Factory
-	repository *mocks.MockCategoryRepository
-	app        app.Application
+	factory           *testrepositoryfactory.Factory
+	repository        *mocks.MockCategoryRepository
+	app               app.Application
+	userRepository    *mocks.MockUserRepository
+	sessionRepository *mocks.MockSessionRepository
 }
 
 func newSetup(t *testing.T) setup {
 	factory := testrepositoryfactory.New(t)
 	return setup{
-		factory:    factory,
-		repository: factory.GetCategoryRepositoryMock(),
-		app:        app.NewFiberApplication(factory, factory),
+		factory:           factory,
+		repository:        factory.GetCategoryRepositoryMock(),
+		app:               app.NewFiberApplication(factory, factory),
+		userRepository:    factory.GetUserRepositoryMock(),
+		sessionRepository: factory.GetSessionRepositoryMock(),
 	}
 }
 
@@ -42,6 +48,10 @@ func TestRest(t *testing.T) {
 	t.Run("create category", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		category := categorybuilder.New().Build()
 		body := fmt.Sprintf(
 			`{"name": "%s", "type": "%s"}`,
@@ -53,7 +63,8 @@ func TestRest(t *testing.T) {
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithPayload(body).
-			WithResponseData(&responseBody)
+			WithResponseData(&responseBody).
+			WithSession(session)
 
 		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
@@ -61,18 +72,54 @@ func TestRest(t *testing.T) {
 		assert.Equal(t, category.Name(), responseBody["name"])
 		assert.Equal(t, category.Type().String(), responseBody["type"])
 		assert.NotNil(t, responseBody["id"])
+		assert.Equal(t, user.ID(), responseBody["user_id"])
 		setup.repository.AssertCalled(t, "Add", mock.Anything, mock.Anything)
+	})
+
+	t.Run("create category with anonymous user", func(t *testing.T) {
+		setup := newSetup(t)
+		category := categorybuilder.New().Build()
+		body := fmt.Sprintf(
+			`{"name": "%s", "type": "%s"}`,
+			category.Name(),
+			category.Type(),
+		)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(apiCategoryPath).
+			WithPayload(body)
+
+		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	})
+
+	t.Run("get categories with anonymous user", func(t *testing.T) {
+		setup := newSetup(t)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(apiCategoryPath).
+			WithMethod(http.MethodGet)
+
+		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 	})
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		var responseBody restcategoryhandler.CategoriesResponse
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithMethod(http.MethodGet).
-			WithResponseData(&responseBody)
+			WithResponseData(&responseBody).
+			WithSession(session)
 
 		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 
@@ -84,6 +131,10 @@ func TestRest(t *testing.T) {
 	t.Run("get categories", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		builder := categorybuilder.New()
 		categories := make([]*categorymodel.Category, 0, 1)
 		categories = append(categories, builder.Create(setup.repository))
@@ -93,7 +144,9 @@ func TestRest(t *testing.T) {
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithMethod(http.MethodGet).
-			WithResponseData(&responseBody)
+			WithResponseData(&responseBody).
+			WithSession(session)
+
 		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
@@ -103,6 +156,10 @@ func TestRest(t *testing.T) {
 
 	t.Run("create category with wrong data", func(t *testing.T) {
 		setup := newSetup(t)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		category := categorybuilder.New().Build()
 		testCases := []struct {
 			testCaseName string
@@ -136,7 +193,9 @@ func TestRest(t *testing.T) {
 				requestBuilder := builders.NewRequestBuilder()
 				requestBuilder.
 					WithPath(apiCategoryPath).
-					WithPayload(body)
+					WithPayload(body).
+					WithSession(session)
+
 				response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -154,8 +213,16 @@ func TestHTMX(t *testing.T) {
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.WithPath(categoryPath).WithMethod(http.MethodGet)
+		requestBuilder.
+			WithPath(categoryPath).
+			WithMethod(http.MethodGet).
+			WithSession(session).
+			WithContentType("")
 
 		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
 
@@ -168,12 +235,20 @@ func TestHTMX(t *testing.T) {
 	t.Run("get categories", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		categories := make([]*categorymodel.Category, 0, 1)
 		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
 		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.WithPath(categoryPath).WithMethod(http.MethodGet)
+		requestBuilder.
+			WithPath(categoryPath).
+			WithMethod(http.MethodGet).
+			WithSession(session).
+			WithContentType("")
 
 		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
 

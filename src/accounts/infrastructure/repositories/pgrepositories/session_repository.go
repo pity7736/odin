@@ -7,14 +7,18 @@ import (
 )
 
 type PGSessionRepository struct {
-	sessions []*sessionmodel.Session
+	sessions map[string]*sessionmodel.Session
 }
 
 func NewPGSessionRepository() *PGSessionRepository {
-	return &PGSessionRepository{sessions: make([]*sessionmodel.Session, 0)}
+	return &PGSessionRepository{sessions: make(map[string]*sessionmodel.Session)}
 }
 
 func (self *PGSessionRepository) Add(ctx context.Context, session *sessionmodel.Session) error {
-	self.sessions = append(self.sessions, session)
+	self.sessions[session.Token()] = session
 	return nil
+}
+
+func (self *PGSessionRepository) Get(ctx context.Context, token string) (*sessionmodel.Session, error) {
+	return self.sessions[token], nil
 }

@@ -3,7 +3,7 @@ package sessionstarter
 import (
 	"context"
 	"errors"
-	
+
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
@@ -37,15 +37,16 @@ func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, e
 
 func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
 	if user != nil && user.CheckPassword(self.password) {
-		return self.createSession(ctx)
+		return self.createSession(ctx, user)
 	}
 	return nil, errors.New("email or password are wrong")
 }
 
-func (self *SessionStarter) createSession(ctx context.Context) (*sessionmodel.Session, error) {
-	err := self.sessionRepository.Add(ctx, sessionmodel.New())
+func (self *SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
+	session := sessionmodel.New(user.ID())
+	err := self.sessionRepository.Add(ctx, session)
 	if err != nil {
 		return nil, err
 	}
-	return sessionmodel.New(), nil
+	return session, nil
 }

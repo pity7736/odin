@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -35,31 +36,53 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		ViewsLayout: "base",
 	})
 	app.Use(logger.New())
-	app.Use(func(c *fiber.Ctx) error {
-		c.Locals("userID", c.Get("Authorization"))
-		return c.Next()
-	})
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
+	})
+	app.Use(func(c *fiber.Ctx) error {
+		cookie := c.Cookies("__Secure-odin-session")
+		if cookie != "" {
+			session, _ := accountsRepositoryFactory.GetSessionRepository().Get(c.Context(), cookie)
+			c.Locals("userID", session.UserID())
+		}
+		return c.Next()
 	})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", nil)
 	})
 	api := app.Group("/api")
 	apiV1 := api.Group("/v1")
+	apiV1.Use(func(c *fiber.Ctx) error {
+		authHeader := strings.Split(c.Get("Authorization", ""), " ")
+		if len(authHeader) == 2 {
+			session, _ := accountsRepositoryFactory.GetSessionRepository().Get(c.Context(), authHeader[1])
+			c.Locals("userID", session.UserID())
+		}
+		return c.Next()
+	})
 	apiV1.Post(categoriesPath, func(ctx *fiber.Ctx) error {
-		// TODO: handle error. design a way to handle app errors
-		categoryhandler.New(
-			accountingRepositoryFactory.GetCategoryRepository(),
-			restcategoryhandler.New(ctx),
-		).Create(ctx)
-		return nil
+		if ctx.Locals("userID") != nil {
+			// TODO: handle error. design a way to handle app errors
+			categoryhandler.New(
+				accountingRepositoryFactory.GetCategoryRepository(),
+				restcategoryhandler.New(ctx),
+			).Create(ctx)
+			return nil
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			return nil
+		}
 	})
 	apiV1.Get(categoriesPath, func(ctx *fiber.Ctx) error {
-		return categoryhandler.New(
-			accountingRepositoryFactory.GetCategoryRepository(),
-			restcategoryhandler.New(ctx),
-		).GetAll(ctx)
+		if ctx.Locals("userID") != nil {
+			return categoryhandler.New(
+				accountingRepositoryFactory.GetCategoryRepository(),
+				restcategoryhandler.New(ctx),
+			).GetAll(ctx)
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			return nil
+		}
 	})
 	app.Post(categoriesPath, func(ctx *fiber.Ctx) error {
 		categoryhandler.New(
