@@ -92,11 +92,16 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		return nil
 	})
 	app.Get(categoriesPath, func(ctx *fiber.Ctx) error {
-		categoryhandler.New(
-			accountingRepositoryFactory.GetCategoryRepository(),
-			htmxcategoryhandler.New(ctx),
-		).GetAll(ctx)
-		return nil
+		if ctx.Locals("userID") != nil {
+			categoryhandler.New(
+				accountingRepositoryFactory.GetCategoryRepository(),
+				htmxcategoryhandler.New(ctx),
+			).GetAll(ctx)
+			return nil
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			return nil
+		}
 	})
 	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
 		return loginhandler.New(

@@ -257,4 +257,22 @@ func TestHTMX(t *testing.T) {
 		assert.False(t, strings.Contains(responseData, "hx-vals='{\"first\": \"true\"}'"))
 		assert.True(t, strings.Contains(responseData, category.Name()))
 	})
+
+	t.Run("get categories with anonymous user", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		categories := make([]*categorymodel.Category, 0, 1)
+		category := categorybuilder.New().Create(setup.repository)
+		categories = append(categories, category)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(categoryPath).
+			WithMethod(http.MethodGet).
+			WithContentType("")
+
+		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+		assert.False(t, strings.Contains(responseData, category.Name()))
+	})
 }
