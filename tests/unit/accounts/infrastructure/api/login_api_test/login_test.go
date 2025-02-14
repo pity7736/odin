@@ -28,7 +28,11 @@ func TestRest(t *testing.T) {
 		repository := factory.GetUserRepositoryMock()
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
 		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
+		requestBuilder.
+			WithPath("/api/v1/auth/login").
+			WithPayload(body).
+			WithResponseData(&responseData).
+			WithContentType("application/json")
 		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -80,7 +84,9 @@ func TestRest(t *testing.T) {
 				requestBuilder.
 					WithPath("/api/v1/auth/login").
 					WithPayload(testCase.body).
-					WithResponseData(&responseData)
+					WithResponseData(&responseData).
+					WithContentType("application/json")
+
 				response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -102,7 +108,11 @@ func TestRest(t *testing.T) {
 		sessionRepositoryMock := factory.GetSessionRepositoryMock()
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.WithPath("/api/v1/auth/login").WithPayload(body).WithResponseData(&responseData)
+		requestBuilder.
+			WithPath("/api/v1/auth/login").
+			WithPayload(body).
+			WithResponseData(&responseData).
+			WithContentType("application/json")
 		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)

@@ -23,7 +23,7 @@ func NewRequestBuilder() *RequestBuilder {
 	return &RequestBuilder{
 		method:      "POST",
 		path:        "/",
-		contentType: "application/json",
+		contentType: "",
 	}
 }
 

@@ -64,7 +64,8 @@ func TestRest(t *testing.T) {
 			WithPath(apiCategoryPath).
 			WithPayload(body).
 			WithResponseData(&responseBody).
-			WithSession(session)
+			WithSession(session).
+			WithContentType("application/json")
 
 		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
