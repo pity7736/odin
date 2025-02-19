@@ -43,7 +43,9 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		cookie := c.Cookies("__Secure-odin-session")
 		if cookie != "" {
 			session, _ := accountsRepositoryFactory.GetSessionRepository().Get(c.Context(), cookie)
-			c.Locals("userID", session.UserID())
+			if session != nil {
+				c.Locals("userID", session.UserID())
+			}
 		}
 		return c.Next()
 	})
@@ -85,11 +87,16 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		}
 	})
 	app.Post(categoriesPath, func(ctx *fiber.Ctx) error {
-		categoryhandler.New(
-			accountingRepositoryFactory.GetCategoryRepository(),
-			htmxcategoryhandler.New(ctx),
-		).Create(ctx)
-		return nil
+		if ctx.Locals("userID") != nil {
+			categoryhandler.New(
+				accountingRepositoryFactory.GetCategoryRepository(),
+				htmxcategoryhandler.New(ctx),
+			).Create(ctx)
+			return nil
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			return nil
+		}
 	})
 	app.Get(categoriesPath, func(ctx *fiber.Ctx) error {
 		if ctx.Locals("userID") != nil {

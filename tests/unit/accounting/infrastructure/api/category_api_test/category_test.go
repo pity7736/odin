@@ -211,6 +211,60 @@ const categoryPath = "/categories"
 
 func TestHTMX(t *testing.T) {
 
+	t.Run("create category", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
+		category := categorybuilder.New().Build()
+		body := fmt.Sprintf(
+			"name=%s&type=%s",
+			category.Name(),
+			category.Type(),
+		)
+		var responseBody map[string]any
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(categoryPath).
+			WithPayload(body).
+			WithResponseData(&responseBody).
+			WithSession(session).
+			WithContentType("application/x-www-form-urlencoded")
+
+		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.True(t, strings.Contains(responseData, category.Name()))
+		setup.repository.AssertCalled(t, "Add", mock.Anything, mock.Anything)
+	})
+
+	t.Run("create category when token does not exists", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, nil)
+		category := categorybuilder.New().Build()
+		body := fmt.Sprintf(
+			"name=%s&type=%s",
+			category.Name(),
+			category.Type(),
+		)
+		var responseBody map[string]any
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(categoryPath).
+			WithPayload(body).
+			WithResponseData(&responseBody).
+			WithSession(session).
+			WithContentType("application/x-www-form-urlencoded")
+
+		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+		assert.False(t, strings.Contains(responseData, category.Name()))
+	})
+
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
@@ -275,5 +329,23 @@ func TestHTMX(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 		assert.False(t, strings.Contains(responseData, category.Name()))
+	})
+
+	t.Run("get categories when session token does not exists", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, nil)
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(categoryPath).
+			WithMethod(http.MethodGet).
+			WithSession(session).
+			WithContentType("")
+
+		response, _ := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 	})
 }
