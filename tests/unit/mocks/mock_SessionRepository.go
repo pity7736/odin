@@ -70,6 +70,65 @@ func (_c *MockSessionRepository_Add_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// Get provides a mock function with given fields: ctx, token
+func (_m *MockSessionRepository) Get(ctx context.Context, token string) (*sessionmodel.Session, error) {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
+
+	var r0 *sessionmodel.Session
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*sessionmodel.Session, error)); ok {
+		return rf(ctx, token)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *sessionmodel.Session); ok {
+		r0 = rf(ctx, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*sessionmodel.Session)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockSessionRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockSessionRepository_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *MockSessionRepository_Expecter) Get(ctx interface{}, token interface{}) *MockSessionRepository_Get_Call {
+	return &MockSessionRepository_Get_Call{Call: _e.mock.On("Get", ctx, token)}
+}
+
+func (_c *MockSessionRepository_Get_Call) Run(run func(ctx context.Context, token string)) *MockSessionRepository_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_Get_Call) Return(_a0 *sessionmodel.Session, _a1 error) *MockSessionRepository_Get_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockSessionRepository_Get_Call) RunAndReturn(run func(context.Context, string) (*sessionmodel.Session, error)) *MockSessionRepository_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockSessionRepository creates a new instance of MockSessionRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockSessionRepository(t interface {

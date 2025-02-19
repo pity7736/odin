@@ -32,6 +32,12 @@ func New() *builder {
 	}
 }
 
+func (self *builder) WithUser(user *usermodel.User) *builder {
+	self.user = user
+	self.userID = user.ID()
+	return self
+}
+
 func (self *builder) Build() *categorymodel.Category {
 	return categorymodel.New(
 		self.id,
