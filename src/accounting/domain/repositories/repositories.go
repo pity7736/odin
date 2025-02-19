@@ -8,5 +8,5 @@ import (
 
 type CategoryRepository interface {
 	Add(ctx context.Context, category *categorymodel.Category) error
-	GetAll(ctx context.Context) []*categorymodel.Category
+	GetAll(ctx context.Context, userID string) []*categorymodel.Category
 }

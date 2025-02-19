@@ -19,10 +19,12 @@ func (self *PGCategoryRepository) Add(ctx context.Context, category *categorymod
 	return nil
 }
 
-func (self *PGCategoryRepository) GetAll(ctx context.Context) []*categorymodel.Category {
+func (self *PGCategoryRepository) GetAll(ctx context.Context, userID string) []*categorymodel.Category {
 	result := make([]*categorymodel.Category, 0, len(self.categories))
 	for _, category := range self.categories {
-		result = append(result, category)
+		if category.UserID() == userID {
+			result = append(result, category)
+		}
 	}
 	return result
 }

@@ -51,7 +51,7 @@ func (self *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.Cat
 }
 
 func (self *categoryHandler) GetAll(ctx *fiber.Ctx) error {
-	categories := self.repository.GetAll(ctx.Context())
+	categories := self.repository.GetAll(ctx.Context(), ctx.Locals("userID").(string))
 	self.handler.HandleManyResponse(categories)
 	return nil
 }

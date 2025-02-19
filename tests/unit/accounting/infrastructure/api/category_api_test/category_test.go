@@ -109,9 +109,9 @@ func TestRest(t *testing.T) {
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
 		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		user := userbuilder.New().Create(setup.userRepository)
+		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(make([]*categorymodel.Category, 0))
 		session := sessionmodel.New(user.ID())
 		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		var responseBody restcategoryhandler.CategoriesResponse
@@ -138,8 +138,8 @@ func TestRest(t *testing.T) {
 		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		builder := categorybuilder.New()
 		categories := make([]*categorymodel.Category, 0, 1)
-		categories = append(categories, builder.Create(setup.repository))
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
+		categories = append(categories, builder.WithUser(user).Create(setup.repository))
+		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(categories)
 		var responseBody restcategoryhandler.CategoriesResponse
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.
@@ -153,6 +153,33 @@ func TestRest(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
 		assert.Equal(t, 1, len(responseBody.Categories))
+	})
+
+	t.Run("get categories from different user", func(t *testing.T) {
+		setup := newSetup(t)
+		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user0 := userbuilder.New().Create(setup.userRepository)
+		session := sessionmodel.New(user0.ID())
+		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
+		builder := categorybuilder.New()
+		categories := make([]*categorymodel.Category, 0, 1)
+		user1 := userbuilder.New().Create(setup.userRepository)
+		categories = append(categories, builder.WithUser(user1).Create(setup.repository))
+		setup.repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return([]*categorymodel.Category{})
+		var responseBody restcategoryhandler.CategoriesResponse
+		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder.
+			WithPath(apiCategoryPath).
+			WithMethod(http.MethodGet).
+			WithResponseData(&responseBody).
+			WithSession(session)
+
+		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
+		assert.Equal(t, 0, len(responseBody.Categories))
 	})
 
 	t.Run("create category with wrong data", func(t *testing.T) {
@@ -267,9 +294,9 @@ func TestHTMX(t *testing.T) {
 
 	t.Run("get categories when is empty", func(t *testing.T) {
 		setup := newSetup(t)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(make([]*categorymodel.Category, 0))
 		setup.userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		user := userbuilder.New().Create(setup.userRepository)
+		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(make([]*categorymodel.Category, 0))
 		session := sessionmodel.New(user.ID())
 		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		requestBuilder := builders.NewRequestBuilder()
@@ -297,7 +324,7 @@ func TestHTMX(t *testing.T) {
 		categories := make([]*categorymodel.Category, 0, 1)
 		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
-		setup.repository.EXPECT().GetAll(mock.Anything).Return(categories)
+		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(categories)
 		requestBuilder := builders.NewRequestBuilder()
 		requestBuilder.
 			WithPath(categoryPath).
