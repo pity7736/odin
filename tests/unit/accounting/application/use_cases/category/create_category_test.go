@@ -1,4 +1,4 @@
-package create_category_test
+package category_test
 
 import (
 	"context"
