@@ -1,7 +1,7 @@
 package api
 
-import "context"
+import "github.com/gofiber/fiber/v2"
 
 type Handler interface {
-	Handle(ctx context.Context) error
+	Handle(ctx *fiber.Ctx) error
 }
