@@ -1,6 +1,10 @@
 package accountmodel
 
-import moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+import (
+	"errors"
+
+	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+)
 
 type Account struct {
 	name           string
@@ -10,14 +14,37 @@ type Account struct {
 	balance        moneymodel.Money
 }
 
-func New(id, name, userID string, initialBalance, balance moneymodel.Money) *Account {
+func New(id, name, userID string, initialBalance, balance moneymodel.Money) (*Account, error) {
+	err := validateData(id, name, userID, initialBalance, balance)
+	if err != nil {
+		return nil, err
+	}
 	return &Account{
 		id:             id,
 		name:           name,
 		initialBalance: initialBalance,
 		userID:         userID,
 		balance:        balance,
+	}, nil
+}
+
+func validateData(id, name, userID string, initialBalance, balance moneymodel.Money) error {
+	if initialBalance.IsNegative() {
+		return errors.New("initial balance must be positive")
 	}
+	if balance.IsNegative() {
+		return errors.New("balance must be positive")
+	}
+	if id == "" {
+		return errors.New("id cannot be empty")
+	}
+	if name == "" {
+		return errors.New("name cannot be empty")
+	}
+	if userID == "" {
+		return errors.New("user id cannot be empty")
+	}
+	return nil
 }
 
 func (self *Account) ID() string {

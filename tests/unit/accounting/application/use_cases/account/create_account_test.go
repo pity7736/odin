@@ -44,7 +44,7 @@ func TestAccountCreator(t *testing.T) {
 		account, err := accountCreator.Create(context.TODO())
 
 		assert.Nil(t, account)
-		assert.Equal(t, errors.New("initialBalance must be positive"), err)
+		assert.Equal(t, errors.New("initial balance must be positive"), err)
 		repository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 

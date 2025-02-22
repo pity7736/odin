@@ -33,11 +33,12 @@ func (self *AccountBuilder) WithUserID(userID string) *AccountBuilder {
 }
 
 func (self *AccountBuilder) Build() *accountmodel.Account {
-	return accountmodel.New(
+	account, _ := accountmodel.New(
 		self.id,
 		self.name,
 		self.userID,
 		self.initialBalance,
 		self.balance,
 	)
+	return account
 }
