@@ -53,7 +53,7 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 	t.Run("return error when initial balance is not valid", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		ctxBuilder := builders.NewFiberContextBuilder()
-		ctxBuilder.WithMethod("POST").WithContentType("application/json")
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationJSON)
 		defer ctxBuilder.Release()
 		initialBalance := "some value"
 		ctxBuilder.WithBody([]byte(fmt.Sprintf(

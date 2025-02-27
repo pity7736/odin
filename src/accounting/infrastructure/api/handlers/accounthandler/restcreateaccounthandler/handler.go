@@ -9,15 +9,15 @@ import (
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
 )
 
-type CreateAccountHandler struct {
+type RestCreateAccountHandler struct {
 	repository repositories.AccountRepository
 }
 
-func New(repository repositories.AccountRepository) CreateAccountHandler {
-	return CreateAccountHandler{repository: repository}
+func New(repository repositories.AccountRepository) RestCreateAccountHandler {
+	return RestCreateAccountHandler{repository: repository}
 }
 
-func (self CreateAccountHandler) Handle(ctx *fiber.Ctx) error {
+func (self RestCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 	ctx.Set("content-type", fiber.MIMEApplicationJSON)
 	var body createAccountBody
 	if err := ctx.BodyParser(&body); err != nil {

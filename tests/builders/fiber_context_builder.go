@@ -2,6 +2,7 @@ package builders
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
 	"github.com/valyala/fasthttp"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
@@ -17,10 +18,17 @@ type FiberContextBuilder struct {
 }
 
 func NewFiberContextBuilder() *FiberContextBuilder {
+	engine := html.New(
+		"/Users/julian.cortes/development/odin/src/shared/infrastructure/templates",
+		".gohtml",
+	)
 	return &FiberContextBuilder{
 		method: fiber.MethodGet,
-		app:    fiber.New(),
-		user:   userbuilder.New().Build(),
+		app: fiber.New(fiber.Config{
+			Views:       engine,
+			ViewsLayout: "base",
+		}),
+		user: userbuilder.New().Build(),
 	}
 }
 
@@ -41,6 +49,7 @@ func (self *FiberContextBuilder) WithMethod(method string) *FiberContextBuilder 
 
 func (self *FiberContextBuilder) Build() *fiber.Ctx {
 	self.ctx = self.app.AcquireCtx(&fasthttp.RequestCtx{})
+	self.ctx.Method(self.method)
 	if self.body != nil {
 		self.ctx.Request().SetBody(self.body)
 		self.ctx.Request().Header.SetContentLength(len(self.body))
