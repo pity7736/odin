@@ -22,7 +22,8 @@ func TestAccountCreator(t *testing.T) {
 		initialBalance, _ := moneymodel.New("1000000")
 		repository := mocks.NewMockAccountRepository(t)
 		repository.EXPECT().Add(mock.IsType(context.TODO()), mock.Anything).Return(nil)
-		accountCreator := accountcreator.New(accountName, user.ID(), initialBalance, repository)
+		command := accountcreator.NewCreateAccountCommand(accountName, initialBalance, user.ID())
+		accountCreator := accountcreator.New(*command, repository)
 
 		account, err := accountCreator.Create(context.TODO())
 
@@ -39,7 +40,8 @@ func TestAccountCreator(t *testing.T) {
 		accountName := "saving account"
 		initialBalance, _ := moneymodel.New("-1000000")
 		repository := mocks.NewMockAccountRepository(t)
-		accountCreator := accountcreator.New(accountName, user.ID(), initialBalance, repository)
+		command := accountcreator.NewCreateAccountCommand(accountName, initialBalance, user.ID())
+		accountCreator := accountcreator.New(*command, repository)
 
 		account, err := accountCreator.Create(context.TODO())
 
@@ -54,7 +56,8 @@ func TestAccountCreator(t *testing.T) {
 		initialBalance, _ := moneymodel.New("1000000")
 		repository := mocks.NewMockAccountRepository(t)
 		repository.EXPECT().Add(mock.IsType(context.TODO()), mock.Anything).Return(errors.New("some error"))
-		accountCreator := accountcreator.New(accountName, user.ID(), initialBalance, repository)
+		command := accountcreator.NewCreateAccountCommand(accountName, initialBalance, user.ID())
+		accountCreator := accountcreator.New(*command, repository)
 
 		account, err := accountCreator.Create(context.TODO())
 

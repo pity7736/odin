@@ -16,11 +16,11 @@ type AccountCreator struct {
 	repository     repositories.AccountRepository
 }
 
-func New(name, userID string, initialBalance moneymodel.Money, repository repositories.AccountRepository) *AccountCreator {
+func New(command CreateAccountCommand, repository repositories.AccountRepository) *AccountCreator {
 	return &AccountCreator{
-		name:           name,
-		initialBalance: initialBalance,
-		userID:         userID,
+		name:           command.Name(),
+		initialBalance: command.InitialBalance(),
+		userID:         command.UserID(),
 		repository:     repository,
 	}
 }

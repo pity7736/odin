@@ -61,7 +61,7 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		assert.True(t, strings.Contains(responseBody, errorValue))
 	})
 
-	t.Run("return error when render fails", func(t *testing.T) {
+	t.Run("return error when render fails on success", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		ctxBuilder := builders.NewFiberContextBuilder()
@@ -79,9 +79,35 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		defer patches.Reset()
 
 		err := createAccountHandler.Handle(ctx)
+		responseBody := string(ctx.Response().Body())
 
 		assert.Equal(t, renderError, err)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
+		assert.False(t, strings.Contains(responseBody, renderError.Error()))
+	})
+
+	t.Run("return error when render fails on error", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody([]byte(fmt.Sprintf(
+			"name=%s&initial_balance=%s",
+			"test",
+			"some value",
+		)))
+		createAccountHandler := htmxcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+		renderError := errors.New("some render error")
+		patches := gomonkey.ApplyMethodReturn(ctx, "Render", renderError)
+		defer patches.Reset()
+
+		err := createAccountHandler.Handle(ctx)
+		responseBody := string(ctx.Response().Body())
+
+		assert.Equal(t, renderError, err)
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
+		assert.False(t, strings.Contains(responseBody, renderError.Error()))
 	})
 
 	t.Run("be able to create an account", func(t *testing.T) {

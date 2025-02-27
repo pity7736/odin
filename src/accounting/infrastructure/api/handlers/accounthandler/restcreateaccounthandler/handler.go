@@ -1,39 +1,22 @@
 package restcreateaccounthandler
 
 import (
-	"context"
-
 	"github.com/gofiber/fiber/v2"
-	"raiseexception.dev/odin/src/accounting/application/use_cases/accountcreator"
-	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/createaccounthandler"
 )
 
 type RestCreateAccountHandler struct {
-	repository repositories.AccountRepository
+	handler *createaccounthandler.CreateAccountHandler
 }
 
 func New(repository repositories.AccountRepository) RestCreateAccountHandler {
-	return RestCreateAccountHandler{repository: repository}
+	return RestCreateAccountHandler{handler: createaccounthandler.New(repository)}
 }
 
 func (self RestCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 	ctx.Set("content-type", fiber.MIMEApplicationJSON)
-	var body createAccountBody
-	if err := ctx.BodyParser(&body); err != nil {
-		return err
-	}
-	initialBalance, err := moneymodel.New(body.RawInitialBalance)
-	if err != nil {
-		return err
-	}
-	accountCreator := accountcreator.New(
-		body.Name,
-		ctx.Locals("userID").(string),
-		initialBalance,
-		self.repository,
-	)
-	account, err := accountCreator.Create(context.TODO())
+	account, err := self.handler.Handle(ctx)
 	if err != nil {
 		return err
 	}
@@ -44,11 +27,6 @@ func (self RestCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 		Balance:        account.Balance().String(),
 		UserID:         account.UserID(),
 	})
-}
-
-type createAccountBody struct {
-	Name              string `json:"name"`
-	RawInitialBalance string `json:"initial_balance"`
 }
 
 type createAccountResponse struct {
