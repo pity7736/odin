@@ -1,0 +1,14 @@
+
+{{ define "create_account_error" }}
+    {{ if .Error }}
+        <p>{{ .Error }}</p>
+    {{ end }}
+{{ end }}
+
+{{ define "account_created" }}
+    <div>
+        <p>Name: <span>{{ .Name }}</span></p>
+        <p>Initial Balance: <span>{{ .InitialBalance }}</span></p>
+        <p>Balance: <span>{{ .Balance }}</span></p>
+    </div>
+{{ end }}

@@ -6,6 +6,7 @@ packages:
   raiseexception.dev/odin/src/accounting/domain/repositories:
     interfaces:
       CategoryRepository:
+      AccountRepository:
   raiseexception.dev/odin/src/accounts/domain/repositories:
     interfaces:
       SessionRepository:
