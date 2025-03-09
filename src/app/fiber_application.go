@@ -7,6 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
 
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
@@ -19,6 +21,7 @@ import (
 )
 
 const categoriesPath = "/categories"
+const accountPath = "/accounts"
 
 type fibberApplication struct {
 	app *fiber.App
@@ -116,6 +119,14 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 			restloginhandler.New(ctx),
 		).Login(ctx)
 	})
+	apiV1.Post(accountPath, func(ctx *fiber.Ctx) error {
+		if ctx.Locals("userID") != nil {
+			return restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			return nil
+		}
+	})
 	app.Get("/auth/login", func(ctx *fiber.Ctx) error {
 		ctx.Render("login", htmxloginhandler.RequestError{Error: ""})
 		return nil
@@ -125,6 +136,14 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 			accountsRepositoryFactory,
 			htmxloginhandler.New(ctx),
 		).Login(ctx)
+	})
+	app.Post(accountPath, func(ctx *fiber.Ctx) error {
+		if ctx.Locals("userID") != nil {
+			return htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			return nil
+		}
 	})
 	return &fibberApplication{app: app}
 }
