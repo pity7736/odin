@@ -35,5 +35,6 @@
         <p>Name: <span>{{ .Name }}</span></p>
         <p>Saldo inicial: <span>{{ .InitialBalance }}</span></p>
         <p>Saldo actual: <span>{{ .Balance }}</span></p>
+        <p>Fecha apertura: <span>{{ .CreatedAt.Format "Monday, _2 January 2006" }}</span></p>
     </div>
 {{ end }}

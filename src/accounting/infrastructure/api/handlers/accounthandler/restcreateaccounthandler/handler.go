@@ -1,6 +1,8 @@
 package restcreateaccounthandler
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/createaccounthandler"
@@ -26,6 +28,7 @@ func (self RestCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 		InitialBalance: account.InitialBalance().String(),
 		Balance:        account.Balance().String(),
 		UserID:         account.UserID(),
+		CreatedAt:      account.CreatedAt().Format(time.RFC3339),
 	})
 }
 
@@ -35,4 +38,5 @@ type createAccountResponse struct {
 	Balance        string `json:"balance"`
 	ID             string `json:"id"`
 	UserID         string `json:"user_id"`
+	CreatedAt      string `json:"created_at"`
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/gofiber/fiber/v2"
@@ -137,6 +138,7 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", accountName)))
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", initialBalance)))
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", initialBalance)))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", time.Now().Format("Monday, _2 January 2006"))))
 	})
 }
 
@@ -199,9 +201,11 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account0.Name()))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account0.InitialBalance()))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account0.Balance()))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", account0.CreatedAt().Format("Monday, _2 January 2006"))))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account1.Name()))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account1.InitialBalance()))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account1.Balance()))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", account1.CreatedAt().Format("Monday, _2 January 2006"))))
 	})
 
 	t.Run("return error when render fails", func(t *testing.T) {

@@ -2,7 +2,6 @@ package htmxcreateaccounthandler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/createaccounthandler"
 )
@@ -26,9 +25,4 @@ func (self HTMXCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 		return err
 	}
 	return ctx.Render("account_created", account, "")
-}
-
-type data struct {
-	Account *accountmodel.Account
-	IsFirst bool
 }

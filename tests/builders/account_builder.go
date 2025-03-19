@@ -1,6 +1,8 @@
 package builders
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
@@ -38,12 +40,6 @@ func (self *AccountBuilder) WithName(name string) *AccountBuilder {
 }
 
 func (self *AccountBuilder) Build() *accountmodel.Account {
-	account, _ := accountmodel.New(
-		self.id,
-		self.name,
-		self.userID,
-		self.initialBalance,
-		self.balance,
-	)
+	account, _ := accountmodel.New(self.id, self.name, self.userID, self.initialBalance, self.balance, time.Now())
 	return account
 }

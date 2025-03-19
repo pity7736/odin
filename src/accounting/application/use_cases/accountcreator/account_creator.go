@@ -2,6 +2,7 @@ package accountcreator
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
@@ -33,6 +34,7 @@ func (self *AccountCreator) Create(ctx context.Context) (*accountmodel.Account, 
 		self.userID,
 		self.initialBalance,
 		self.initialBalance,
+		time.Now(),
 	)
 	if err != nil {
 		return nil, err
