@@ -1,3 +1,28 @@
+{{ define "create_account_form" }}
+    <p>Crear cuenta</p>
+    <div>
+        <form hx-post="/accounts" hx-target="#accounts-view">
+            <label for="name">Nombre</label>
+            <input id="name" name="name" placeholder="name">
+            <label for="initial_balance">Saldo inicial</label>
+            <input id="initial_balance" name="initial_balance" placeholder="initial_balance">
+            <button type="submit">Crear</button>
+        </form>
+    </div>
+{{ end }}
+
+{{ define "accounts" }}
+    {{ template "create_account_form"}}
+    <div id="accounts-view">
+        {{ if .Accounts }}
+            {{ range .Accounts }}
+                {{ template "account_created" . }}
+            {{ end }}
+        {{ else }}
+            <p>no hay cuentas</p>
+        {{ end }}
+    </div>
+{{ end }}
 
 {{ define "create_account_error" }}
     {{ if .Error }}
@@ -6,9 +31,10 @@
 {{ end }}
 
 {{ define "account_created" }}
-    <div>
+    <div hx-swap-oob="afterend:#accounts-view">
         <p>Name: <span>{{ .Name }}</span></p>
-        <p>Initial Balance: <span>{{ .InitialBalance }}</span></p>
-        <p>Balance: <span>{{ .Balance }}</span></p>
+        <p>Saldo inicial: <span>{{ .InitialBalance }}</span></p>
+        <p>Saldo actual: <span>{{ .Balance }}</span></p>
+        <p>Fecha apertura: <span>{{ .CreatedAt.Format "Monday, _2 January 2006" }}</span></p>
     </div>
 {{ end }}

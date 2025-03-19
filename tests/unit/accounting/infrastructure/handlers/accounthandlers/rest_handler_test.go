@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/gofiber/fiber/v2"
@@ -27,6 +28,8 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		patches := gomonkey.ApplyFuncReturn(uuid.NewV7, id, nil)
 		defer patches.Reset()
 		account := builders.NewAccountBuilder().WithUserID(ctxBuilder.User().ID()).Build()
+		timePatches := gomonkey.ApplyFuncReturn(time.Now, account.CreatedAt())
+		defer timePatches.Reset()
 		ctxBuilder.WithBody([]byte(fmt.Sprintf(
 			`{"name":"%s","initial_balance":"%s"}`,
 			account.Name(),
@@ -47,6 +50,7 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.Equal(t, account.Balance().String(), responseBody["balance"])
 		assert.Equal(t, account.ID(), responseBody["id"])
 		assert.Equal(t, account.UserID(), responseBody["user_id"])
+		assert.Equal(t, account.CreatedAt().Format(time.RFC3339), responseBody["created_at"])
 		repository.AssertCalled(t, "Add", mock.Anything, account)
 	})
 
@@ -100,6 +104,8 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		patches := gomonkey.ApplyFuncReturn(uuid.NewV7, id, nil)
 		defer patches.Reset()
 		account := builders.NewAccountBuilder().WithUserID(ctxBuilder.User().ID()).Build()
+		timePatches := gomonkey.ApplyFuncReturn(time.Now, account.CreatedAt())
+		defer timePatches.Reset()
 		ctxBuilder.WithBody([]byte(fmt.Sprintf(
 			`{"name":"%s","initial_balance":"%s"}`,
 			account.Name(),

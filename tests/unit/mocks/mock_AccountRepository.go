@@ -71,7 +71,7 @@ func (_c *MockAccountRepository_Add_Call) RunAndReturn(run func(context.Context,
 }
 
 // GetAll provides a mock function with given fields: ctx, userID
-func (_m *MockAccountRepository) GetAll(ctx context.Context, userID string) []*accountmodel.Account {
+func (_m *MockAccountRepository) GetAll(ctx context.Context, userID string) ([]*accountmodel.Account, error) {
 	ret := _m.Called(ctx, userID)
 
 	if len(ret) == 0 {
@@ -79,6 +79,10 @@ func (_m *MockAccountRepository) GetAll(ctx context.Context, userID string) []*a
 	}
 
 	var r0 []*accountmodel.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*accountmodel.Account, error)); ok {
+		return rf(ctx, userID)
+	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) []*accountmodel.Account); ok {
 		r0 = rf(ctx, userID)
 	} else {
@@ -87,7 +91,13 @@ func (_m *MockAccountRepository) GetAll(ctx context.Context, userID string) []*a
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockAccountRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
@@ -109,12 +119,12 @@ func (_c *MockAccountRepository_GetAll_Call) Run(run func(ctx context.Context, u
 	return _c
 }
 
-func (_c *MockAccountRepository_GetAll_Call) Return(_a0 []*accountmodel.Account) *MockAccountRepository_GetAll_Call {
-	_c.Call.Return(_a0)
+func (_c *MockAccountRepository_GetAll_Call) Return(_a0 []*accountmodel.Account, _a1 error) *MockAccountRepository_GetAll_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAccountRepository_GetAll_Call) RunAndReturn(run func(context.Context, string) []*accountmodel.Account) *MockAccountRepository_GetAll_Call {
+func (_c *MockAccountRepository_GetAll_Call) RunAndReturn(run func(context.Context, string) ([]*accountmodel.Account, error)) *MockAccountRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,6 +33,7 @@ func TestAccountCreator(t *testing.T) {
 		assert.Equal(t, initialBalance, account.InitialBalance())
 		assert.Equal(t, initialBalance, account.Balance())
 		assert.True(t, testutils.IsUUIDv7(account.ID()))
+		assert.True(t, testutils.IsTimeClose(time.Now(), account.CreatedAt()))
 		assert.Nil(t, err)
 	})
 

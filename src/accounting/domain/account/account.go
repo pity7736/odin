@@ -2,6 +2,7 @@ package accountmodel
 
 import (
 	"errors"
+	"time"
 
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 )
@@ -12,9 +13,10 @@ type Account struct {
 	userID         string
 	id             string
 	balance        moneymodel.Money
+	createdAt      time.Time
 }
 
-func New(id, name, userID string, initialBalance, balance moneymodel.Money) (*Account, error) {
+func New(id, name, userID string, initialBalance, balance moneymodel.Money, createdAt time.Time) (*Account, error) {
 	err := validateData(id, name, userID, initialBalance, balance)
 	if err != nil {
 		return nil, err
@@ -25,6 +27,7 @@ func New(id, name, userID string, initialBalance, balance moneymodel.Money) (*Ac
 		initialBalance: initialBalance,
 		userID:         userID,
 		balance:        balance,
+		createdAt:      createdAt,
 	}, nil
 }
 
@@ -65,4 +68,8 @@ func (self *Account) UserID() string {
 
 func (self *Account) Balance() moneymodel.Money {
 	return self.balance
+}
+
+func (self *Account) CreatedAt() time.Time {
+	return self.createdAt
 }
