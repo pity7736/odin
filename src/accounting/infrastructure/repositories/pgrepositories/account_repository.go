@@ -19,12 +19,12 @@ func (self *PGAccountRepository) Add(ctx context.Context, account *accountmodel.
 	return nil
 }
 
-func (self *PGAccountRepository) GetAll(ctx context.Context, userID string) []*accountmodel.Account {
+func (self *PGAccountRepository) GetAll(ctx context.Context, userID string) ([]*accountmodel.Account, error) {
 	result := make([]*accountmodel.Account, 0, len(self.accounts))
 	for _, account := range self.accounts {
 		if account.UserID() == userID {
 			result = append(result, account)
 		}
 	}
-	return result
+	return result, nil
 }
