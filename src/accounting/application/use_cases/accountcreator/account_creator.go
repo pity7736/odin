@@ -2,9 +2,7 @@ package accountcreator
 
 import (
 	"context"
-	"time"
 
-	"github.com/google/uuid"
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
@@ -27,15 +25,7 @@ func New(command CreateAccountCommand, repository repositories.AccountRepository
 }
 
 func (self *AccountCreator) Create(ctx context.Context) (*accountmodel.Account, error) {
-	id, _ := uuid.NewV7()
-	account, err := accountmodel.New(
-		id.String(),
-		self.name,
-		self.userID,
-		self.initialBalance,
-		self.initialBalance,
-		time.Now(),
-	)
+	account, err := accountmodel.New(self.name, self.userID, self.initialBalance)
 	if err != nil {
 		return nil, err
 	}
