@@ -40,6 +40,6 @@ func (self *AccountBuilder) WithName(name string) *AccountBuilder {
 }
 
 func (self *AccountBuilder) Build() *accountmodel.Account {
-	account, _ := accountmodel.New(self.id, self.name, self.userID, self.initialBalance, self.balance, time.Now())
+	account, _ := accountmodel.NewFromRepository(self.id, self.name, self.userID, self.initialBalance, self.balance, time.Now())
 	return account
 }

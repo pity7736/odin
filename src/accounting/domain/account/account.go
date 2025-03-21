@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 )
 
@@ -16,7 +17,22 @@ type Account struct {
 	createdAt      time.Time
 }
 
-func New(id, name, userID string, initialBalance, balance moneymodel.Money, createdAt time.Time) (*Account, error) {
+func New(name, userID string, initialBalance moneymodel.Money) (*Account, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, err
+	}
+	return NewFromRepository(
+		id.String(),
+		name,
+		userID,
+		initialBalance,
+		initialBalance,
+		time.Now(),
+	)
+}
+
+func NewFromRepository(id, name, userID string, initialBalance, balance moneymodel.Money, createdAt time.Time) (*Account, error) {
 	err := validateData(id, name, userID, initialBalance, balance)
 	if err != nil {
 		return nil, err
