@@ -24,6 +24,11 @@ func New() *Builder {
 	}
 }
 
+func (self *Builder) WithEmail(email string) *Builder {
+	self.email = email
+	return self
+}
+
 func (self *Builder) Create(repository repositories.UserRepository) *usermodel.User {
 	user := self.Build()
 	repository.Add(context.TODO(), user)

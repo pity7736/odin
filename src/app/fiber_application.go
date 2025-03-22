@@ -156,7 +156,13 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		}
 	})
 	app.Get(accountPath, func(ctx *fiber.Ctx) error {
-		return htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
+		if ctx.Locals("userID") != nil {
+			return htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
+		} else {
+			ctx.Status(http.StatusUnauthorized)
+			ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
+			return nil
+		}
 	})
 	return &fibberApplication{app: app}
 }
@@ -166,5 +172,5 @@ func (self *fibberApplication) Start() error {
 }
 
 func (self *fibberApplication) Test(request *http.Request) (*http.Response, error) {
-	return self.app.Test(request)
+	return self.app.Test(request, -1)
 }

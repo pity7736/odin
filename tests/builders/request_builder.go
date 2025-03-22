@@ -10,6 +10,7 @@ import (
 
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
@@ -23,6 +24,7 @@ type RequestBuilder struct {
 	session         *sessionmodel.Session
 	accountsFactory accountsrepositoryfactory.AccountsRepositoryFactory
 	withSession     bool
+	user            *usermodel.User
 }
 
 func NewRequestBuilder(accountsFactory accountsrepositoryfactory.AccountsRepositoryFactory) *RequestBuilder {
@@ -71,6 +73,11 @@ func (self *RequestBuilder) WithAnonymousSession() *RequestBuilder {
 	return self
 }
 
+func (self *RequestBuilder) WithUser(user *usermodel.User) *RequestBuilder {
+	self.user = user
+	return self
+}
+
 func (self *RequestBuilder) Build() *http.Request {
 	request := httptest.NewRequest(self.method, self.path, self.payload)
 	if self.contentType != "" {
@@ -78,8 +85,11 @@ func (self *RequestBuilder) Build() *http.Request {
 	}
 	if self.withSession {
 		session := self.session
+		user := self.user
 		if session == nil {
-			user := userbuilder.New().Create(self.accountsFactory.GetUserRepository())
+			if user == nil {
+				user = userbuilder.New().Create(self.accountsFactory.GetUserRepository())
+			}
 			sessionStarter := sessionstarter.New(user.Email(), user.Password(), self.accountsFactory)
 			session, _ = sessionStarter.Start(context.TODO())
 		}
