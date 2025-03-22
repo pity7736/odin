@@ -14,5 +14,5 @@ type CategoryRepository interface {
 
 type AccountRepository interface {
 	Add(ctx context.Context, account *accountmodel.Account) error
-	GetAll(ctx context.Context, userID string) ([]*accountmodel.Account, error)
+	GetAll(ctx context.Context) ([]*accountmodel.Account, error)
 }

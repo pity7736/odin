@@ -5,16 +5,18 @@ import (
 	"github.com/gofiber/template/html/v2"
 	"github.com/valyala/fasthttp"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
 type FiberContextBuilder struct {
-	body        []byte
-	contentType string
-	method      string
-	ctx         *fiber.Ctx
-	app         *fiber.App
-	user        *usermodel.User
+	body           []byte
+	contentType    string
+	method         string
+	ctx            *fiber.Ctx
+	app            *fiber.App
+	user           *usermodel.User
+	requestContext *requestcontext.RequestContext
 }
 
 func NewFiberContextBuilder() *FiberContextBuilder {
@@ -28,7 +30,8 @@ func NewFiberContextBuilder() *FiberContextBuilder {
 			Views:       engine,
 			ViewsLayout: "base",
 		}),
-		user: userbuilder.New().Build(),
+		user:           userbuilder.New().Build(),
+		requestContext: requestcontext.NewAnonymous(),
 	}
 }
 
@@ -47,6 +50,17 @@ func (self *FiberContextBuilder) WithMethod(method string) *FiberContextBuilder 
 	return self
 }
 
+func (self *FiberContextBuilder) WithAnonymousRequest() *FiberContextBuilder {
+	self.user = nil
+	return self
+}
+
+func (self *FiberContextBuilder) WithoutRequestContext() *FiberContextBuilder {
+	self.WithAnonymousRequest()
+	self.requestContext = nil
+	return self
+}
+
 func (self *FiberContextBuilder) Build() *fiber.Ctx {
 	self.ctx = self.app.AcquireCtx(&fasthttp.RequestCtx{})
 	self.ctx.Method(self.method)
@@ -59,6 +73,10 @@ func (self *FiberContextBuilder) Build() *fiber.Ctx {
 	}
 	if self.user != nil {
 		self.ctx.Locals("userID", self.user.ID())
+		self.requestContext, _ = requestcontext.New(self.user.ID())
+	}
+	if self.requestContext != nil {
+		self.ctx.Locals(requestcontext.Key, self.requestContext)
 	}
 	return self.ctx
 }

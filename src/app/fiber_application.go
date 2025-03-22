@@ -10,6 +10,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
@@ -45,10 +46,16 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 	})
 	app.Use(func(c *fiber.Ctx) error {
 		cookie := c.Cookies("__Secure-odin-session")
+		c.Locals(requestcontext.Key, requestcontext.NewAnonymous())
 		if cookie != "" {
 			session, _ := accountsRepositoryFactory.GetSessionRepository().Get(c.Context(), cookie)
 			if session != nil {
 				c.Locals("userID", session.UserID())
+				requestContext, err := requestcontext.New(session.UserID())
+				if err != nil {
+					return err
+				}
+				c.Locals(requestcontext.Key, requestContext)
 			}
 		}
 		return c.Next()
@@ -147,12 +154,7 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		}
 	})
 	app.Get(accountPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			return htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			return nil
-		}
+		return htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
 	})
 	return &fibberApplication{app: app}
 }

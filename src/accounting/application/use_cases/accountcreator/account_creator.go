@@ -4,28 +4,22 @@ import (
 	"context"
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
-	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 )
 
 type AccountCreator struct {
-	name           string
-	initialBalance moneymodel.Money
-	userID         string
-	repository     repositories.AccountRepository
+	command    CreateAccountCommand
+	repository repositories.AccountRepository
 }
 
 func New(command CreateAccountCommand, repository repositories.AccountRepository) *AccountCreator {
-	return &AccountCreator{
-		name:           command.Name(),
-		initialBalance: command.InitialBalance(),
-		userID:         command.UserID(),
-		repository:     repository,
-	}
+	return &AccountCreator{command: command, repository: repository}
 }
 
 func (self *AccountCreator) Create(ctx context.Context) (*accountmodel.Account, error) {
-	account, err := accountmodel.New(self.name, self.userID, self.initialBalance)
+	requestContext := ctx.Value(requestcontext.Key).(*requestcontext.RequestContext)
+	account, err := accountmodel.New(self.command.Name(), requestContext.UserID(), self.command.InitialBalance())
 	if err != nil {
 		return nil, err
 	}

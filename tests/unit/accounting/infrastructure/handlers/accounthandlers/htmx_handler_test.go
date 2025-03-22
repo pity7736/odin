@@ -147,36 +147,34 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 	t.Run("does not return any accounts when user has not yet created one", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		repository := factory.GetAccountRepositoryMock()
-		repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return([]*accountmodel.Account{}, nil)
+		repository.EXPECT().GetAll(mock.Anything).Return([]*accountmodel.Account{}, nil)
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("GET").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		getAccountsHandler := htmxgetaccountshandler.New(repository)
 		ctx := ctxBuilder.Build()
-		user := ctxBuilder.User()
 
 		err := getAccountsHandler.Handle(ctx)
 
 		assert.Nil(t, err)
-		repository.AssertCalled(t, "GetAll", mock.Anything, user.ID())
+		repository.AssertCalled(t, "GetAll", mock.Anything)
 	})
 
 	t.Run("return error when repository returns error", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		repository := factory.GetAccountRepositoryMock()
 		repositoryError := errors.New("some repository error")
-		repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return([]*accountmodel.Account{}, repositoryError)
+		repository.EXPECT().GetAll(mock.Anything).Return([]*accountmodel.Account{}, repositoryError)
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("GET").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		getAccountsHandler := htmxgetaccountshandler.New(repository)
 		ctx := ctxBuilder.Build()
-		user := ctxBuilder.User()
 
 		err := getAccountsHandler.Handle(ctx)
 
 		assert.Equal(t, repositoryError.Error(), err.Error())
-		repository.AssertCalled(t, "GetAll", mock.Anything, user.ID())
+		repository.AssertCalled(t, "GetAll", mock.Anything)
 	})
 
 	t.Run("return accounts", func(t *testing.T) {
@@ -188,16 +186,15 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 		account0 := builders.NewAccountBuilder().WithName("saving account").WithUserID(ctxBuilder.User().ID()).Build()
 		account1 := builders.NewAccountBuilder().WithName("cash").WithUserID(ctxBuilder.User().ID()).Build()
 		accounts := []*accountmodel.Account{account0, account1}
-		repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return(accounts, nil)
+		repository.EXPECT().GetAll(mock.Anything).Return(accounts, nil)
 		getAccountsHandler := htmxgetaccountshandler.New(repository)
 		ctx := ctxBuilder.Build()
-		user := ctxBuilder.User()
 
 		err := getAccountsHandler.Handle(ctx)
 
 		responseBody := string(ctx.Response().Body())
 		assert.Nil(t, err)
-		repository.AssertCalled(t, "GetAll", mock.Anything, user.ID())
+		repository.AssertCalled(t, "GetAll", mock.Anything)
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account0.Name()))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account0.InitialBalance()))
 		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account0.Balance()))
@@ -217,7 +214,7 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 		account0 := builders.NewAccountBuilder().WithName("saving account").WithUserID(ctxBuilder.User().ID()).Build()
 		account1 := builders.NewAccountBuilder().WithName("cash").WithUserID(ctxBuilder.User().ID()).Build()
 		accounts := []*accountmodel.Account{account0, account1}
-		repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return(accounts, nil)
+		repository.EXPECT().GetAll(mock.Anything).Return(accounts, nil)
 		getAccountsHandler := htmxgetaccountshandler.New(repository)
 		ctx := ctxBuilder.Build()
 		renderError := errors.New("some render error")

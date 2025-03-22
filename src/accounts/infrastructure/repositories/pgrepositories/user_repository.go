@@ -13,9 +13,11 @@ type PGUserRepository struct {
 }
 
 func NewPGUserRepository() *PGUserRepository {
-	users := make(map[string]*usermodel.User, 1)
+	users := make(map[string]*usermodel.User, 2)
 	id, _ := uuid.NewV7()
+	id2, _ := uuid.NewV7()
 	users["some@email.com"] = usermodel.New(id.String(), "some@email.com", "password")
+	users["some1@email.com"] = usermodel.New(id2.String(), "some1@email.com", "password")
 	return &PGUserRepository{users: users}
 }
 

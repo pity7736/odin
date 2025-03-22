@@ -4,6 +4,7 @@ import (
 	"context"
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 )
 
 type PGAccountRepository struct {
@@ -19,10 +20,11 @@ func (self *PGAccountRepository) Add(ctx context.Context, account *accountmodel.
 	return nil
 }
 
-func (self *PGAccountRepository) GetAll(ctx context.Context, userID string) ([]*accountmodel.Account, error) {
+func (self *PGAccountRepository) GetAll(ctx context.Context) ([]*accountmodel.Account, error) {
+	requestContext := ctx.Value(requestcontext.Key).(*requestcontext.RequestContext)
 	result := make([]*accountmodel.Account, 0, len(self.accounts))
 	for _, account := range self.accounts {
-		if account.UserID() == userID {
+		if account.UserID() == requestContext.UserID() {
 			result = append(result, account)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 
 	"raiseexception.dev/odin/src/accounting/application/use_cases/accountcreator"
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
@@ -20,12 +21,13 @@ func New(repository repositories.AccountRepository) *CreateAccountHandler {
 }
 
 func (self *CreateAccountHandler) Handle(ctx *fiber.Ctx) (*accountmodel.Account, error) {
+	requestContext := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
 	command, err := self.createCommand(ctx)
 	if err != nil {
 		return nil, err
 	}
 	accountCreator := accountcreator.New(*command, self.repository)
-	return accountCreator.Create(context.TODO())
+	return accountCreator.Create(context.WithValue(ctx.Context(), requestcontext.Key, requestContext))
 }
 
 func (self *CreateAccountHandler) createCommand(ctx *fiber.Ctx) (*accountcreator.CreateAccountCommand, error) {
@@ -33,7 +35,7 @@ func (self *CreateAccountHandler) createCommand(ctx *fiber.Ctx) (*accountcreator
 	if err := ctx.BodyParser(&body); err != nil {
 		return nil, err
 	}
-	return body.toCommand(ctx.Locals("userID").(string))
+	return body.toCommand()
 }
 
 type createAccountBody struct {
@@ -41,10 +43,10 @@ type createAccountBody struct {
 	RawInitialBalance string `json:"initial_balance" form:"initial_balance"`
 }
 
-func (self createAccountBody) toCommand(userID string) (*accountcreator.CreateAccountCommand, error) {
+func (self createAccountBody) toCommand() (*accountcreator.CreateAccountCommand, error) {
 	initialBalance, err := moneymodel.New(self.RawInitialBalance)
 	if err != nil {
 		return nil, err
 	}
-	return accountcreator.NewCreateAccountCommand(self.Name, initialBalance, userID), err
+	return accountcreator.NewCreateAccountCommand(self.Name, initialBalance), err
 }
