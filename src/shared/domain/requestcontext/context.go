@@ -37,6 +37,6 @@ func (self *RequestContext) RequestID() string {
 	return self.requestID
 }
 
-func (self *RequestContext) IsAnonymous() bool {
-	return self.userID == ""
+func (self *RequestContext) IsAuthenticated() bool {
+	return self.userID != ""
 }
