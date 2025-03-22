@@ -2,28 +2,36 @@ package builders
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 
+	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
+	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
 type RequestBuilder struct {
-	method       string
-	path         string
-	contentType  string
-	payload      io.Reader
-	responseData any
-	session      *sessionmodel.Session
+	method          string
+	path            string
+	contentType     string
+	payload         io.Reader
+	responseData    any
+	session         *sessionmodel.Session
+	accountsFactory accountsrepositoryfactory.AccountsRepositoryFactory
+	withSession     bool
 }
 
-func NewRequestBuilder() *RequestBuilder {
+func NewRequestBuilder(accountsFactory accountsrepositoryfactory.AccountsRepositoryFactory) *RequestBuilder {
 	return &RequestBuilder{
-		method:      "POST",
-		path:        "/",
-		contentType: "",
+		method:          "POST",
+		path:            "/",
+		contentType:     "",
+		withSession:     true,
+		accountsFactory: accountsFactory,
 	}
 }
 
@@ -54,6 +62,12 @@ func (self *RequestBuilder) WithContentType(contentType string) *RequestBuilder 
 
 func (self *RequestBuilder) WithSession(session *sessionmodel.Session) *RequestBuilder {
 	self.session = session
+	self.withSession = true
+	return self
+}
+
+func (self *RequestBuilder) WithAnonymousSession() *RequestBuilder {
+	self.withSession = false
 	return self
 }
 
@@ -62,13 +76,19 @@ func (self *RequestBuilder) Build() *http.Request {
 	if self.contentType != "" {
 		request.Header.Set("Content-Type", self.contentType)
 	}
-	if self.session != nil {
+	if self.withSession {
+		session := self.session
+		if session == nil {
+			user := userbuilder.New().Create(self.accountsFactory.GetUserRepository())
+			sessionStarter := sessionstarter.New(user.Email(), user.Password(), self.accountsFactory)
+			session, _ = sessionStarter.Start(context.TODO())
+		}
 		if self.contentType == "application/json" {
-			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", self.session.Token()))
+			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", session.Token()))
 		} else {
 			request.AddCookie(&http.Cookie{
 				Name:     "__Secure-odin-session",
-				Value:    self.session.Token(),
+				Value:    session.Token(),
 				Secure:   true,
 				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,

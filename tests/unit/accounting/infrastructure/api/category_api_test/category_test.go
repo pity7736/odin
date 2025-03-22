@@ -9,14 +9,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
-	"raiseexception.dev/odin/tests/builders/userbuilder"
 
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
+	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/categorybuilder"
+	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
 	"raiseexception.dev/odin/tests/unit/mocks"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
@@ -59,7 +59,7 @@ func TestRest(t *testing.T) {
 			category.Type(),
 		)
 		var responseBody map[string]any
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithPayload(body).
@@ -85,10 +85,11 @@ func TestRest(t *testing.T) {
 			category.Name(),
 			category.Type(),
 		)
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(apiCategoryPath).
-			WithPayload(body)
+			WithPayload(body).
+			WithAnonymousSession()
 
 		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 
@@ -97,10 +98,11 @@ func TestRest(t *testing.T) {
 
 	t.Run("get categories with anonymous user", func(t *testing.T) {
 		setup := newSetup(t)
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(apiCategoryPath).
-			WithMethod(http.MethodGet)
+			WithMethod(http.MethodGet).
+			WithAnonymousSession()
 
 		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
 
@@ -115,7 +117,7 @@ func TestRest(t *testing.T) {
 		session := sessionmodel.New(user.ID())
 		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		var responseBody restcategoryhandler.CategoriesResponse
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithMethod(http.MethodGet).
@@ -141,7 +143,7 @@ func TestRest(t *testing.T) {
 		categories = append(categories, builder.WithUser(user).Create(setup.repository))
 		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(categories)
 		var responseBody restcategoryhandler.CategoriesResponse
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithMethod(http.MethodGet).
@@ -168,7 +170,7 @@ func TestRest(t *testing.T) {
 		categories = append(categories, builder.WithUser(user1).Create(setup.repository))
 		setup.repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return([]*categorymodel.Category{})
 		var responseBody restcategoryhandler.CategoriesResponse
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(apiCategoryPath).
 			WithMethod(http.MethodGet).
@@ -218,7 +220,7 @@ func TestRest(t *testing.T) {
 					testCase.categoryName,
 					testCase.categoryType,
 				)
-				requestBuilder := builders.NewRequestBuilder()
+				requestBuilder := builders.NewRequestBuilder(setup.factory)
 				requestBuilder.
 					WithPath(apiCategoryPath).
 					WithPayload(body).
@@ -252,7 +254,7 @@ func TestHTMX(t *testing.T) {
 			category.Type(),
 		)
 		var responseBody map[string]any
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
 			WithPayload(body).
@@ -279,7 +281,7 @@ func TestHTMX(t *testing.T) {
 			category.Type(),
 		)
 		var responseBody map[string]any
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
 			WithPayload(body).
@@ -299,7 +301,7 @@ func TestHTMX(t *testing.T) {
 		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(make([]*categorymodel.Category, 0))
 		session := sessionmodel.New(user.ID())
 		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
 			WithMethod(http.MethodGet).
@@ -325,7 +327,7 @@ func TestHTMX(t *testing.T) {
 		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
 		setup.repository.EXPECT().GetAll(mock.Anything, user.ID()).Return(categories)
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
 			WithMethod(http.MethodGet).
@@ -346,11 +348,12 @@ func TestHTMX(t *testing.T) {
 		categories := make([]*categorymodel.Category, 0, 1)
 		category := categorybuilder.New().Create(setup.repository)
 		categories = append(categories, category)
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
 			WithMethod(http.MethodGet).
-			WithContentType("")
+			WithContentType("").
+			WithAnonymousSession()
 
 		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
 
@@ -364,7 +367,7 @@ func TestHTMX(t *testing.T) {
 		user := userbuilder.New().Create(setup.userRepository)
 		session := sessionmodel.New(user.ID())
 		setup.sessionRepository.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder()
+		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
 			WithMethod(http.MethodGet).

@@ -128,7 +128,8 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		).Login(ctx)
 	})
 	apiV1.Post(accountPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
+		requestContext := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
+		if !requestContext.IsAnonymous() {
 			return restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
 		} else {
 			ctx.Status(http.StatusUnauthorized)
@@ -150,6 +151,7 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 			return htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
 		} else {
 			ctx.Status(http.StatusUnauthorized)
+			ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
 			return nil
 		}
 	})

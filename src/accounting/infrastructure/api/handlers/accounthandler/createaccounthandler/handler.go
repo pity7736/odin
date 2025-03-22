@@ -27,7 +27,9 @@ func (self *CreateAccountHandler) Handle(ctx *fiber.Ctx) (*accountmodel.Account,
 		return nil, err
 	}
 	accountCreator := accountcreator.New(*command, self.repository)
-	return accountCreator.Create(context.WithValue(ctx.Context(), requestcontext.Key, requestContext))
+	account, err := accountCreator.Create(context.WithValue(ctx.Context(), requestcontext.Key, requestContext))
+	ctx.Status(fiber.StatusCreated)
+	return account, err
 }
 
 func (self *CreateAccountHandler) createCommand(ctx *fiber.Ctx) (*accountcreator.CreateAccountCommand, error) {

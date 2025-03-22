@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -27,12 +28,12 @@ func TestRest(t *testing.T) {
 		var responseData map[string]string
 		repository := factory.GetUserRepositoryMock()
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.
+		requestBuilder := builders.NewRequestBuilder(factory).
 			WithPath("/api/v1/auth/login").
 			WithPayload(body).
 			WithResponseData(&responseData).
-			WithContentType("application/json")
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithAnonymousSession()
 		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -80,12 +81,12 @@ func TestRest(t *testing.T) {
 			t.Run(testCase.name, func(t *testing.T) {
 				var responseData map[string]string
 				repository := factory.GetUserRepositoryMock()
-				requestBuilder := builders.NewRequestBuilder()
-				requestBuilder.
+				requestBuilder := builders.NewRequestBuilder(factory).
 					WithPath("/api/v1/auth/login").
 					WithPayload(testCase.body).
 					WithResponseData(&responseData).
-					WithContentType("application/json")
+					WithContentType(fiber.MIMEApplicationJSON).
+					WithAnonymousSession()
 
 				response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
@@ -107,12 +108,12 @@ func TestRest(t *testing.T) {
 		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
 		sessionRepositoryMock := factory.GetSessionRepositoryMock()
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.
+		requestBuilder := builders.NewRequestBuilder(factory).
 			WithPath("/api/v1/auth/login").
 			WithPayload(body).
 			WithResponseData(&responseData).
-			WithContentType("application/json")
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithAnonymousSession()
 		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
@@ -126,11 +127,11 @@ func TestHTMX(t *testing.T) {
 	t.Run("get login form", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		application := app.NewFiberApplication(factory, factory)
-		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.
+		requestBuilder := builders.NewRequestBuilder(factory).
 			WithPath("/auth/login").
 			WithMethod("GET").
-			WithContentType("")
+			WithContentType("").
+			WithAnonymousSession()
 		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
@@ -152,11 +153,11 @@ func TestHTMX(t *testing.T) {
 		body := fmt.Sprintf("email=%s&password=%s", email, user.Password())
 		repository := factory.GetUserRepositoryMock()
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.
+		requestBuilder := builders.NewRequestBuilder(factory).
 			WithPath("/auth/login").
 			WithPayload(body).
-			WithContentType("application/x-www-form-urlencoded")
+			WithContentType(fiber.MIMEApplicationForm).
+			WithAnonymousSession()
 		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -173,11 +174,11 @@ func TestHTMX(t *testing.T) {
 		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
 		sessionRepositoryMock := factory.GetSessionRepositoryMock()
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		requestBuilder := builders.NewRequestBuilder()
-		requestBuilder.
+		requestBuilder := builders.NewRequestBuilder(factory).
 			WithPath("/auth/login").
 			WithPayload(body).
-			WithContentType("application/x-www-form-urlencoded")
+			WithContentType(fiber.MIMEApplicationForm).
+			WithAnonymousSession()
 		response, _ := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
 		sessionCookie := response.Cookies()[0]
 
