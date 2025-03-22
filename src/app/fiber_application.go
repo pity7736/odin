@@ -11,6 +11,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
+	"raiseexception.dev/odin/src/shared/infrastructure/api"
 
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
@@ -128,13 +129,7 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		).Login(ctx)
 	})
 	apiV1.Post(accountPath, func(ctx *fiber.Ctx) error {
-		requestContext := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
-		if !requestContext.IsAnonymous() {
-			return restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			return nil
-		}
+		return restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
 	})
 	app.Get("/auth/login", func(ctx *fiber.Ctx) error {
 		ctx.Render("login", htmxloginhandler.RequestError{Error: ""})
@@ -147,22 +142,10 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		).Login(ctx)
 	})
 	app.Post(accountPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			return htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
-			return nil
-		}
+		return loginRequired(ctx, htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()))
 	})
 	app.Get(accountPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			return htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
-			return nil
-		}
+		return loginRequired(ctx, htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()))
 	})
 	return &fibberApplication{app: app}
 }
@@ -173,4 +156,17 @@ func (self *fibberApplication) Start() error {
 
 func (self *fibberApplication) Test(request *http.Request) (*http.Response, error) {
 	return self.app.Test(request, -1)
+}
+
+func loginRequired(ctx *fiber.Ctx, handler api.Handler) error {
+	requestContext := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
+	if requestContext.IsAuthenticated() {
+		return handler.Handle(ctx)
+	}
+	ctx.Status(http.StatusUnauthorized)
+	ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
+	if ctx.Get("Content-Type", "") == fiber.MIMEApplicationJSON {
+		ctx.Set("Content-Type", fiber.MIMEApplicationJSON)
+	}
+	return nil
 }

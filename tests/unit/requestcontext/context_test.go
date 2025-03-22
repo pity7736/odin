@@ -18,7 +18,7 @@ func TestRequestContextShould(t *testing.T) {
 	t.Run("return anonymous when request id is empty", func(t *testing.T) {
 		ctx := requestcontext.NewAnonymous()
 
-		assert.True(t, ctx.IsAnonymous())
+		assert.False(t, ctx.IsAuthenticated())
 	})
 
 	t.Run("return not anonymous when data is valid", func(t *testing.T) {
@@ -27,6 +27,6 @@ func TestRequestContextShould(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, userID, ctx.UserID())
-		assert.False(t, ctx.IsAnonymous())
+		assert.True(t, ctx.IsAuthenticated())
 	})
 }
