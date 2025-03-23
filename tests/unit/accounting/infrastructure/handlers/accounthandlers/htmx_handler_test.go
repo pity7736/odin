@@ -14,6 +14,7 @@ import (
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/unit/mocks"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
@@ -37,10 +38,13 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		err := createAccountHandler.Handle(ctx)
 		responseBody := string(ctx.Response().Body())
 		errorValue := fmt.Sprintf("%s is not valid money value", initialBalance)
-
-		assert.Equal(t, errorValue, err.Error())
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("error creating account: %s", errorValue), odinError.ExternalError())
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 		assert.True(t, strings.Contains(responseBody, errorValue))
+		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 	})
 
 	t.Run("return error when name is empty", func(t *testing.T) {
@@ -57,12 +61,16 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctx := ctxBuilder.Build()
 
 		err := createAccountHandler.Handle(ctx)
-		responseBody := string(ctx.Response().Body())
-		errorValue := "name cannot be empty"
 
-		assert.Equal(t, errorValue, err.Error())
+		responseBody := string(ctx.Response().Body())
+		errorValue := "validation error: name cannot be empty"
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("error creating account: %s", errorValue), odinError.ExternalError())
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 		assert.True(t, strings.Contains(responseBody, errorValue))
+		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 	})
 
 	t.Run("return error when render fails on success", func(t *testing.T) {
@@ -85,9 +93,13 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		err := createAccountHandler.Handle(ctx)
 		responseBody := string(ctx.Response().Body())
 
-		assert.Equal(t, renderError, err)
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("error rendering create account block: %s", renderError), odinError.Error())
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 		assert.False(t, strings.Contains(responseBody, renderError.Error()))
+		assert.Equal(t, odinerrors.RENDER, odinError.Tag())
 	})
 
 	t.Run("return error when render fails on error", func(t *testing.T) {
@@ -109,9 +121,13 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		err := createAccountHandler.Handle(ctx)
 		responseBody := string(ctx.Response().Body())
 
-		assert.Equal(t, renderError, err)
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("error rendering create account error block: %s", renderError), odinError.Error())
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 		assert.False(t, strings.Contains(responseBody, renderError.Error()))
+		assert.Equal(t, odinerrors.RENDER, odinError.Tag())
 	})
 
 	t.Run("be able to create an account", func(t *testing.T) {

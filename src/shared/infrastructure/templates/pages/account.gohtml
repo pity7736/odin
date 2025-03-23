@@ -25,8 +25,8 @@
 {{ end }}
 
 {{ define "create_account_error" }}
-    {{ if .Error }}
-        <p>{{ .Error }}</p>
+    {{ if .ExternalError }}
+        <p>{{ .ExternalError }}</p>
     {{ end }}
 {{ end }}
 

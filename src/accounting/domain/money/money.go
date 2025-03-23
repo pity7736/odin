@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/govalues/decimal"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type Money struct {
@@ -18,7 +19,11 @@ func New(value string, currencies ...*Currency) (Money, error) {
 	}
 	val, err := decimal.Parse(value)
 	if err != nil {
-		return Money{}, fmt.Errorf(`%s is not valid money value`, value)
+		message := fmt.Sprintf(`%s is not valid money value`, value)
+		return Money{}, odinerrors.NewErrorBuilder(message).
+			WithExternalMessage(message).
+			WithTag(odinerrors.DOMAIN).
+			Build()
 	}
 	return Money{value: val, currency: currency}, nil
 }

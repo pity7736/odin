@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"raiseexception.dev/odin/src/accounting/application/use_cases/accountcreator"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
@@ -52,8 +53,11 @@ func TestAccountCreator(t *testing.T) {
 
 		account, err := accountCreator.Create(context.WithValue(context.TODO(), requestcontext.Key, requestContext))
 
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
 		assert.Nil(t, account)
-		assert.Equal(t, errors.New("initial balance must be positive"), err)
+		assert.Equal(t, "validation error: initial balance must be positive", odinError.ExternalError())
 		repository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 

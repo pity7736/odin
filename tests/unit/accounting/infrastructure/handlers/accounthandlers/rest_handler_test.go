@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/unit/mocks"
 )
@@ -70,8 +71,11 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 
 		err := createAccountHandler.Handle(ctx)
 
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
 		assert.NotNil(t, err)
-		assert.Equal(t, errors.New(fmt.Sprintf(`%s is not valid money value`, initialBalance)), err)
+		assert.Equal(t, fmt.Sprintf(`%s is not valid money value`, initialBalance), odinError.ExternalError())
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
 	})
 

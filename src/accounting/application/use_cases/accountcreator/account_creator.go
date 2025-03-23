@@ -5,6 +5,7 @@ import (
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 )
 
@@ -21,7 +22,10 @@ func (self *AccountCreator) Create(ctx context.Context) (*accountmodel.Account, 
 	requestContext := ctx.Value(requestcontext.Key).(*requestcontext.RequestContext)
 	account, err := accountmodel.New(self.command.Name(), requestContext.UserID(), self.command.InitialBalance())
 	if err != nil {
-		return nil, err
+		return nil, odinerrors.NewErrorBuilder("error creating a new account").
+			WithWrapped(err).
+			WithExternalMessage("validation error").
+			Build()
 	}
 	err = self.repository.Add(ctx, account)
 	if err != nil {

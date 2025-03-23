@@ -1,11 +1,11 @@
 package accountmodel
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type Account struct {
@@ -49,19 +49,34 @@ func NewFromRepository(id, name, userID string, initialBalance, balance moneymod
 
 func validateData(id, name, userID string, initialBalance, balance moneymodel.Money) error {
 	if initialBalance.IsNegative() {
-		return errors.New("initial balance must be positive")
+		return odinerrors.NewErrorBuilder("initial balance must be positive").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("initial balance must be positive").
+			Build()
 	}
 	if balance.IsNegative() {
-		return errors.New("balance must be positive")
+		return odinerrors.NewErrorBuilder("balance must be positive").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("balance must be positive").
+			Build()
 	}
 	if id == "" {
-		return errors.New("id cannot be empty")
+		return odinerrors.NewErrorBuilder("id cannot be empty").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("id cannot be empty").
+			Build()
 	}
 	if name == "" {
-		return errors.New("name cannot be empty")
+		return odinerrors.NewErrorBuilder("name cannot be empty").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("name cannot be empty").
+			Build()
 	}
 	if userID == "" {
-		return errors.New("user id cannot be empty")
+		return odinerrors.NewErrorBuilder("user id cannot be empty").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("user id cannot be empty").
+			Build()
 	}
 	return nil
 }

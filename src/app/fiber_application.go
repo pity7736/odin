@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 	"raiseexception.dev/odin/src/shared/infrastructure/api"
 
@@ -38,8 +40,9 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		".gohtml",
 	)
 	app := fiber.New(fiber.Config{
-		Views:       engine,
-		ViewsLayout: "base",
+		Views:        engine,
+		ViewsLayout:  "base",
+		ErrorHandler: errorHandler,
 	})
 	app.Use(logger.New())
 	app.Get("/ping", func(c *fiber.Ctx) error {
@@ -168,5 +171,20 @@ func loginRequired(ctx *fiber.Ctx, handler api.Handler) error {
 	if ctx.Get("Content-Type", "") == fiber.MIMEApplicationJSON {
 		ctx.Set("Content-Type", fiber.MIMEApplicationJSON)
 	}
+	return nil
+}
+
+func errorHandler(ctx *fiber.Ctx, err error) error {
+	var odinError *odinerrors.Error
+	ok := errors.As(err, &odinError)
+	code := http.StatusInternalServerError
+	if ok {
+		switch odinError.Tag() {
+		case odinerrors.DOMAIN:
+			code = http.StatusBadRequest
+		default:
+		}
+	}
+	ctx.Status(code)
 	return nil
 }

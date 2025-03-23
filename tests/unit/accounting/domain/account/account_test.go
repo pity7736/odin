@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/testutils"
 )
 
@@ -30,21 +31,33 @@ func Test_givenNewAccountFromRepository_WhenIDIsEmpty_ThenReturnError(t *testing
 	balance, _ := moneymodel.New("100")
 	_, err := accountmodel.NewFromRepository("", "savings", "user id", balance, balance, time.Now())
 
-	assert.Equal(t, errors.New("id cannot be empty"), err)
+	var odinError *odinerrors.Error
+	ok := errors.As(err, &odinError)
+	assert.True(t, ok)
+	assert.Equal(t, "id cannot be empty", odinError.ExternalError())
+	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenNameIsEmpty_ThenReturnError(t *testing.T) {
 	balance, _ := moneymodel.New("100")
 	_, err := accountmodel.NewFromRepository("some id", "", "user id", balance, balance, time.Now())
 
-	assert.Equal(t, errors.New("name cannot be empty"), err)
+	var odinError *odinerrors.Error
+	ok := errors.As(err, &odinError)
+	assert.True(t, ok)
+	assert.Equal(t, "name cannot be empty", odinError.ExternalError())
+	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenUserIDIsEmpty_ThenReturnError(t *testing.T) {
 	balance, _ := moneymodel.New("100")
 	_, err := accountmodel.NewFromRepository("some id", "savings", "", balance, balance, time.Now())
 
-	assert.Equal(t, errors.New("user id cannot be empty"), err)
+	var odinError *odinerrors.Error
+	ok := errors.As(err, &odinError)
+	assert.True(t, ok)
+	assert.Equal(t, "user id cannot be empty", odinError.ExternalError())
+	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenNegativeInitialBalance_ThenReturnError(t *testing.T) {
@@ -52,7 +65,11 @@ func Test_givenNewAccountFromRepository_WhenNegativeInitialBalance_ThenReturnErr
 	balance, _ := moneymodel.New("100")
 	_, err := accountmodel.NewFromRepository("some id", "savings", "user id", initialBalance, balance, time.Now())
 
-	assert.Equal(t, errors.New("initial balance must be positive"), err)
+	var odinError *odinerrors.Error
+	ok := errors.As(err, &odinError)
+	assert.True(t, ok)
+	assert.Equal(t, "initial balance must be positive", odinError.ExternalError())
+	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenNegativeBalance_ThenReturnError(t *testing.T) {
@@ -60,5 +77,8 @@ func Test_givenNewAccountFromRepository_WhenNegativeBalance_ThenReturnError(t *t
 	balance, _ := moneymodel.New("-100")
 	_, err := accountmodel.NewFromRepository("some id", "savings", "user id", initialBalance, balance, time.Now())
 
-	assert.Equal(t, errors.New("balance must be positive"), err)
+	var odinError *odinerrors.Error
+	errors.As(err, &odinError)
+	assert.Equal(t, "balance must be positive", odinError.ExternalError())
+	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 }

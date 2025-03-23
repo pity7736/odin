@@ -39,6 +39,26 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
 	})
 
+	t.Run("return bad request when data is wrong", func(t *testing.T) {
+		accountingFactory := accountingrepositoryfactory.New()
+		accountsFactory := accountsrepositoryfactory.New()
+		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
+		body := fmt.Sprintf(
+			"name=%s&initial_balance=%s",
+			"test",
+			"aoeu",
+		)
+		requestBuilder := builders.NewRequestBuilder(accountsFactory).
+			WithPath(accountPath).
+			WithContentType(fiber.MIMEApplicationForm).
+			WithPayload(body)
+
+		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+
+		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
+	})
+
 	t.Run("return unauthorized when request is anonymous", func(t *testing.T) {
 		accountingFactory := accountingrepositoryfactory.New()
 		accountsFactory := accountsrepositoryfactory.New()
