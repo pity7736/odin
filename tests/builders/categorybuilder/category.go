@@ -38,6 +38,11 @@ func (self *builder) WithUser(user *usermodel.User) *builder {
 	return self
 }
 
+func (self *builder) WithIncomeType() *builder {
+	self.t = constants.INCOME
+	return self
+}
+
 func (self *builder) Build() *categorymodel.Category {
 	return categorymodel.New(
 		self.id,

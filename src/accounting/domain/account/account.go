@@ -4,8 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	categorymodel "raiseexception.dev/odin/src/accounting/domain/category"
+	"raiseexception.dev/odin/src/accounting/domain/incomemodel"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 )
 
 type Account struct {
@@ -15,6 +18,7 @@ type Account struct {
 	id             string
 	balance        moneymodel.Money
 	createdAt      time.Time
+	incomes        []*incomemodel.Income
 }
 
 func New(name, userID string, initialBalance moneymodel.Money) (*Account, error) {
@@ -81,6 +85,16 @@ func validateData(id, name, userID string, initialBalance, balance moneymodel.Mo
 	return nil
 }
 
+func (self *Account) ValidateOwnership(requestContext *requestcontext.RequestContext) error {
+	if self.UserID() != requestContext.UserID() {
+		return odinerrors.NewErrorBuilder("cuenta no pertenece a usuario logueado").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("la cuenta no pertenece al usuario logueado").
+			Build()
+	}
+	return nil
+}
+
 func (self *Account) ID() string {
 	return self.id
 }
@@ -103,4 +117,36 @@ func (self *Account) Balance() moneymodel.Money {
 
 func (self *Account) CreatedAt() time.Time {
 	return self.createdAt
+}
+
+func (self *Account) CreateIncome(amount moneymodel.Money, date time.Time, category categorymodel.Category) (*incomemodel.Income, error) {
+	minimalAmount := moneymodel.MustNew("1")
+	if amount.Less(minimalAmount) {
+		return nil, odinerrors.NewErrorBuilder("amount error").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("el monto debe ser mayor o igual a 1").
+			Build()
+	}
+	if self.createdAt.After(date) {
+		return nil, odinerrors.NewErrorBuilder("date error").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("la fecha del ingreso debe ser posterior a la fecha de creación de la cuenta").
+			Build()
+	}
+	if !category.IsIncome() {
+		return nil, odinerrors.NewErrorBuilder("category error").
+			WithTag(odinerrors.DOMAIN).
+			WithExternalMessage("la categoría no es de ingreso").
+			Build()
+	}
+	// TODO: handle error
+	incomeID, _ := uuid.NewV7()
+	income := incomemodel.New(incomeID.String(), amount, date)
+	self.balance = self.balance.Subtract(amount)
+	self.incomes = append(self.incomes, income)
+	return income, nil
+}
+
+func (self *Account) Incomes() []*incomemodel.Income {
+	return self.incomes
 }

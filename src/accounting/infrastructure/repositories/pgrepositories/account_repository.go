@@ -30,3 +30,13 @@ func (self *PGAccountRepository) GetAll(ctx context.Context) ([]*accountmodel.Ac
 	}
 	return result, nil
 }
+
+func (self *PGAccountRepository) GetByID(ctx context.Context, id string) (*accountmodel.Account, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (self *PGAccountRepository) Save(ctx context.Context, account *accountmodel.Account) error {
+	//TODO implement me
+	panic("implement me")
+}

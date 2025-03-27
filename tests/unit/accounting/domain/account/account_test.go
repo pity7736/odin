@@ -9,6 +9,8 @@ import (
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
+	"raiseexception.dev/odin/tests/builders"
+	"raiseexception.dev/odin/tests/builders/categorybuilder"
 	"raiseexception.dev/odin/tests/testutils"
 )
 
@@ -81,4 +83,92 @@ func Test_givenNewAccountFromRepository_WhenNegativeBalance_ThenReturnError(t *t
 	errors.As(err, &odinError)
 	assert.Equal(t, "balance must be positive", odinError.ExternalError())
 	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+}
+
+func TestCreateIncomeShould(t *testing.T) {
+	t.Run("return error when amount is less than 1", func(t *testing.T) {
+		account := builders.NewAccountBuilder().Build()
+		amount, _ := moneymodel.New("0")
+		category := categorybuilder.New().Build()
+
+		income, err := account.CreateIncome(amount, time.Now(), *category)
+
+		var odinError *odinerrors.Error
+		errors.As(err, &odinError)
+		assert.Nil(t, income)
+		assert.Equal(t, "el monto debe ser mayor o igual a 1", odinError.ExternalError())
+		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	})
+
+	t.Run("return error when date is before than account creation", func(t *testing.T) {
+		account := builders.NewAccountBuilder().Build()
+		amount, _ := moneymodel.New("1000")
+		category := categorybuilder.New().Build()
+
+		income, err := account.CreateIncome(
+			amount,
+			account.CreatedAt().AddDate(0, 0, -1),
+			*category,
+		)
+
+		var odinError *odinerrors.Error
+		errors.As(err, &odinError)
+		assert.Nil(t, income)
+		assert.Equal(t, "la fecha del ingreso debe ser posterior a la fecha de creación de la cuenta", odinError.ExternalError())
+		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	})
+
+	t.Run("return error when date is before than account creation", func(t *testing.T) {
+		account := builders.NewAccountBuilder().Build()
+		amount, _ := moneymodel.New("1000")
+		category := categorybuilder.New().Build()
+
+		income, err := account.CreateIncome(
+			amount,
+			account.CreatedAt().AddDate(0, 0, -1),
+			*category,
+		)
+
+		var odinError *odinerrors.Error
+		errors.As(err, &odinError)
+		assert.Nil(t, income)
+		assert.Equal(t, "la fecha del ingreso debe ser posterior a la fecha de creación de la cuenta", odinError.ExternalError())
+		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	})
+
+	t.Run("return error when category is not income type", func(t *testing.T) {
+		account := builders.NewAccountBuilder().Build()
+		amount, _ := moneymodel.New("1000")
+		category := categorybuilder.New().Build()
+
+		income, err := account.CreateIncome(
+			amount,
+			account.CreatedAt(),
+			*category,
+		)
+
+		var odinError *odinerrors.Error
+		errors.As(err, &odinError)
+		assert.Nil(t, income)
+		assert.Equal(t, "la categoría no es de ingreso", odinError.ExternalError())
+		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	})
+
+	t.Run("return income and add amount to account balance", func(t *testing.T) {
+		account := builders.NewAccountBuilder().Build()
+		initialBalance := account.InitialBalance()
+		amount, _ := moneymodel.New("1000")
+		incomeDate := time.Now()
+		category := categorybuilder.New().WithIncomeType().Build()
+
+		income, err := account.CreateIncome(amount, incomeDate, *category)
+
+		assert.Nil(t, err)
+		assert.True(t, testutils.IsUUIDv7(income.ID()))
+		assert.Equal(t, amount, income.Amount())
+		assert.Equal(t, incomeDate, income.Date())
+		assert.Equal(t, initialBalance.Subtract(amount), account.Balance())
+		assert.Equal(t, initialBalance, account.InitialBalance())
+		assert.Contains(t, account.Incomes(), income)
+	})
 }
