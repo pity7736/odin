@@ -48,6 +48,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 			category.ID(),
 			accountID,
 		)
+		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
 
@@ -58,6 +59,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, odinerrors.NOT_FOUND, odinError.Tag())
 		assert.Equal(t, "account with id 1234 does not exist", odinError.ExternalError())
+		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})
 
 	t.Run("return error when category does not exist", func(t *testing.T) {
@@ -89,6 +91,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 			categoryID,
 			account.ID(),
 		)
+		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
 
@@ -99,6 +102,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, odinerrors.NOT_FOUND, odinError.Tag())
 		assert.Equal(t, "category with id 1234 does not exist", odinError.ExternalError())
+		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})
 
 	t.Run("return error when category does not belong to user", func(t *testing.T) {
@@ -127,6 +131,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 			category.ID(),
 			account.ID(),
 		)
+		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
 
@@ -137,6 +142,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 		assert.Equal(t, "la categoría no pertenece al usuario logueado", odinError.ExternalError())
+		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})
 
 	t.Run("return error when account does not belong to user", func(t *testing.T) {
@@ -165,6 +171,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 			category.ID(),
 			account.ID(),
 		)
+		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
 
@@ -175,6 +182,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
 		assert.Equal(t, "la cuenta no pertenece al usuario logueado", odinError.ExternalError())
+		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})
 
 	t.Run("return income when data is valid", func(t *testing.T) {
@@ -196,6 +204,9 @@ func TestIncomeCreatorShould(t *testing.T) {
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
 		accountRepositoryMock.EXPECT().Save(ctx, account).Return(nil)
 
+		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
+		incomeRepositoryMock.EXPECT().Add(ctx, mock.Anything).Return(nil)
+
 		amount, _ := moneymodel.New("100000")
 		incomeCreator := incomecreator.New(
 			accountingFactory,
@@ -209,7 +220,8 @@ func TestIncomeCreatorShould(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, amount, income.Amount())
+		incomeRepositoryMock.AssertCalled(t, "Add", ctx, income)
 	})
 }
 
-// TODO: add case when save account balance fails. aka transactions
+// TODO: add case when save account balance or add income fails. aka transactions

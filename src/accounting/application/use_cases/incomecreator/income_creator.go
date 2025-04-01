@@ -14,6 +14,7 @@ import (
 )
 
 type IncomeCreator struct {
+	incomeRepository   repositories.IncomeRepository
 	accountRepository  repositories.AccountRepository
 	categoryRepository repositories.CategoryRepository
 	accountID          string
@@ -24,6 +25,7 @@ type IncomeCreator struct {
 
 func New(factory accountingrepositoryfactory.RepositoryFactory, amount moneymodel.Money, date time.Time, categoryID string, accountID string) *IncomeCreator {
 	return &IncomeCreator{
+		incomeRepository:   factory.GetIncomeRepository(),
 		accountRepository:  factory.GetAccountRepository(),
 		categoryRepository: factory.GetCategoryRepository(),
 		accountID:          accountID,
@@ -42,7 +44,7 @@ func (self *IncomeCreator) Create(ctx context.Context) (*incomemodel.Income, err
 	if err != nil {
 		return nil, err
 	}
-	return self.createIncome(ctx, err, account, category)
+	return self.createIncome(ctx, account, category)
 }
 
 func (self *IncomeCreator) getAccount(ctx context.Context) (*accountmodel.Account, error) {
@@ -69,11 +71,14 @@ func (self *IncomeCreator) getCategory(ctx context.Context) (*categorymodel.Cate
 	return category, nil
 }
 
-func (self *IncomeCreator) createIncome(ctx context.Context, err error, account *accountmodel.Account, category *categorymodel.Category) (*incomemodel.Income, error) {
+func (self *IncomeCreator) createIncome(ctx context.Context, account *accountmodel.Account,
+	category *categorymodel.Category) (*incomemodel.Income, error) {
+
 	income, err := account.CreateIncome(self.amount, self.date, *category)
 	if err != nil {
 		return nil, err
 	}
+	self.incomeRepository.Add(ctx, income)
 	self.accountRepository.Save(ctx, account)
 	return income, nil
 }

@@ -5,6 +5,7 @@ import (
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	"raiseexception.dev/odin/src/accounting/domain/category"
+	"raiseexception.dev/odin/src/accounting/domain/incomemodel"
 )
 
 type CategoryRepository interface {
@@ -18,4 +19,8 @@ type AccountRepository interface {
 	GetAll(ctx context.Context) ([]*accountmodel.Account, error)
 	GetByID(ctx context.Context, id string) (*accountmodel.Account, error)
 	Save(ctx context.Context, account *accountmodel.Account) error
+}
+
+type IncomeRepository interface {
+	Add(ctx context.Context, income *incomemodel.Income) error
 }

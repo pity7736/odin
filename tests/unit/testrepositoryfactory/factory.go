@@ -14,6 +14,7 @@ type Factory struct {
 	sessionRepository  *mocks.MockSessionRepository
 	userRepository     *mocks.MockUserRepository
 	accountsRepository *mocks.MockAccountRepository
+	incomeRepository   *mocks.MockIncomeRepository
 }
 
 func New(t *testing.T) *Factory {
@@ -62,4 +63,15 @@ func (self *Factory) GetAccountRepositoryMock() *mocks.MockAccountRepository {
 		self.accountsRepository = mocks.NewMockAccountRepository(self.t)
 	}
 	return self.accountsRepository
+}
+
+func (self *Factory) GetIncomeRepository() repositories.IncomeRepository {
+	return self.GetIncomeRepositoryMock()
+}
+
+func (self *Factory) GetIncomeRepositoryMock() *mocks.MockIncomeRepository {
+	if self.incomeRepository == nil {
+		self.incomeRepository = mocks.NewMockIncomeRepository(self.t)
+	}
+	return self.incomeRepository
 }
