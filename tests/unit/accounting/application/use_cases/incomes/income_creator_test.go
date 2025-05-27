@@ -41,13 +41,13 @@ func TestIncomeCreatorShould(t *testing.T) {
 		category := categorybuilder.New().WithUser(user).Create(categoryRepositoryMock)
 		//categoryRepositoryMock.EXPECT().GetByID(ctx, category.ID()).Return(category, nil)
 		amount, _ := moneymodel.New("100000")
-		incomeCreator := incomecreator.New(
-			accountingFactory,
+		command := incomecreator.NewCommand(
 			amount,
 			time.Now(),
 			category.ID(),
 			accountID,
 		)
+		incomeCreator := incomecreator.New(accountingFactory, command)
 		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
@@ -84,13 +84,13 @@ func TestIncomeCreatorShould(t *testing.T) {
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
 
 		amount, _ := moneymodel.New("100000")
-		incomeCreator := incomecreator.New(
-			accountingFactory,
+		command := incomecreator.NewCommand(
 			amount,
 			time.Now(),
 			categoryID,
 			account.ID(),
 		)
+		incomeCreator := incomecreator.New(accountingFactory, command)
 		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
@@ -124,13 +124,13 @@ func TestIncomeCreatorShould(t *testing.T) {
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
 
 		amount, _ := moneymodel.New("100000")
-		incomeCreator := incomecreator.New(
-			accountingFactory,
+		command := incomecreator.NewCommand(
 			amount,
 			time.Now(),
 			category.ID(),
 			account.ID(),
 		)
+		incomeCreator := incomecreator.New(accountingFactory, command)
 		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
@@ -164,13 +164,13 @@ func TestIncomeCreatorShould(t *testing.T) {
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
 
 		amount, _ := moneymodel.New("100000")
-		incomeCreator := incomecreator.New(
-			accountingFactory,
+		command := incomecreator.NewCommand(
 			amount,
 			time.Now(),
 			category.ID(),
 			account.ID(),
 		)
+		incomeCreator := incomecreator.New(accountingFactory, command)
 		incomeRepositoryMock := accountingFactory.GetIncomeRepositoryMock()
 
 		income, err := incomeCreator.Create(ctx)
@@ -208,13 +208,13 @@ func TestIncomeCreatorShould(t *testing.T) {
 		incomeRepositoryMock.EXPECT().Add(ctx, mock.Anything).Return(nil)
 
 		amount, _ := moneymodel.New("100000")
-		incomeCreator := incomecreator.New(
-			accountingFactory,
+		command := incomecreator.NewCommand(
 			amount,
 			time.Now(),
 			category.ID(),
 			account.ID(),
 		)
+		incomeCreator := incomecreator.New(accountingFactory, command)
 
 		income, err := incomeCreator.Create(ctx)
 

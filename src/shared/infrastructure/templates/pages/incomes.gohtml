@@ -1,0 +1,5 @@
+{{ define "create_income_error" }}
+    {{ if .ExternalError }}
+        <p>{{ .ExternalError }}</p>
+    {{ end }}
+{{ end }}

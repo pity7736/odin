@@ -23,15 +23,15 @@ type IncomeCreator struct {
 	date               time.Time
 }
 
-func New(factory accountingrepositoryfactory.RepositoryFactory, amount moneymodel.Money, date time.Time, categoryID string, accountID string) *IncomeCreator {
+func New(factory accountingrepositoryfactory.RepositoryFactory, command CreateIncomeCommand) *IncomeCreator {
 	return &IncomeCreator{
 		incomeRepository:   factory.GetIncomeRepository(),
 		accountRepository:  factory.GetAccountRepository(),
 		categoryRepository: factory.GetCategoryRepository(),
-		accountID:          accountID,
-		categoryID:         categoryID,
-		amount:             amount,
-		date:               date,
+		accountID:          command.AccountID(),
+		categoryID:         command.CategoryID(),
+		amount:             command.Amount(),
+		date:               command.Date(),
 	}
 }
 
