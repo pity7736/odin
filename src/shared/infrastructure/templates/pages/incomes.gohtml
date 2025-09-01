@@ -1,3 +1,31 @@
+{{ define "create_income_form" }}
+    <p>Crear Ingreso</p>
+    <div>
+        <form hx-post="/incomes/{{ .AccountID }}" hx-target="#incomes-view">
+            <label for="amount">Monto</label>
+            <input type="text" name="amount" placeholder="Monto">
+            <label for="date">Fecha</label>
+            <input type="date" name="date" placeholder="Fecha">
+            <label for="category_id">Categoría</label>
+            <input type="text" name="category_id" placeholder="Categoría">
+            <button type="submit">Crear</button>
+        </form>
+    </div>
+{{ end }}
+
+{{ define "incomes" }}
+    {{ template "create_income_form" . }}
+    <div id="incomes-view">
+        <p>No hay ingresos</p>
+    </div>
+{{ end }}
+
+{{ define "income_created" }}
+    <div hx-swap-oob="afterend:#incomes-view">
+        <p>Monto: <span>{{ .Amount }}</span></p>
+    </div>
+{{ end }}
+
 {{ define "create_income_error" }}
     {{ if .ExternalError }}
         <p>{{ .ExternalError }}</p>

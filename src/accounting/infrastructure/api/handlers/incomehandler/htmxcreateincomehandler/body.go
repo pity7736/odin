@@ -12,7 +12,7 @@ import (
 type createIncomeBody struct {
 	Amount     string `json:"amount"`
 	Date       string `json:"date"`
-	CategoryID string `json:"category_id"`
+	CategoryID string `json:"category_id" form:"category_id"`
 	accountID  string
 }
 

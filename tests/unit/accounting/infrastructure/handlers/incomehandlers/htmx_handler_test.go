@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/gofiber/fiber/v2"
@@ -14,6 +15,7 @@ import (
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/categorybuilder"
+	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
@@ -28,12 +30,12 @@ func TestHTMXCreateIncomeHandlerShould(t *testing.T) {
 		ctxBuilder := builders.NewFiberContextBuilder().
 			WithMethod("POST").
 			WithContentType(fiber.MIMEApplicationForm).
-			WithBody([]byte(fmt.Sprintf(
+			WithBody(fmt.Appendf(nil,
 				"amount=%s&date=%s&category_id=%s",
 				"1000",
 				"2025-04-03",
 				category.ID(),
-			)))
+			))
 		defer ctxBuilder.Release()
 		ctx := ctxBuilder.Build()
 		patches := gomonkey.ApplyMethodReturn(ctx, "Params", "")
@@ -59,21 +61,21 @@ func TestHTMXCreateIncomeHandlerShould(t *testing.T) {
 		accountError := odinerrors.NewErrorBuilder("account not found").
 			WithExternalMessage(fmt.Sprintf("no existe una cuenta con el id %s", accountID)).
 			Build()
+		accountRepository.EXPECT().GetByID(mock.Anything, accountID).Return(nil, accountError)
 		categoryRepository := factory.GetCategoryRepositoryMock()
 		categoryRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		category := categorybuilder.New().Create(categoryRepository)
 		ctxBuilder := builders.NewFiberContextBuilder().
 			WithMethod("POST").
 			WithContentType(fiber.MIMEApplicationForm).
-			WithBody([]byte(fmt.Sprintf(
+			WithBody(fmt.Appendf(nil,
 				"amount=%s&date=%s&category_id=%s",
 				"1000",
 				"2025-04-03",
 				category.ID(),
-			)))
+			))
 		defer ctxBuilder.Release()
 		ctx := ctxBuilder.Build()
-		accountRepository.EXPECT().GetByID(mock.Anything, accountID).Return(nil, accountError)
 
 		patches := gomonkey.ApplyMethodReturn(ctx, "Params", accountID)
 		defer patches.Reset()
@@ -88,5 +90,49 @@ func TestHTMXCreateIncomeHandlerShould(t *testing.T) {
 		errorValue := fmt.Sprintf("no existe una cuenta con el id %s", accountID)
 		assert.True(t, strings.Contains(responseBody, errorValue))
 		repository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+	})
+
+	t.Run("be able to create income", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		repository := factory.GetIncomeRepositoryMock()
+		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+
+		userRepository := factory.GetUserRepositoryMock()
+		userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(userRepository)
+
+		accountRepository := factory.GetAccountRepositoryMock()
+		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepository)
+		accountRepository.EXPECT().GetByID(mock.Anything, account.ID()).Return(account, nil)
+		accountRepository.EXPECT().Save(mock.Anything, mock.Anything).Return(nil)
+
+		categoryRepository := factory.GetCategoryRepositoryMock()
+		categoryRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		category := categorybuilder.New().WithUserID(user.ID()).WithIncomeType().Create(categoryRepository)
+		categoryRepository.EXPECT().GetByID(mock.Anything, category.ID()).Return(category, nil)
+
+		ctxBuilder := builders.NewFiberContextBuilder().
+			WithMethod("POST").
+			WithContentType(fiber.MIMEApplicationForm).
+			WithBody(fmt.Appendf(nil,
+				"amount=%s&date=%s&category_id=%s",
+				"1000",
+				account.CreatedAt().Add(time.Hour*25).Format("2006-01-02"),
+				category.ID(),
+			)).
+			WithUser(user)
+		defer ctxBuilder.Release()
+		ctx := ctxBuilder.Build()
+
+		patches := gomonkey.ApplyMethodReturn(ctx, "Params", account.ID())
+		defer patches.Reset()
+		createIncomeHandler := htmxcreateincomehandler.New(factory)
+
+		err := createIncomeHandler.Handle(ctx)
+
+		responseBody := string(ctx.Response().Body())
+		assert.Nil(t, err)
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Monto: <span>%s</span></p>", "1000")))
 	})
 }

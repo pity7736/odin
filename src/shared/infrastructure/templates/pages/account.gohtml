@@ -32,6 +32,7 @@
 
 {{ define "account_created" }}
     <div hx-swap-oob="afterend:#accounts-view">
+        <p>id: <span>{{ .ID }}</span></p>
         <p>Name: <span>{{ .Name }}</span></p>
         <p>Saldo inicial: <span>{{ .InitialBalance }}</span></p>
         <p>Saldo actual: <span>{{ .Balance }}</span></p>

@@ -32,7 +32,11 @@ func (self *HTMXCreateIncomeHandler) Handle(c *fiber.Ctx) error {
 	incomeCreator := incomecreator.New(self.factory, command)
 	requestContext := c.Locals(requestcontext.Key).(*requestcontext.RequestContext)
 	ctx := context.WithValue(c.Context(), requestcontext.Key, requestContext)
-	_, err = incomeCreator.Create(ctx)
-	c.Render("create_account_error", err, "")
+	income, err := incomeCreator.Create(ctx)
+	if err != nil {
+		c.Render("create_account_error", err, "")
+		return err
+	}
+	c.Render("income_created", income, "")
 	return err
 }

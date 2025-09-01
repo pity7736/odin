@@ -43,6 +43,11 @@ func (self *builder) WithIncomeType() *builder {
 	return self
 }
 
+func (self *builder) WithUserID(userID string) *builder {
+	self.userID = userID
+	return self
+}
+
 func (self *builder) Build() *categorymodel.Category {
 	return categorymodel.New(
 		self.id,
