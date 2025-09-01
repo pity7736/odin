@@ -11,3 +11,4 @@ packages:
     interfaces:
       SessionRepository:
       UserRepository:
+      IncomeRepository:

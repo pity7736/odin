@@ -128,6 +128,112 @@ func (_c *MockAccountRepository_GetAll_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// GetByID provides a mock function with given fields: ctx, id
+func (_m *MockAccountRepository) GetByID(ctx context.Context, id string) (*accountmodel.Account, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByID")
+	}
+
+	var r0 *accountmodel.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*accountmodel.Account, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *accountmodel.Account); ok {
+		r0 = rf(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*accountmodel.Account)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockAccountRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type MockAccountRepository_GetByID_Call struct {
+	*mock.Call
+}
+
+// GetByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockAccountRepository_Expecter) GetByID(ctx interface{}, id interface{}) *MockAccountRepository_GetByID_Call {
+	return &MockAccountRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
+}
+
+func (_c *MockAccountRepository_GetByID_Call) Run(run func(ctx context.Context, id string)) *MockAccountRepository_GetByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockAccountRepository_GetByID_Call) Return(_a0 *accountmodel.Account, _a1 error) *MockAccountRepository_GetByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockAccountRepository_GetByID_Call) RunAndReturn(run func(context.Context, string) (*accountmodel.Account, error)) *MockAccountRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Save provides a mock function with given fields: ctx, account
+func (_m *MockAccountRepository) Save(ctx context.Context, account *accountmodel.Account) error {
+	ret := _m.Called(ctx, account)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Save")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *accountmodel.Account) error); ok {
+		r0 = rf(ctx, account)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockAccountRepository_Save_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Save'
+type MockAccountRepository_Save_Call struct {
+	*mock.Call
+}
+
+// Save is a helper method to define mock.On call
+//   - ctx context.Context
+//   - account *accountmodel.Account
+func (_e *MockAccountRepository_Expecter) Save(ctx interface{}, account interface{}) *MockAccountRepository_Save_Call {
+	return &MockAccountRepository_Save_Call{Call: _e.mock.On("Save", ctx, account)}
+}
+
+func (_c *MockAccountRepository_Save_Call) Run(run func(ctx context.Context, account *accountmodel.Account)) *MockAccountRepository_Save_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*accountmodel.Account))
+	})
+	return _c
+}
+
+func (_c *MockAccountRepository_Save_Call) Return(_a0 error) *MockAccountRepository_Save_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockAccountRepository_Save_Call) RunAndReturn(run func(context.Context, *accountmodel.Account) error) *MockAccountRepository_Save_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockAccountRepository creates a new instance of MockAccountRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockAccountRepository(t interface {

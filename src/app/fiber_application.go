@@ -11,6 +11,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/incomehandler/htmxcreateincomehandler"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 	"raiseexception.dev/odin/src/shared/infrastructure/api"
@@ -143,6 +144,12 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 			accountsRepositoryFactory,
 			htmxloginhandler.New(ctx),
 		).Login(ctx)
+	})
+	app.Post("/accounts/:accountID/incomes", func(ctx *fiber.Ctx) error {
+		return loginRequired(
+			ctx,
+			htmxcreateincomehandler.New(accountingRepositoryFactory),
+		)
 	})
 	app.Post(accountPath, func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()))

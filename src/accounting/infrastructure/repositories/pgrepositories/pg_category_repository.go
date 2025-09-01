@@ -28,3 +28,8 @@ func (self *PGCategoryRepository) GetAll(ctx context.Context, userID string) []*
 	}
 	return result
 }
+
+func (self *PGCategoryRepository) GetByID(ctx context.Context, id string) (*categorymodel.Category, error) {
+	//TODO implement me
+	panic("implement me")
+}

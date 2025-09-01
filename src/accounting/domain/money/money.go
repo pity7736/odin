@@ -12,6 +12,14 @@ type Money struct {
 	currency *Currency
 }
 
+func MustNew(value string, currencies ...*Currency) Money {
+	money, err := New(value, currencies...)
+	if err != nil {
+		panic(err)
+	}
+	return money
+}
+
 func New(value string, currencies ...*Currency) (Money, error) {
 	currency := COP()
 	if len(currencies) > 0 {
@@ -38,4 +46,13 @@ func (self Money) Value() decimal.Decimal {
 
 func (self Money) String() string {
 	return self.value.String()
+}
+
+func (self Money) Less(amount Money) bool {
+	return self.value.Less(amount.value)
+}
+
+func (self Money) Subtract(amount Money) Money {
+	value, _ := self.value.Sub(amount.value)
+	return Money{value: value, currency: self.currency}
 }

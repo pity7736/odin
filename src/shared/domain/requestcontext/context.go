@@ -6,7 +6,9 @@ import (
 	"github.com/google/uuid"
 )
 
-const Key = "requestContext"
+type contextKey string
+
+const Key contextKey = "requestContext"
 
 type RequestContext struct {
 	userID    string

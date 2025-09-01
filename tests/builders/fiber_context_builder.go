@@ -61,6 +61,11 @@ func (self *FiberContextBuilder) WithoutRequestContext() *FiberContextBuilder {
 	return self
 }
 
+func (self *FiberContextBuilder) WithUser(user *usermodel.User) *FiberContextBuilder {
+	self.user = user
+	return self
+}
+
 func (self *FiberContextBuilder) Build() *fiber.Ctx {
 	self.ctx = self.app.AcquireCtx(&fasthttp.RequestCtx{})
 	self.ctx.Method(self.method)

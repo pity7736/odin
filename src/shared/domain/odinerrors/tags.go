@@ -6,4 +6,5 @@ const (
 	UNKNOWN Tag = iota
 	DOMAIN
 	RENDER
+	NOT_FOUND
 )
