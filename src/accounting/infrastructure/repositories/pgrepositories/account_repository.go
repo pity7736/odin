@@ -4,6 +4,7 @@ import (
 	"context"
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 )
 
@@ -32,8 +33,13 @@ func (self *PGAccountRepository) GetAll(ctx context.Context) ([]*accountmodel.Ac
 }
 
 func (self *PGAccountRepository) GetByID(ctx context.Context, id string) (*accountmodel.Account, error) {
-	//TODO implement me
-	panic("implement me")
+	requestContext := ctx.Value(requestcontext.Key).(*requestcontext.RequestContext)
+	for _, account := range self.accounts {
+		if account.ID() == id && account.UserID() == requestContext.UserID() {
+			return account, nil
+		}
+	}
+	return nil, odinerrors.NewErrorBuilder("account not found").WithExternalMessage("account not found").Build()
 }
 
 func (self *PGAccountRepository) Save(ctx context.Context, account *accountmodel.Account) error {
