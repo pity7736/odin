@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/incomehandler/htmxcreateincomehandler"
@@ -144,6 +145,12 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 			accountsRepositoryFactory,
 			htmxloginhandler.New(ctx),
 		).Login(ctx)
+	})
+	app.Get("/accounts/:accountID", func(ctx *fiber.Ctx) error {
+		return loginRequired(
+			ctx,
+			htmxgetaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()),
+		)
 	})
 	app.Post("/accounts/:accountID/incomes", func(ctx *fiber.Ctx) error {
 		return loginRequired(

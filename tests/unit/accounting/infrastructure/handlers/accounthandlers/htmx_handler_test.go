@@ -13,9 +13,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders"
+	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/mocks"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
@@ -27,11 +29,11 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		initialBalance := "some value"
-		ctxBuilder.WithBody([]byte(fmt.Sprintf(
+		ctxBuilder.WithBody(fmt.Appendf(nil,
 			"name=%s&initial_balance=%s",
 			"test",
 			initialBalance,
-		)))
+		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 
@@ -52,11 +54,11 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
-		ctxBuilder.WithBody([]byte(fmt.Sprintf(
+		ctxBuilder.WithBody(fmt.Appendf(nil,
 			"name=%s&initial_balance=%s",
 			"",
 			"1000000",
-		)))
+		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 
@@ -79,11 +81,11 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
-		ctxBuilder.WithBody([]byte(fmt.Sprintf(
+		ctxBuilder.WithBody(fmt.Appendf(nil,
 			"name=%s&initial_balance=%s",
 			"test",
 			"1000000",
-		)))
+		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 		renderError := errors.New("some render error")
@@ -107,11 +109,11 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
-		ctxBuilder.WithBody([]byte(fmt.Sprintf(
+		ctxBuilder.WithBody(fmt.Appendf(nil,
 			"name=%s&initial_balance=%s",
 			"test",
 			"some value",
-		)))
+		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 		renderError := errors.New("some render error")
@@ -138,11 +140,11 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		defer ctxBuilder.Release()
 		accountName := "test"
 		initialBalance := "1000000"
-		ctxBuilder.WithBody([]byte(fmt.Sprintf(
+		ctxBuilder.WithBody(fmt.Appendf(nil,
 			"name=%s&initial_balance=%s",
 			accountName,
 			initialBalance,
-		)))
+		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 
@@ -240,5 +242,78 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 		err := getAccountsHandler.Handle(ctx)
 
 		assert.Equal(t, renderError, err)
+	})
+}
+
+func TestGetAccountHTMXHandlerShould(t *testing.T) {
+
+	t.Run("return error when repository returns error", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		repository := factory.GetAccountRepositoryMock()
+		repositoryError := errors.New("some repository error")
+		repository.EXPECT().GetByID(mock.Anything, mock.Anything).Return(nil, repositoryError)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("GET").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		getAccountHandler := htmxgetaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+		patches := gomonkey.ApplyMethodReturn(ctx, "Params", "some id")
+		defer patches.Reset()
+
+		err := getAccountHandler.Handle(ctx)
+
+		assert.Equal(t, repositoryError.Error(), err.Error())
+		repository.AssertCalled(t, "GetByID", mock.Anything, mock.Anything)
+	})
+
+	t.Run("return error when account does not exist", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		userRepository := factory.GetUserRepositoryMock()
+		userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(userRepository)
+
+		accountRepository := factory.GetAccountRepositoryMock()
+		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepository)
+		accountRepository.EXPECT().GetByID(mock.Anything, "some id").Return(nil, errors.New("account not found"))
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("GET").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		getAccountHandler := htmxgetaccounthandler.New(accountRepository)
+		ctx := ctxBuilder.Build()
+		patches := gomonkey.ApplyMethodReturn(ctx, "Params", "some id")
+		defer patches.Reset()
+
+		err := getAccountHandler.Handle(ctx)
+
+		assert.Equal(t, "account not found", err.Error())
+		accountRepository.AssertCalled(t, "GetByID", mock.Anything, mock.Anything)
+	})
+
+	t.Run("return account when belongs to user", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		userRepository := factory.GetUserRepositoryMock()
+		userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		user := userbuilder.New().Create(userRepository)
+
+		accountRepository := factory.GetAccountRepositoryMock()
+		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepository)
+		accountRepository.EXPECT().GetByID(mock.Anything, account.ID()).Return(account, nil)
+		ctxBuilder := builders.NewFiberContextBuilder().
+			WithMethod("GET").
+			WithContentType(fiber.MIMEApplicationForm).
+			WithUser(user)
+		defer ctxBuilder.Release()
+		getAccountHandler := htmxgetaccounthandler.New(accountRepository)
+		ctx := ctxBuilder.Build()
+		patches := gomonkey.ApplyMethodReturn(ctx, "Params", account.ID())
+		defer patches.Reset()
+
+		err := getAccountHandler.Handle(ctx)
+
+		responseBody := string(ctx.Response().Body())
+		assert.Nil(t, err)
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Nombre: <span>%s</span></p>", account.Name())))
 	})
 }
