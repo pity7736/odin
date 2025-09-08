@@ -1,11 +1,11 @@
 {{ define "create_account_form" }}
     <p>Crear cuenta</p>
     <div>
-        <form hx-post="/accounts" hx-target="#accounts-view">
+        <form hx-post="/accounts" hx-swap="none">
             <label for="name">Nombre</label>
-            <input id="name" name="name" placeholder="name">
+            <input id="name" name="name" placeholder="nombre">
             <label for="initial_balance">Saldo inicial</label>
-            <input id="initial_balance" name="initial_balance" placeholder="initial_balance">
+            <input id="initial_balance" name="initial_balance" placeholder="saldo inicial">
             <button type="submit">Crear</button>
         </form>
     </div>
@@ -13,15 +13,21 @@
 
 {{ define "accounts" }}
     {{ template "create_account_form"}}
-    <div id="accounts-view">
-        {{ if .Accounts }}
+    <table id="accounts-table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Saldo inicial</th>
+                <th>Saldo actual</th>
+                <th>Fecha apertura</th>
+            </tr>
+        </thead>
+        <tbody id="accounts-view">
             {{ range .Accounts }}
                 {{ template "account_created" . }}
             {{ end }}
-        {{ else }}
-            <p>no hay cuentas</p>
-        {{ end }}
-    </div>
+        </tbody>
+    </table>
 {{ end }}
 
 {{ define "create_account_error" }}
@@ -31,11 +37,11 @@
 {{ end }}
 
 {{ define "account_created" }}
-    <div hx-swap-oob="afterend:#accounts-view">
-        <p>id: <span>{{ .ID }}</span></p>
-        <p>Name: <span>{{ .Name }}</span></p>
-        <p>Saldo inicial: <span>{{ .InitialBalance }}</span></p>
-        <p>Saldo actual: <span>{{ .Balance }}</span></p>
-        <p>Fecha apertura: <span>{{ .CreatedAt.Format "Monday, _2 January 2006" }}</span></p>
-    </div>
+     <tr hx-swap-oob="afterbegin:#accounts-view" >
+        <td><a href="/accounts/{{ .ID }}">{{ .Name }}</a></td>
+        <td>{{ .InitialBalance }}</td>
+        <td>{{ .Balance }}</td>
+        <td>{{ .CreatedAt.Format "Monday, _2 January 2006" }}</td>
+     </tr>
 {{ end }}
+
