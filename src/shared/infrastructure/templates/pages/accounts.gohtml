@@ -1,7 +1,7 @@
 {{ define "create_account_form" }}
     <p>Crear cuenta</p>
     <div>
-        <form hx-post="/accounts" hx-target="#accounts-table" hx-swap="none">
+        <form hx-post="/accounts" hx-swap="none">
             <label for="name">Nombre</label>
             <input id="name" name="name" placeholder="nombre">
             <label for="initial_balance">Saldo inicial</label>
