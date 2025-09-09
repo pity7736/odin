@@ -24,12 +24,12 @@ func (self *HtmxLoginHandler) HandleResponse(session *sessionmodel.Session) erro
 		SameSite: "strict",
 	}
 	self.ctx.Cookie(&cookie)
-	self.ctx.Set("HX-Redirect", "/")
+	self.ctx.Set("HX-Redirect", self.ctx.Query("next", "/"))
 	return nil
 }
 
 func (self *HtmxLoginHandler) HandleBadRequest(err error) error {
-	self.ctx.Render("login_error", RequestError{err.Error()}, "")
+	self.ctx.Render("login_error", LoginData{err.Error(), "/"}, "")
 	return nil
 }
 
@@ -37,6 +37,7 @@ func (self *HtmxLoginHandler) ContentType() string {
 	return fiber.MIMETextHTMLCharsetUTF8
 }
 
-type RequestError struct {
+type LoginData struct {
 	Error string
+	Next  string
 }
