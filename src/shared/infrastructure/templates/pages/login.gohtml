@@ -1,6 +1,6 @@
 {{ define "login_form" }}
     <p>Login</p>
-    <form hx-post="/auth/login" hx-target="#login_error">
+    <form hx-post="/auth/login?next={{ .Next }}" hx-target="#login_error">
         <label for="email">Email:</label>
         <input id="email" type="email" name="email" required>
         <label for="password">Password:</label>
@@ -10,7 +10,7 @@
 {{ end }}
 
 {{ define "login" }}
-    {{ template "login_form" }}
+    {{ template "login_form" . }}
     <div id="login_error">
         {{ template "login_error" . }}
     </div>

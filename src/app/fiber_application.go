@@ -137,7 +137,8 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		return restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
 	})
 	app.Get("/auth/login", func(ctx *fiber.Ctx) error {
-		ctx.Render("login", htmxloginhandler.RequestError{Error: ""})
+		next := ctx.Query("next", "/")
+		ctx.Render("login", htmxloginhandler.LoginData{Error: "", Next: next})
 		return nil
 	})
 	app.Post("/auth/login", func(ctx *fiber.Ctx) error {
@@ -180,18 +181,20 @@ func loginRequired(ctx *fiber.Ctx, handler api.Handler) error {
 	if requestContext.IsAuthenticated() {
 		return handler.Handle(ctx)
 	}
-	ctx.Status(http.StatusUnauthorized)
-	ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
 	if ctx.Get("Content-Type", "") == fiber.MIMEApplicationJSON {
+		ctx.Status(http.StatusUnauthorized)
 		ctx.Set("Content-Type", fiber.MIMEApplicationJSON)
+		return nil
 	}
+	ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
+	ctx.Redirect("/auth/login?next=" + ctx.Path())
 	return nil
 }
 
 func errorHandler(ctx *fiber.Ctx, err error) error {
 	var odinError *odinerrors.Error
-	ok := errors.As(err, &odinError)
 	code := http.StatusInternalServerError
+	ok := errors.As(err, &odinError)
 	if ok {
 		switch odinError.Tag() {
 		case odinerrors.DOMAIN:
