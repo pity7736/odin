@@ -136,7 +136,7 @@ func TestHTMX(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, `<p>Login</p>`))
-		assert.True(t, strings.Contains(responseData, `<form hx-post="/auth/login" hx-target="#login_error">`))
+		assert.True(t, strings.Contains(responseData, `<form hx-post="/auth/login?next=/" hx-target="#login_error">`))
 		assert.True(t, strings.Contains(responseData, `<label for="email">Email:</label>`))
 		assert.True(t, strings.Contains(responseData, `<input id="email" type="email" name="email" required>`))
 		assert.True(t, strings.Contains(responseData, `<label for="password">Password:</label>`))

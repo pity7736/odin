@@ -118,7 +118,7 @@ func TestHTMXCreateIncomeHandlerShould(t *testing.T) {
 			WithBody(fmt.Appendf(nil,
 				"amount=%s&date=%s&category_id=%s",
 				"1000",
-				account.CreatedAt().Add(time.Hour*25).Format("2006-01-02"),
+				account.CreatedAt().Add(time.Hour*24).Format("2006-01-02"),
 				category.ID(),
 			)).
 			WithUser(user)

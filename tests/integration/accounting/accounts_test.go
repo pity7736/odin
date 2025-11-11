@@ -59,7 +59,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
 	})
 
-	t.Run("return unauthorized when request is anonymous", func(t *testing.T) {
+	t.Run("return redirect when request is anonymous", func(t *testing.T) {
 		accountingFactory := accountingrepositoryfactory.New()
 		accountsFactory := accountsrepositoryfactory.New()
 		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
@@ -76,7 +76,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 
 		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
 
-		assert.Equal(t, fiber.StatusUnauthorized, response.StatusCode)
+		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
 	})
 
@@ -99,7 +99,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 
 		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
 
-		assert.Equal(t, fiber.StatusUnauthorized, response.StatusCode)
+		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
 	})
 }
@@ -135,20 +135,22 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 		response, responseBody := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusOK, response.StatusCode)
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account0.Name()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account0.InitialBalance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account0.Balance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", account0.CreatedAt().Format("Monday, _2 January 2006")))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account1.Name()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account1.InitialBalance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account1.Balance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", account1.CreatedAt().Format("Monday, _2 January 2006")))
-		assert.NotContains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account2.Name()))
-		assert.NotContains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account2.InitialBalance()))
-		assert.NotContains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account2.Balance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account0.ID(), account0.Name()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.InitialBalance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.Balance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.CreatedAt().Format("Monday, _2 January 2006")))
+
+		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account1.ID(), account1.Name()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.InitialBalance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.Balance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.CreatedAt().Format("Monday, _2 January 2006")))
+
+		assert.NotContains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s<a></td>", account2.ID(), account2.Name()))
+		assert.NotContains(t, responseBody, fmt.Sprintf("<td>%s</td>", account2.InitialBalance()))
+		assert.NotContains(t, responseBody, fmt.Sprintf("<td>%s</td>", account2.Balance()))
 	})
 
-	t.Run("return unauthorized when request is anonymous", func(t *testing.T) {
+	t.Run("return found when request is anonymous", func(t *testing.T) {
 		accountingFactory := accountingrepositoryfactory.New()
 		accountsFactory := accountsrepositoryfactory.New()
 		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
@@ -160,10 +162,10 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 
 		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
 
-		assert.Equal(t, fiber.StatusUnauthorized, response.StatusCode)
+		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 	})
 
-	t.Run("return unauthorized when request sent cookie but session doesn't exists", func(t *testing.T) {
+	t.Run("return found when request sent cookie but session doesn't exists", func(t *testing.T) {
 		accountingFactory := accountingrepositoryfactory.New()
 		accountsFactory := accountsrepositoryfactory.New()
 		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
@@ -177,6 +179,6 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 
 		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
 
-		assert.Equal(t, fiber.StatusUnauthorized, response.StatusCode)
+		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 	})
 }

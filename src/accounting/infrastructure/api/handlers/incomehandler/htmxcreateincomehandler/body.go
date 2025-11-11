@@ -33,6 +33,7 @@ func newFromCtx(ctx *fiber.Ctx) (createIncomeBody, error) {
 
 func (self createIncomeBody) toCommand() (incomecreator.CreateIncomeCommand, error) {
 	amount, _ := moneymodel.New(self.Amount)
-	date, _ := time.Parse(time.DateOnly, self.Date)
+	loc, _ := time.LoadLocation("America/Bogota")
+	date, _ := time.ParseInLocation(time.DateOnly, self.Date, loc)
 	return incomecreator.NewCommand(amount, date, self.CategoryID, self.accountID), nil
 }

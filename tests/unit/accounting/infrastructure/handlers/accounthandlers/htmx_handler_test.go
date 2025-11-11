@@ -23,6 +23,7 @@ import (
 )
 
 func TestCreateAccountHTMXHandlerShould(t *testing.T) {
+
 	t.Run("return error when initial balance is not valid", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		ctxBuilder := builders.NewFiberContextBuilder()
@@ -153,10 +154,10 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", accountName)))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", initialBalance)))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", initialBalance)))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", time.Now().Format("Monday, _2 January 2006"))))
+		assert.True(t, strings.Contains(responseBody, accountName))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", initialBalance)))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", initialBalance)))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", time.Now().Format("Monday, _2 January 2006"))))
 	})
 }
 
@@ -213,14 +214,14 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 		responseBody := string(ctx.Response().Body())
 		assert.Nil(t, err)
 		repository.AssertCalled(t, "GetAll", mock.Anything)
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account0.Name()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account0.InitialBalance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account0.Balance()))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", account0.CreatedAt().Format("Monday, _2 January 2006"))))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Name: <span>%s</span></p>", account1.Name()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo inicial: <span>%s</span></p>", account1.InitialBalance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<p>Saldo actual: <span>%s</span></p>", account1.Balance()))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<p>Fecha apertura: <span>%s</span></p>", account1.CreatedAt().Format("Monday, _2 January 2006"))))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account0.ID(), account0.Name()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.InitialBalance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.Balance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.CreatedAt().Format("Monday, _2 January 2006")))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account1.ID(), account1.Name()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.InitialBalance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.Balance()))
+		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.CreatedAt().Format("Monday, _2 January 2006")))
 	})
 
 	t.Run("return error when render fails", func(t *testing.T) {
@@ -298,7 +299,9 @@ func TestGetAccountHTMXHandlerShould(t *testing.T) {
 
 		accountRepository := factory.GetAccountRepositoryMock()
 		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepository)
+		account := builders.NewAccountBuilder().
+			WithUserID(user.ID()).
+			Create(accountRepository)
 		accountRepository.EXPECT().GetByID(mock.Anything, account.ID()).Return(account, nil)
 		ctxBuilder := builders.NewFiberContextBuilder().
 			WithMethod("GET").
