@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$PATH:$(go env GOPATH)/bin"
+
+require() {
+    if ! command -v "$1" &>/dev/null; then
+        echo "error: $1 not found. $2"
+        exit 1
+    fi
+}
+
+require govulncheck "run: go install golang.org/x/vuln/cmd/govulncheck@latest"
+require gitleaks    "run: brew install gitleaks"
+
+echo "→ lint"
+make lint
+
+echo "→ govulncheck"
+govulncheck ./...
+
+echo "→ secret scan"
+gitleaks protect --staged --redact
+
+echo "→ tests + coverage"
+make coverage-check

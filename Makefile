@@ -1,4 +1,4 @@
-.PHONY: lint test mocks coverage coverage-check check
+.PHONY: lint test mocks coverage coverage-check check install-hooks
 
 lint:
 	golangci-lint run ./...
@@ -25,3 +25,7 @@ coverage-check: coverage
 	fi
 
 check: lint test coverage-check
+
+install-hooks:
+	@ln -sf $(shell pwd)/scripts/hooks/pre-commit .git/hooks/pre-commit
+	@echo "hooks installed"

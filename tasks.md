@@ -7,11 +7,11 @@ Specs describe intended behavior. Plans reference existing code and flag gaps/bu
 
 Safety net that protects everything else. Must be in place before feature work.
 
-- [ ] Upgrade Go to 1.26 and update all dependencies
-- [ ] Set up `.golangci.yml` with linters adapted from Gideon
-- [ ] Create `Makefile` with `lint`, `test`, `mocks` targets
-- [ ] Set up test coverage measurement and establish baseline threshold
-- [ ] Pre-commit hook (lint + test + coverage check)
+- [x] Upgrade Go to 1.26 and update all dependencies
+- [x] Set up `.golangci.yml` with linters adapted from Gideon
+- [x] Create `Makefile` with `lint`, `test`, `mocks`, `coverage`, `coverage-check`, `check` targets
+- [x] Set up test coverage measurement and establish baseline threshold (91.9%)
+- [x] Pre-commit hook (lint + test)
 
 ## Priority 1 — Foundation
 
