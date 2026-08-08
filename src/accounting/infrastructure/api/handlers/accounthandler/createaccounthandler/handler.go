@@ -2,6 +2,7 @@ package createaccounthandler
 
 import (
 	"context"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
@@ -50,5 +51,5 @@ func (self createAccountBody) toCommand() (*accountcreator.CreateAccountCommand,
 	if err != nil {
 		return nil, err
 	}
-	return accountcreator.NewCreateAccountCommand(self.Name, initialBalance), err
+	return accountcreator.NewCreateAccountCommand(strings.Clone(self.Name), initialBalance), err
 }

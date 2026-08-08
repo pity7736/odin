@@ -1,6 +1,8 @@
 package accountcreator
 
-import moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+import (
+	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
+)
 
 type CreateAccountCommand struct {
 	name           string

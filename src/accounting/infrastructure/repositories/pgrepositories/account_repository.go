@@ -39,7 +39,10 @@ func (self *PGAccountRepository) GetByID(ctx context.Context, id string) (*accou
 			return account, nil
 		}
 	}
-	return nil, odinerrors.NewErrorBuilder("account not found").WithExternalMessage("account not found").Build()
+	return nil, odinerrors.NewErrorBuilder("account not found").
+		WithExternalMessage("account not found").
+		WithTag(odinerrors.NOT_FOUND).
+		Build()
 }
 
 func (self *PGAccountRepository) Save(ctx context.Context, account *accountmodel.Account) error {
