@@ -8,7 +8,7 @@ Our development process is founded on three core principles:
 - **[Test-Driven Development (TDD)](./04-tdd-workflow.md):** We verify behavior with tests before implementing it.
 - **[Modular Architecture](./02-architecture.md):** We create a decoupled, testable, and maintainable codebase with clear boundaries between components.
 
-We use **Go 1.24** and **Fiber** for this project.
+We use **Go 1.26** and **Fiber** for this project.
 
 This documentation is organized into several parts:
 

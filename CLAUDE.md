@@ -1,6 +1,6 @@
 # Odin - Personal Finance
 
-Personal finance management application with dual interface: HTMX for web, REST API for mobile. Built with **Go 1.24** and **Fiber**.
+Personal finance management application with dual interface: HTMX for web, REST API for mobile. Built with **Go 1.26** and **Fiber**.
 
 ## Quick Reference
 

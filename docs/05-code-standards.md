@@ -2,7 +2,7 @@
 
 ## 1. Tooling
 
-- **Language:** Go 1.24
+- **Language:** Go 1.26
 - **Web Framework:** Fiber v2
 - **Template Engine:** gohtml templates with HTMX
 - **UUID Generation:** `github.com/google/uuid` (UUIDv7). UUIDs stored and passed as `string`.

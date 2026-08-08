@@ -3,9 +3,19 @@
 Each feature needs a `specs/<module>/<feature>/spec.md` and `plan.md` before implementation.
 Specs describe intended behavior. Plans reference existing code and flag gaps/bugs to fix.
 
+## Priority 0 — Tooling
+
+Safety net that protects everything else. Must be in place before feature work.
+
+- [ ] Upgrade Go to 1.26 and update all dependencies
+- [ ] Set up `.golangci.yml` with linters adapted from Gideon
+- [ ] Create `Makefile` with `lint`, `test`, `mocks` targets
+- [ ] Set up test coverage measurement and establish baseline threshold
+- [ ] Pre-commit hook (lint + test + coverage check)
+
 ## Priority 1 — Foundation
 
-These block everything else. Fix structural issues before specifying features.
+Fix structural issues before specifying features.
 
 - [ ] `specs/shared/error-handling/` — Centralize error-to-HTTP mapping, fix empty response bodies, complete NOT_FOUND handling, error response format for REST and HTMX
 - [ ] `specs/accounts/authentication/` — Consolidate auth (loginRequired everywhere, fix REST API nil dereference on invalid Bearer token, cookie + Bearer token handling)
@@ -32,11 +42,3 @@ Features from the original roadmap that need specs before implementation.
 - [ ] `specs/shared/input-validation/` — Unique names for accounts and categories, payload validation
 - [ ] `specs/accounts/user-management/` — User invitations
 - [ ] `specs/accounting/financial-institutions/` — Create, get, link to accounts
-
-## Priority 5 — Tooling
-
-Non-feature tasks that improve developer experience.
-
-- [ ] Create `Makefile` with `lint`, `test`, `mocks` targets
-- [ ] Set up `.golangci.yml` with linters adapted from Gideon
-- [ ] Pre-commit hook (lint + test)
