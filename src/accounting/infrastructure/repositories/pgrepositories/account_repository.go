@@ -41,7 +41,7 @@ func (self *PGAccountRepository) GetByID(ctx context.Context, id string) (*accou
 	}
 	return nil, odinerrors.NewErrorBuilder("account not found").
 		WithExternalMessage("account not found").
-		WithTag(odinerrors.NOT_FOUND).
+		WithTag(odinerrors.NotFound).
 		Build()
 }
 

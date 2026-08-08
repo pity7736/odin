@@ -9,7 +9,6 @@ import (
 type OdinErrorBuilder struct {
 	tag      Tag
 	message  string
-	location string
 	external string
 	err      *Error
 }

@@ -18,7 +18,9 @@ type SessionStarter struct {
 }
 
 func New(email, password string,
-	factory accountsrepositoryfactory.AccountsRepositoryFactory) *SessionStarter {
+	factory accountsrepositoryfactory.AccountsRepositoryFactory,
+) *SessionStarter {
+
 	return &SessionStarter{
 		email:             email,
 		password:          password,

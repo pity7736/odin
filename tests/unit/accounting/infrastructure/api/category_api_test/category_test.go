@@ -44,7 +44,6 @@ func newSetup(t *testing.T) setup {
 const apiCategoryPath = "/api/v1/categories"
 
 func TestRest(t *testing.T) {
-
 	t.Run("create category", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
@@ -67,7 +66,8 @@ func TestRest(t *testing.T) {
 			WithSession(session).
 			WithContentType("application/json")
 
-		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
 		assert.Equal(t, category.Name(), responseBody["name"])
@@ -91,7 +91,8 @@ func TestRest(t *testing.T) {
 			WithPayload(body).
 			WithAnonymousSession()
 
-		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 	})
@@ -104,7 +105,8 @@ func TestRest(t *testing.T) {
 			WithMethod(http.MethodGet).
 			WithAnonymousSession()
 
-		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 	})
@@ -124,7 +126,8 @@ func TestRest(t *testing.T) {
 			WithResponseData(&responseBody).
 			WithSession(session)
 
-		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
@@ -150,7 +153,8 @@ func TestRest(t *testing.T) {
 			WithResponseData(&responseBody).
 			WithSession(session)
 
-		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
@@ -165,9 +169,8 @@ func TestRest(t *testing.T) {
 		session := sessionmodel.New(user0.ID())
 		setup.sessionRepository.EXPECT().Get(mock.Anything, session.Token()).Return(session, nil)
 		builder := categorybuilder.New()
-		categories := make([]*categorymodel.Category, 0, 1)
 		user1 := userbuilder.New().Create(setup.userRepository)
-		categories = append(categories, builder.WithUser(user1).Create(setup.repository))
+		builder.WithUser(user1).Create(setup.repository)
 		setup.repository.EXPECT().GetAll(mock.Anything, mock.Anything).Return([]*categorymodel.Category{})
 		var responseBody restcategoryhandler.CategoriesResponse
 		requestBuilder := builders.NewRequestBuilder(setup.factory)
@@ -177,7 +180,8 @@ func TestRest(t *testing.T) {
 			WithResponseData(&responseBody).
 			WithSession(session)
 
-		response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
@@ -226,7 +230,8 @@ func TestRest(t *testing.T) {
 					WithPayload(body).
 					WithSession(session)
 
-				response := testutils.GetJsonResponseFromRequestBuilder(setup.app, requestBuilder)
+				response := testutils.GetJSONResponseFromRequestBuilder(setup.app, requestBuilder)
+				defer func() { _ = response.Body.Close() }()
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, fiber.MIMEApplicationJSON, response.Header.Get("content-type"))
@@ -239,7 +244,6 @@ func TestRest(t *testing.T) {
 const categoryPath = "/categories"
 
 func TestHTMX(t *testing.T) {
-
 	t.Run("create category", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
@@ -262,7 +266,8 @@ func TestHTMX(t *testing.T) {
 			WithSession(session).
 			WithContentType("application/x-www-form-urlencoded")
 
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, category.Name()))
 		setup.repository.AssertCalled(t, "Add", mock.Anything, mock.Anything)
@@ -289,7 +294,8 @@ func TestHTMX(t *testing.T) {
 			WithSession(session).
 			WithContentType("application/x-www-form-urlencoded")
 
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 		assert.False(t, strings.Contains(responseData, category.Name()))
 	})
@@ -308,7 +314,8 @@ func TestHTMX(t *testing.T) {
 			WithSession(session).
 			WithContentType("")
 
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
@@ -334,7 +341,8 @@ func TestHTMX(t *testing.T) {
 			WithSession(session).
 			WithContentType("")
 
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
@@ -345,9 +353,7 @@ func TestHTMX(t *testing.T) {
 	t.Run("get categories with anonymous user", func(t *testing.T) {
 		setup := newSetup(t)
 		setup.repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		categories := make([]*categorymodel.Category, 0, 1)
 		category := categorybuilder.New().Create(setup.repository)
-		categories = append(categories, category)
 		requestBuilder := builders.NewRequestBuilder(setup.factory)
 		requestBuilder.
 			WithPath(categoryPath).
@@ -355,7 +361,8 @@ func TestHTMX(t *testing.T) {
 			WithContentType("").
 			WithAnonymousSession()
 
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 		assert.False(t, strings.Contains(responseData, category.Name()))
@@ -374,7 +381,8 @@ func TestHTMX(t *testing.T) {
 			WithSession(session).
 			WithContentType("")
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(setup.app, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(setup.app, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 	})

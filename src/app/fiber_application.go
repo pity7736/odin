@@ -37,6 +37,7 @@ type fibberApplication struct {
 func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory.RepositoryFactory,
 	accountsRepositoryFactory accountsrepositoryfactory.AccountsRepositoryFactory,
 ) Application {
+
 	engine := html.New(
 		"/Users/julian.cortes/development/odin/src/shared/infrastructure/templates",
 		".gohtml",
@@ -82,7 +83,7 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 	apiV1.Post(categoriesPath, func(ctx *fiber.Ctx) error {
 		if ctx.Locals("userID") != nil {
 			// TODO: handle error. design a way to handle app errors
-			categoryhandler.New(
+			_ = categoryhandler.New(
 				accountingRepositoryFactory.GetCategoryRepository(),
 				restcategoryhandler.New(ctx),
 			).Create(ctx)
@@ -105,7 +106,8 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 	})
 	app.Post(categoriesPath, func(ctx *fiber.Ctx) error {
 		if ctx.Locals("userID") != nil {
-			categoryhandler.New(
+			// TODO: handle error. design a way to handle app errors
+			_ = categoryhandler.New(
 				accountingRepositoryFactory.GetCategoryRepository(),
 				htmxcategoryhandler.New(ctx),
 			).Create(ctx)
@@ -117,11 +119,10 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 	})
 	app.Get(categoriesPath, func(ctx *fiber.Ctx) error {
 		if ctx.Locals("userID") != nil {
-			categoryhandler.New(
+			return categoryhandler.New(
 				accountingRepositoryFactory.GetCategoryRepository(),
 				htmxcategoryhandler.New(ctx),
 			).GetAll(ctx)
-			return nil
 		} else {
 			ctx.Status(http.StatusUnauthorized)
 			return nil
@@ -138,8 +139,7 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 	})
 	app.Get("/auth/login", func(ctx *fiber.Ctx) error {
 		next := ctx.Query("next", "/")
-		ctx.Render("login", htmxloginhandler.LoginData{Error: "", Next: next})
-		return nil
+		return ctx.Render("login", htmxloginhandler.LoginData{Error: "", Next: next})
 	})
 	app.Post("/auth/login", func(ctx *fiber.Ctx) error {
 		return loginhandler.New(
@@ -176,7 +176,7 @@ func (self *fibberApplication) Test(request *http.Request) (*http.Response, erro
 	return self.app.Test(request, -1)
 }
 
-func loginRequired(ctx *fiber.Ctx, handler api.Handler) error {
+func loginRequired(ctx *fiber.Ctx, handler handler.Handler) error {
 	requestContext := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
 	if requestContext.IsAuthenticated() {
 		return handler.Handle(ctx)
@@ -187,8 +187,7 @@ func loginRequired(ctx *fiber.Ctx, handler api.Handler) error {
 		return nil
 	}
 	ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
-	ctx.Redirect("/auth/login?next=" + ctx.Path())
-	return nil
+	return ctx.Redirect("/auth/login?next=" + ctx.Path())
 }
 
 func errorHandler(ctx *fiber.Ctx, err error) error {
@@ -199,7 +198,7 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 		switch odinError.Tag() {
 		case odinerrors.DOMAIN:
 			code = http.StatusBadRequest
-		case odinerrors.NOT_FOUND:
+		case odinerrors.NotFound:
 			code = http.StatusNotFound
 		default:
 		}

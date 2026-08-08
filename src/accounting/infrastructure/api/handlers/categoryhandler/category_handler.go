@@ -13,8 +13,8 @@ import (
 )
 
 type CategoryHandler interface {
-	HandleOneResponse(category *categorymodel.Category)
-	HandleManyResponse(categories []*categorymodel.Category)
+	HandleOneResponse(category *categorymodel.Category) error
+	HandleManyResponse(categories []*categorymodel.Category) error
 	ContentType() string
 }
 
@@ -36,9 +36,8 @@ func (self *categoryHandler) Create(ctx *fiber.Ctx) error {
 	}
 	categoryCreator := categorycreator.New(*command, self.repository)
 	category, _ := categoryCreator.Create(ctx.Context())
-	self.handler.HandleOneResponse(category)
 	ctx.Status(http.StatusCreated)
-	return nil
+	return self.handler.HandleOneResponse(category)
 }
 
 func (self *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.CategoryCreatorCommand, error) {
@@ -52,6 +51,5 @@ func (self *categoryHandler) createCommand(ctx *fiber.Ctx) (*categorycommand.Cat
 
 func (self *categoryHandler) GetAll(ctx *fiber.Ctx) error {
 	categories := self.repository.GetAll(ctx.Context(), ctx.Locals("userID").(string))
-	self.handler.HandleManyResponse(categories)
-	return nil
+	return self.handler.HandleManyResponse(categories)
 }

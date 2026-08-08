@@ -31,7 +31,7 @@ func (self *Builder) WithEmail(email string) *Builder {
 
 func (self *Builder) Create(repository repositories.UserRepository) *usermodel.User {
 	user := self.Build()
-	repository.Add(context.TODO(), user)
+	_ = repository.Add(context.TODO(), user)
 	return user
 }
 

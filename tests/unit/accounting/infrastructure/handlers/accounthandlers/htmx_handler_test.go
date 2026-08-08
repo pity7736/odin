@@ -23,7 +23,6 @@ import (
 )
 
 func TestCreateAccountHTMXHandlerShould(t *testing.T) {
-
 	t.Run("return error when initial balance is not valid", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		ctxBuilder := builders.NewFiberContextBuilder()
@@ -162,7 +161,6 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 }
 
 func TestGetAccountsHTMXHandlerShould(t *testing.T) {
-
 	t.Run("does not return any accounts when user has not yet created one", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		repository := factory.GetAccountRepositoryMock()
@@ -247,7 +245,6 @@ func TestGetAccountsHTMXHandlerShould(t *testing.T) {
 }
 
 func TestGetAccountHTMXHandlerShould(t *testing.T) {
-
 	t.Run("return error when repository returns error", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		repository := factory.GetAccountRepositoryMock()

@@ -1,0 +1,52 @@
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errcheck
+    - errorlint
+    - govet
+    - intrange
+    - nilerr
+    - revive
+    - whitespace
+
+  settings:
+    revive:
+      rules:
+        - name: var-naming
+        - name: context-as-argument
+        - name: error-return
+        - name: receiver-naming
+          disabled: true
+        - name: exported
+          disabled: true
+
+    whitespace:
+      multi-func: true
+      multi-if: true
+
+    staticcheck:
+      checks:
+        - "all"
+        - "-ST1006"
+        - "-ST1000"
+
+  exclusions:
+    paths:
+      - tests/unit/mocks
+    rules:
+      - linters:
+          - revive
+        text: "avoid meaningless package names"
+
+formatters:
+  enable:
+    - gofmt
+  settings:
+    gofmt:
+      rewrite-rules:
+        - pattern: "interface{}"
+          replacement: "any"

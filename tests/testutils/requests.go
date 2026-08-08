@@ -9,26 +9,26 @@ import (
 	"raiseexception.dev/odin/tests/builders"
 )
 
-func GetHtmlResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) (*http.Response, string) {
+func GetHTMLResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) (*http.Response, string) {
 	response, err := application.Test(requestBuilder.Build())
 	if err != nil {
 		panic(fmt.Errorf("error making request: %w", err))
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	data := make([]byte, response.ContentLength)
-	response.Body.Read(data)
+	_, _ = response.Body.Read(data)
 	return response, string(data)
 }
 
-func GetJsonResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) *http.Response {
+func GetJSONResponseFromRequestBuilder(application app.Application, requestBuilder *builders.RequestBuilder) *http.Response {
 	response, err := application.Test(requestBuilder.Build())
 	if err != nil {
 		panic(fmt.Errorf("error making request: %w", err))
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if requestBuilder.ResponseData() != nil {
 		data := make([]byte, response.ContentLength)
-		response.Body.Read(data)
+		_, _ = response.Body.Read(data)
 		err = json.Unmarshal(data, requestBuilder.ResponseData())
 		if err != nil {
 			panic(fmt.Errorf("error unmarshalling response body: %w", err))

@@ -18,7 +18,6 @@ import (
 )
 
 func TestAccountCreator(t *testing.T) {
-
 	t.Run("should create an account", func(t *testing.T) {
 		user := userbuilder.New().Build()
 		accountName := "saving account"

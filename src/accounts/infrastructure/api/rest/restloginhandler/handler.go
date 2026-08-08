@@ -16,13 +16,11 @@ func New(ctx *fiber.Ctx) loginhandler.LoginHandler {
 }
 
 func (self *RestLoginHandler) HandleResponse(session *sessionmodel.Session) error {
-	self.ctx.JSON(response{Token: session.Token(), Error: ""})
-	return nil
+	return self.ctx.JSON(response{Token: session.Token(), Error: ""})
 }
 
 func (self *RestLoginHandler) HandleBadRequest(err error) error {
-	self.ctx.JSON(response{Token: "", Error: err.Error()})
-	return nil
+	return self.ctx.JSON(response{Token: "", Error: err.Error()})
 }
 
 func (self *RestLoginHandler) ContentType() string {

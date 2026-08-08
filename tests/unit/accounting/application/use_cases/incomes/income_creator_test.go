@@ -20,7 +20,6 @@ import (
 )
 
 func TestIncomeCreatorShould(t *testing.T) {
-
 	t.Run("return error when account does not exist", func(t *testing.T) {
 		accountingFactory := testrepositoryfactory.New(t)
 		userRepositoryMock := accountingFactory.GetUserRepositoryMock()
@@ -30,7 +29,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		ctx := context.WithValue(context.TODO(), requestcontext.Key, requestContext)
 		accountID := "1234"
 		accountError := odinerrors.NewErrorBuilder("account not found").
-			WithTag(odinerrors.NOT_FOUND).
+			WithTag(odinerrors.NotFound).
 			WithExternalMessage(fmt.Sprintf("account with id %s does not exist", accountID)).
 			Build()
 		accountRepositoryMock := accountingFactory.GetAccountRepositoryMock()
@@ -57,7 +56,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 
 		assert.Nil(t, income)
 		assert.True(t, ok)
-		assert.Equal(t, odinerrors.NOT_FOUND, odinError.Tag())
+		assert.Equal(t, odinerrors.NotFound, odinError.Tag())
 		assert.Equal(t, "account with id 1234 does not exist", odinError.ExternalError())
 		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})
@@ -72,7 +71,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		ctx := context.WithValue(context.TODO(), requestcontext.Key, requestContext)
 		categoryID := "1234"
 		categoryError := odinerrors.NewErrorBuilder("account not found").
-			WithTag(odinerrors.NOT_FOUND).
+			WithTag(odinerrors.NotFound).
 			WithExternalMessage(fmt.Sprintf("category with id %s does not exist", categoryID)).
 			Build()
 		categoryRepositoryMock := accountingFactory.GetCategoryRepositoryMock()
@@ -100,7 +99,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 
 		assert.Nil(t, income)
 		assert.True(t, ok)
-		assert.Equal(t, odinerrors.NOT_FOUND, odinError.Tag())
+		assert.Equal(t, odinerrors.NotFound, odinError.Tag())
 		assert.Equal(t, "category with id 1234 does not exist", odinError.ExternalError())
 		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})

@@ -18,7 +18,6 @@ import (
 )
 
 func TestRest(t *testing.T) {
-
 	t.Run("non existing email", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		application := app.NewFiberApplication(factory, factory)
@@ -34,7 +33,8 @@ func TestRest(t *testing.T) {
 			WithResponseData(&responseData).
 			WithContentType(fiber.MIMEApplicationJSON).
 			WithAnonymousSession()
-		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "email or password are wrong", responseData["error"])
@@ -88,7 +88,8 @@ func TestRest(t *testing.T) {
 					WithContentType(fiber.MIMEApplicationJSON).
 					WithAnonymousSession()
 
-				response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
+				response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+				defer func() { _ = response.Body.Close() }()
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, testCase.expectedError, responseData["error"])
@@ -114,7 +115,8 @@ func TestRest(t *testing.T) {
 			WithResponseData(&responseData).
 			WithContentType(fiber.MIMEApplicationJSON).
 			WithAnonymousSession()
-		response := testutils.GetJsonResponseFromRequestBuilder(application, requestBuilder)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Empty(t, responseData["error"])
@@ -132,7 +134,8 @@ func TestHTMX(t *testing.T) {
 			WithMethod("GET").
 			WithContentType("").
 			WithAnonymousSession()
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, `<p>Login</p>`))
@@ -158,7 +161,8 @@ func TestHTMX(t *testing.T) {
 			WithPayload(body).
 			WithContentType(fiber.MIMEApplicationForm).
 			WithAnonymousSession()
-		response, responseData := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
+		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, "email or password are wrong"))
@@ -179,7 +183,8 @@ func TestHTMX(t *testing.T) {
 			WithPayload(body).
 			WithContentType(fiber.MIMEApplicationForm).
 			WithAnonymousSession()
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(application, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
 		sessionCookie := response.Cookies()[0]
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)

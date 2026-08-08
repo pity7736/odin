@@ -20,7 +20,6 @@ import (
 )
 
 func TestHTMXCreateIncomeHandlerShould(t *testing.T) {
-
 	t.Run("return error when account id is not sent", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		repository := factory.GetIncomeRepositoryMock()

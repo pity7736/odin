@@ -20,7 +20,6 @@ import (
 )
 
 func TestCreateAccountHandlerShould(t *testing.T) {
-
 	t.Run("be able to create an account", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		ctxBuilder := builders.NewFiberContextBuilder()
@@ -44,7 +43,7 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		err := createAccountHandler.Handle(ctx)
 
 		var responseBody map[string]string
-		json.Unmarshal(ctx.Response().Body(), &responseBody)
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
 		assert.Nil(t, err)
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
 		assert.Equal(t, account.Name(), responseBody["name"])
@@ -170,5 +169,4 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
 	})
-
 }

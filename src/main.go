@@ -7,9 +7,11 @@ import (
 )
 
 func main() {
-	app := app.NewFiberApplication(
+	application := app.NewFiberApplication(
 		accountingrepositoryfactory.New(),
 		accountsrepositoryfactory.New(),
 	)
-	app.Start()
+	if err := application.Start(); err != nil {
+		panic(err)
+	}
 }

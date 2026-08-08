@@ -13,7 +13,6 @@ import (
 var currentFilePath = fmt.Sprintf("%s/errors_test.go", testutils.GetTestPath())
 
 func TestNewError(t *testing.T) {
-
 	t.Run("it's built with default configuration", func(t *testing.T) {
 		errorMessage := "some domain error"
 		odinError := odinerrors.NewErrorBuilder(errorMessage).Build()
@@ -21,7 +20,7 @@ func TestNewError(t *testing.T) {
 		ok := errors.As(odinError, &err)
 
 		assert.True(t, ok)
-		assert.Equal(t, fmt.Sprintf("%s:%s:19", errorMessage, currentFilePath), err.Error())
+		assert.Equal(t, fmt.Sprintf("%s:%s:18", errorMessage, currentFilePath), err.Error())
 		assert.Equal(t, "", err.ExternalError())
 	})
 
@@ -35,7 +34,7 @@ func TestNewError(t *testing.T) {
 		ok := errors.As(odinError, &err)
 
 		assert.True(t, ok)
-		assert.Equal(t, fmt.Sprintf("%s:%s:33", errorMessage, currentFilePath), err.Error())
+		assert.Equal(t, fmt.Sprintf("%s:%s:32", errorMessage, currentFilePath), err.Error())
 		assert.Equal(t, externalMessage, err.ExternalError())
 	})
 
@@ -63,7 +62,7 @@ func TestNewError(t *testing.T) {
 		ok := errors.As(wrapError, &err)
 
 		assert.True(t, ok)
-		assert.Equal(t, fmt.Sprintf("%s: %s:%s:56", applicationMessage, domainMessage, currentFilePath), err.Error())
+		assert.Equal(t, fmt.Sprintf("%s: %s:%s:55", applicationMessage, domainMessage, currentFilePath), err.Error())
 		assert.Equal(t, externalError, err.ExternalError())
 	})
 
@@ -84,7 +83,7 @@ func TestNewError(t *testing.T) {
 		ok := errors.As(errorWrapper, &err)
 
 		assert.True(t, ok)
-		assert.Equal(t, fmt.Sprintf("%s: %s:%s:76", applicationMessage, domainMessage, currentFilePath), err.Error())
+		assert.Equal(t, fmt.Sprintf("%s: %s:%s:75", applicationMessage, domainMessage, currentFilePath), err.Error())
 		assert.Equal(t, fmt.Sprintf("%s: %s", applicationExternalMessage, domainExternalMessage), err.ExternalError())
 	})
 

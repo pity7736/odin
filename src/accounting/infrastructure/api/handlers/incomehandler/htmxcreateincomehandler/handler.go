@@ -25,7 +25,7 @@ func New(factory accountingrepositoryfactory.RepositoryFactory) *HTMXCreateIncom
 func (self *HTMXCreateIncomeHandler) Handle(c *fiber.Ctx) error {
 	body, err := newFromCtx(c)
 	if err != nil {
-		c.Render("create_account_error", err, "")
+		_ = c.Render("create_account_error", err, "")
 		return err
 	}
 	command, _ := body.toCommand()
@@ -34,9 +34,9 @@ func (self *HTMXCreateIncomeHandler) Handle(c *fiber.Ctx) error {
 	ctx := context.WithValue(c.Context(), requestcontext.Key, requestContext)
 	income, err := incomeCreator.Create(ctx)
 	if err != nil {
-		c.Render("create_account_error", err, "")
+		_ = c.Render("create_account_error", err, "")
 		return err
 	}
-	c.Render("income_created", income, "")
+	_ = c.Render("income_created", income, "")
 	return err
 }

@@ -29,8 +29,7 @@ func (self *HtmxLoginHandler) HandleResponse(session *sessionmodel.Session) erro
 }
 
 func (self *HtmxLoginHandler) HandleBadRequest(err error) error {
-	self.ctx.Render("login_error", LoginData{err.Error(), "/"}, "")
-	return nil
+	return self.ctx.Render("login_error", LoginData{err.Error(), "/"}, "")
 }
 
 func (self *HtmxLoginHandler) ContentType() string {

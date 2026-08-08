@@ -78,7 +78,7 @@ func (self *IncomeCreator) createIncome(ctx context.Context, account *accountmod
 	if err != nil {
 		return nil, err
 	}
-	self.incomeRepository.Add(ctx, income)
-	self.accountRepository.Save(ctx, account)
+	_ = self.incomeRepository.Add(ctx, income)
+	_ = self.accountRepository.Save(ctx, account)
 	return income, nil
 }

@@ -18,7 +18,6 @@ import (
 const accountPath = "/accounts"
 
 func TestCreateAccountHtmxShould(t *testing.T) {
-
 	t.Run("create account when everything is ok", func(t *testing.T) {
 		accountingFactory := accountingrepositoryfactory.New()
 		accountsFactory := accountsrepositoryfactory.New()
@@ -33,7 +32,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 			WithContentType(fiber.MIMEApplicationForm).
 			WithPayload(body)
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusCreated, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
@@ -53,7 +52,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 			WithContentType(fiber.MIMEApplicationForm).
 			WithPayload(body)
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
@@ -74,7 +73,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 			WithPayload(body).
 			WithAnonymousSession()
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
@@ -97,7 +96,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 			WithSession(session)
 		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
@@ -105,7 +104,6 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 }
 
 func TestGetAccountsHTMXShould(t *testing.T) {
-
 	t.Run("return accounts when everything is ok", func(t *testing.T) {
 		accountingFactory := accountingrepositoryfactory.New()
 		accountsFactory := accountsrepositoryfactory.New()
@@ -132,7 +130,7 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 			WithInitialBalance("0").
 			Create(accountingFactory.GetAccountRepository())
 
-		response, responseBody := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, responseBody := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusOK, response.StatusCode)
 		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account0.ID(), account0.Name()))
@@ -160,7 +158,7 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 			WithContentType("").
 			WithAnonymousSession()
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 	})
@@ -177,7 +175,7 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 			WithContentType("").
 			WithSession(session)
 
-		response, _ := testutils.GetHtmlResponseFromRequestBuilder(odinApp, requestBuilder)
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
 
 		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 	})

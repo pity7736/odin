@@ -17,7 +17,7 @@ Safety net that protects everything else. Must be in place before feature work.
 
 Fix structural issues before specifying features.
 
-- [ ] `specs/shared/error-handling/` — Centralize error-to-HTTP mapping, fix empty response bodies, complete NOT_FOUND handling, error response format for REST and HTMX
+- [ ] `specs/shared/error-handling/` — Centralize error-to-HTTP mapping, fix empty response bodies, complete NOT_FOUND handling, error response format for REST and HTMX. Includes: add test cases for ignored Render errors in `htmxcreateincomehandler`, add test cases for ignored Create errors in category handler calls (`fiber_application.go`), and define how application-level validation errors (not domain errors) propagate to HTTP status codes
 - [ ] `specs/accounts/authentication/` — Consolidate auth (loginRequired everywhere, fix REST API nil dereference on invalid Bearer token, cookie + Bearer token handling)
 - [ ] `specs/shared/routing/` — Extract route registration from the god function in fiber_application.go, consistent auth middleware for all routes
 

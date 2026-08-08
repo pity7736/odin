@@ -43,7 +43,6 @@ func newSetup(t *testing.T) setup {
 }
 
 func Test(t *testing.T) {
-
 	ctx := context.TODO()
 
 	t.Run("success", func(t *testing.T) {
