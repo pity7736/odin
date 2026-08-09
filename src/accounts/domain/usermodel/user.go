@@ -1,13 +1,23 @@
 package usermodel
 
+import "golang.org/x/crypto/bcrypt"
+
 type User struct {
-	email    string
-	id       string
-	password string
+	id             string
+	email          string
+	hashedPassword string
 }
 
-func New(id, email, password string) *User {
-	return &User{email: email, id: id, password: password}
+func New(id, email, hashedPassword string) *User {
+	return &User{id: id, email: email, hashedPassword: hashedPassword}
+}
+
+func NewWithPlainPassword(id, email, password string) (*User, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	return &User{id: id, email: email, hashedPassword: string(hash)}, nil
 }
 
 func (self *User) ID() string {
@@ -18,10 +28,10 @@ func (self *User) Email() string {
 	return self.email
 }
 
-func (self *User) Password() string {
-	return self.password
+func (self *User) HashedPassword() string {
+	return self.hashedPassword
 }
 
 func (self *User) CheckPassword(password string) bool {
-	return self.password == password
+	return bcrypt.CompareHashAndPassword([]byte(self.hashedPassword), []byte(password)) == nil
 }

@@ -29,4 +29,8 @@ func TestRequestContextShould(t *testing.T) {
 		assert.Equal(t, userID, ctx.UserID())
 		assert.True(t, ctx.IsAuthenticated())
 	})
+	t.Run("generate a request id for authenticated context", func(t *testing.T) {
+		ctx, _ := requestcontext.New("user-id")
+		assert.NotEmpty(t, ctx.RequestID())
+	})
 }

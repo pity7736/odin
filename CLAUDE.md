@@ -55,7 +55,11 @@ Personal finance management application with dual interface: HTMX for web, REST 
 
 ### Tooling
 
-- **Tests:** `go test ./...` to run all tests
+- **Always use Makefile targets.** Do not run manual commands when a Makefile target exists.
+- **Tests:** `make test` to run all tests
+- **Coverage:** `make coverage` to see coverage, `make coverage-check` to verify threshold
+- **Lint:** `make lint` to run linters
+- **Full check:** `make check` runs lint + test + coverage-check
 - **Mocks:** mockery — configured in `.mockery.yaml`, run with `go run github.com/vektra/mockery/v3`
 
 ### Testing

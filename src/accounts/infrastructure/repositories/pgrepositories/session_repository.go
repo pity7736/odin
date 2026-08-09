@@ -20,5 +20,19 @@ func (self *PGSessionRepository) Add(ctx context.Context, session *sessionmodel.
 }
 
 func (self *PGSessionRepository) Get(ctx context.Context, token string) (*sessionmodel.Session, error) {
-	return self.sessions[token], nil
+	session := self.sessions[token]
+	if session == nil || session.IsExpired() {
+		return nil, nil
+	}
+	return session, nil
+}
+
+func (self *PGSessionRepository) Save(ctx context.Context, session *sessionmodel.Session) error {
+	self.sessions[session.Token()] = session
+	return nil
+}
+
+func (self *PGSessionRepository) Delete(ctx context.Context, token string) error {
+	delete(self.sessions, token)
+	return nil
 }

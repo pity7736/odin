@@ -2,30 +2,31 @@ package sessionstarter
 
 import (
 	"context"
-	"errors"
 
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
-	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type SessionStarter struct {
 	email             string
 	password          string
-	sessionRepository repositories.SessionRepository
 	userRepository    repositories.UserRepository
+	sessionRepository repositories.SessionRepository
 }
 
-func New(email, password string,
-	factory accountsrepositoryfactory.AccountsRepositoryFactory,
+func New(
+	email, password string,
+	userRepository repositories.UserRepository,
+	sessionRepository repositories.SessionRepository,
 ) *SessionStarter {
 
 	return &SessionStarter{
 		email:             email,
 		password:          password,
-		sessionRepository: factory.GetSessionRepository(),
-		userRepository:    factory.GetUserRepository(),
+		userRepository:    userRepository,
+		sessionRepository: sessionRepository,
 	}
 }
 
@@ -41,12 +42,18 @@ func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (*s
 	if user != nil && user.CheckPassword(self.password) {
 		return self.createSession(ctx, user)
 	}
-	return nil, errors.New("email or password are wrong")
+	return nil, odinerrors.NewErrorBuilder("email or password are wrong").
+		WithExternalMessage("Correo o contraseña incorrectos").
+		WithTag(odinerrors.DOMAIN).
+		Build()
 }
 
 func (self *SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
-	session := sessionmodel.New(user.ID())
-	err := self.sessionRepository.Add(ctx, session)
+	session, err := sessionmodel.New(user.ID(), sessionmodel.DefaultTTL)
+	if err != nil {
+		return nil, err
+	}
+	err = self.sessionRepository.Add(ctx, session)
 	if err != nil {
 		return nil, err
 	}

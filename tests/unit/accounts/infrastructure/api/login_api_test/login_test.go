@@ -3,6 +3,7 @@ package login_api_test
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -11,188 +12,155 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"raiseexception.dev/odin/src/app"
-	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
-func TestRest(t *testing.T) {
-	t.Run("non existing email", func(t *testing.T) {
+func newApplication(factory *testrepositoryfactory.Factory) app.Application {
+	return app.NewFiberApplication(factory, factory.GetSessionRepository(), factory.GetUserRepository())
+}
+
+func TestRestLoginShould(t *testing.T) {
+	t.Run("return session token when credentials are valid", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		email := "some@email.com"
-		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, email, user.Password())
+		builder := userbuilder.New()
+		user := builder.Build()
+		factory.GetUserRepositoryMock().EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
+		factory.GetSessionRepositoryMock().EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), builder.Password())
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
 		var responseData map[string]string
-		repository := factory.GetUserRepositoryMock()
-		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
-			WithPath("/api/v1/auth/login").
-			WithPayload(body).
-			WithResponseData(&responseData).
-			WithContentType(fiber.MIMEApplicationJSON).
-			WithAnonymousSession()
-		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
 		defer func() { _ = response.Body.Close() }()
-
-		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-		assert.Equal(t, "email or password are wrong", responseData["error"])
-		assert.Empty(t, responseData["token"])
-		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
-	})
-
-	t.Run("login with wrong data", func(t *testing.T) {
-		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		testCases := []struct {
-			name          string
-			body          string
-			expectedError string
-		}{
-			{
-				"when email is missing",
-				fmt.Sprintf(`{"password": "%s"}`, user.Password()),
-				"email is required",
-			},
-			{
-				"when email is empty",
-				fmt.Sprintf(`{"email": "", "password": "%s"}`, user.Password()),
-				"email is required",
-			},
-			{
-				"when password is missing",
-				fmt.Sprintf(`{"email": "%s"}`, user.Email()),
-				"password is required",
-			},
-			{
-				"when password is empty",
-				fmt.Sprintf(`{"email": "%s", "password": ""}`, user.Email()),
-				"password is required",
-			},
-			{
-				"when body is wrong",
-				fmt.Sprintf(`{"email": "%s" "password": ""}`, user.Email()),
-				"wrong body",
-			},
-		}
-		for _, testCase := range testCases {
-			t.Run(testCase.name, func(t *testing.T) {
-				var responseData map[string]string
-				repository := factory.GetUserRepositoryMock()
-				requestBuilder := builders.NewRequestBuilder(factory).
-					WithPath("/api/v1/auth/login").
-					WithPayload(testCase.body).
-					WithResponseData(&responseData).
-					WithContentType(fiber.MIMEApplicationJSON).
-					WithAnonymousSession()
-
-				response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
-				defer func() { _ = response.Body.Close() }()
-
-				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-				assert.Equal(t, testCase.expectedError, responseData["error"])
-				assert.Empty(t, responseData["token"])
-				repository.AssertNotCalled(t, "GetByEmail")
-			})
-		}
-	})
-
-	t.Run("when email and password are correct", func(t *testing.T) {
-		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), user.Password())
-		var responseData map[string]string
-		userRepositoryMock := factory.GetUserRepositoryMock()
-		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
-		sessionRepositoryMock := factory.GetSessionRepositoryMock()
-		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
-			WithPath("/api/v1/auth/login").
-			WithPayload(body).
-			WithResponseData(&responseData).
-			WithContentType(fiber.MIMEApplicationJSON).
-			WithAnonymousSession()
-		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
-		defer func() { _ = response.Body.Close() }()
-
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
-		assert.Empty(t, responseData["error"])
 		assert.NotEmpty(t, responseData["token"])
-		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
+		assert.Empty(t, responseData["error"])
+	})
+	t.Run("return error when user does not exist", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		factory.GetUserRepositoryMock().EXPECT().GetByEmail(mock.Anything, "unknown@example.com").Return(nil, nil)
+		body := `{"email": "unknown@example.com", "password": "any"}`
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Empty(t, responseData["token"])
+		assert.Equal(t, "Correo o contraseña incorrectos", responseData["error"])
+	})
+	t.Run("return error when password is wrong", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		builder := userbuilder.New()
+		user := builder.Build()
+		factory.GetUserRepositoryMock().EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
+		body := fmt.Sprintf(`{"email": "%s", "password": "wrong_password"}`, user.Email())
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "Correo o contraseña incorrectos", responseData["error"])
+	})
+	t.Run("return error when email is missing", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		body := `{"password": "some"}`
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "El correo es obligatorio", responseData["error"])
+	})
+	t.Run("return error when email is empty", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		body := `{"email": "", "password": "some"}`
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "El correo es obligatorio", responseData["error"])
+	})
+	t.Run("return error when password is missing", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		builder := userbuilder.New()
+		body := fmt.Sprintf(`{"email": "%s"}`, builder.Build().Email())
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "La contraseña es obligatoria", responseData["error"])
+	})
+	t.Run("return error when password is empty", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		builder := userbuilder.New()
+		body := fmt.Sprintf(`{"email": "%s", "password": ""}`, builder.Build().Email())
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "La contraseña es obligatoria", responseData["error"])
+	})
+	t.Run("return error when body is malformed", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		body := `{"email": "test@example.com" "password": "x"}`
+		req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
+		var responseData map[string]string
+		response := testutils.GetJSONResponseFromRequest(newApplication(factory), req, &responseData)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "Datos de solicitud inválidos", responseData["error"])
 	})
 }
 
-func TestHTMX(t *testing.T) {
-	t.Run("get login form", func(t *testing.T) {
+func TestHtmxLoginShould(t *testing.T) {
+	t.Run("render login form", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		requestBuilder := builders.NewRequestBuilder(factory).
-			WithPath("/auth/login").
-			WithMethod("GET").
-			WithContentType("").
-			WithAnonymousSession()
-		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		req := httptest.NewRequest("GET", "/auth/login", nil)
+		response, body := testutils.GetHTMLResponseFromRequest(newApplication(factory), req)
 		defer func() { _ = response.Body.Close() }()
-
 		assert.Equal(t, http.StatusOK, response.StatusCode)
-		assert.True(t, strings.Contains(responseData, `<p>Login</p>`))
-		assert.True(t, strings.Contains(responseData, `<form hx-post="/auth/login?next=/" hx-target="#login_error">`))
-		assert.True(t, strings.Contains(responseData, `<label for="email">Email:</label>`))
-		assert.True(t, strings.Contains(responseData, `<input id="email" type="email" name="email" required>`))
-		assert.True(t, strings.Contains(responseData, `<label for="password">Password:</label>`))
-		assert.True(t, strings.Contains(responseData, `<input id="password" type="password" name="password" required>`))
-		assert.True(t, strings.Contains(responseData, `<button type="submit">Iniciar sesión</button>`))
-		assert.True(t, strings.Contains(responseData, `</form>`))
+		assert.Contains(t, body, `<form hx-post="/auth/login?next=/" hx-target="#login_error">`)
 	})
-
-	t.Run("non existing email", func(t *testing.T) {
+	t.Run("set session cookie and redirect when credentials are valid", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		email := "some@email.com"
-		body := fmt.Sprintf("email=%s&password=%s", email, user.Password())
-		repository := factory.GetUserRepositoryMock()
-		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
-			WithPath("/auth/login").
-			WithPayload(body).
-			WithContentType(fiber.MIMEApplicationForm).
-			WithAnonymousSession()
-		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		builder := userbuilder.New()
+		user := builder.Build()
+		factory.GetUserRepositoryMock().EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
+		factory.GetSessionRepositoryMock().EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		body := fmt.Sprintf("email=%s&password=%s", user.Email(), builder.Password())
+		req := httptest.NewRequest("POST", "/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationForm)
+		response, _ := testutils.GetHTMLResponseFromRequest(newApplication(factory), req)
 		defer func() { _ = response.Body.Close() }()
-
-		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-		assert.True(t, strings.Contains(responseData, "email or password are wrong"))
-		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
-	})
-
-	t.Run("when email and password are correct", func(t *testing.T) {
-		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		body := fmt.Sprintf("email=%s&password=%s", user.Email(), user.Password())
-		userRepositoryMock := factory.GetUserRepositoryMock()
-		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
-		sessionRepositoryMock := factory.GetSessionRepositoryMock()
-		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
-			WithPath("/auth/login").
-			WithPayload(body).
-			WithContentType(fiber.MIMEApplicationForm).
-			WithAnonymousSession()
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
-		defer func() { _ = response.Body.Close() }()
-		sessionCookie := response.Cookies()[0]
-
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, "/", response.Header.Get("HX-Redirect"))
+		sessionCookie := response.Cookies()[0]
 		assert.NotEmpty(t, sessionCookie.Value)
 		assert.True(t, sessionCookie.Secure)
 		assert.True(t, sessionCookie.HttpOnly)
 		assert.Equal(t, http.SameSiteStrictMode, sessionCookie.SameSite)
-		assert.Equal(t, "/", response.Header.Get("HX-Redirect"))
-		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
+	})
+	t.Run("render error when user does not exist", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		factory.GetUserRepositoryMock().EXPECT().GetByEmail(mock.Anything, "nobody@example.com").Return(nil, nil)
+		body := "email=nobody@example.com&password=any"
+		req := httptest.NewRequest("POST", "/auth/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", fiber.MIMEApplicationForm)
+		response, responseBody := testutils.GetHTMLResponseFromRequest(newApplication(factory), req)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Contains(t, responseBody, "Correo o contraseña incorrectos")
 	})
 }

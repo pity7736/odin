@@ -29,12 +29,17 @@ func (self *Builder) WithEmail(email string) *Builder {
 	return self
 }
 
+func (self *Builder) Password() string {
+	return self.password
+}
+
+func (self *Builder) Build() *usermodel.User {
+	user, _ := usermodel.NewWithPlainPassword(self.id, self.email, self.password)
+	return user
+}
+
 func (self *Builder) Create(repository repositories.UserRepository) *usermodel.User {
 	user := self.Build()
 	_ = repository.Add(context.TODO(), user)
 	return user
-}
-
-func (self *Builder) Build() *usermodel.User {
-	return usermodel.New(self.id, self.email, self.password)
 }

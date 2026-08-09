@@ -10,6 +10,7 @@ require (
 	github.com/govalues/decimal v0.1.36
 	github.com/stretchr/testify v1.11.1
 	github.com/valyala/fasthttp v1.73.0
+	golang.org/x/crypto v0.54.0
 )
 
 require (

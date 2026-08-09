@@ -1,14 +1,14 @@
 package loginhandler
 
 import (
-	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
-
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
-	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
+	"raiseexception.dev/odin/src/accounts/domain/repositories"
+	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type LoginHandler interface {
@@ -18,12 +18,17 @@ type LoginHandler interface {
 }
 
 type loginHandler struct {
-	factory accountsrepositoryfactory.AccountsRepositoryFactory
-	handler LoginHandler
+	userRepository    repositories.UserRepository
+	sessionRepository repositories.SessionRepository
+	handler           LoginHandler
 }
 
-func New(factory accountsrepositoryfactory.AccountsRepositoryFactory, handler LoginHandler) *loginHandler {
-	return &loginHandler{factory: factory, handler: handler}
+func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, handler LoginHandler) *loginHandler {
+	return &loginHandler{
+		userRepository:    userRepository,
+		sessionRepository: sessionRepository,
+		handler:           handler,
+	}
 }
 
 func (self *loginHandler) Login(ctx *fiber.Ctx) error {
@@ -38,20 +43,34 @@ func (self *loginHandler) Login(ctx *fiber.Ctx) error {
 
 func (self *loginHandler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) error {
 	if err := ctx.BodyParser(body); err != nil {
-		return errors.New("wrong body")
+		return odinerrors.NewErrorBuilder("wrong body").
+			WithExternalMessage("Datos de solicitud inválidos").
+			WithTag(odinerrors.DOMAIN).
+			Build()
 	}
 	if body.Email == "" {
-		return errors.New("email is required")
+		return odinerrors.NewErrorBuilder("email is required").
+			WithExternalMessage("El correo es obligatorio").
+			WithTag(odinerrors.DOMAIN).
+			Build()
 	}
 	if body.Password == "" {
-		return errors.New("password is required")
+		return odinerrors.NewErrorBuilder("password is required").
+			WithExternalMessage("La contraseña es obligatoria").
+			WithTag(odinerrors.DOMAIN).
+			Build()
 	}
 	return nil
 }
 
 func (self *loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
-	sessionStarter := sessionstarter.New(body.Email, body.Password, self.factory)
-	session, err := sessionStarter.Start(ctx.Context())
+	starter := sessionstarter.New(
+		strings.Clone(body.Email),
+		strings.Clone(body.Password),
+		self.userRepository,
+		self.sessionRepository,
+	)
+	session, err := starter.Start(ctx.Context())
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return self.handler.HandleBadRequest(err)

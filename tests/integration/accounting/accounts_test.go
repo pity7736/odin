@@ -1,182 +1,107 @@
 package accounting_test
 
 import (
-	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
+
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
-	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
-	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/accountsrepositoryfactory"
+	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/pgrepositories"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
-	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
 )
 
-const accountPath = "/accounts"
+func newIntegrationApp() (app.Application, *pgrepositories.PGUserRepository, *pgrepositories.PGSessionRepository) {
+	userRepository := pgrepositories.NewPGUserRepository()
+	sessionRepository := pgrepositories.NewPGSessionRepository()
+	application := app.NewFiberApplication(
+		accountingrepositoryfactory.New(),
+		sessionRepository,
+		userRepository,
+	)
+	return application, userRepository, sessionRepository
+}
 
-func TestCreateAccountHtmxShould(t *testing.T) {
-	t.Run("create account when everything is ok", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-		body := fmt.Sprintf(
-			"name=%s&initial_balance=%s",
-			"test",
-			"10000",
-		)
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
-			WithPath(accountPath).
-			WithContentType(fiber.MIMEApplicationForm).
-			WithPayload(body)
-
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusCreated, response.StatusCode)
-		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
-	})
-
-	t.Run("return bad request when data is wrong", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-		body := fmt.Sprintf(
-			"name=%s&initial_balance=%s",
-			"test",
-			"aoeu",
-		)
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
-			WithPath(accountPath).
-			WithContentType(fiber.MIMEApplicationForm).
-			WithPayload(body)
-
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode)
-		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
-	})
-
-	t.Run("return redirect when request is anonymous", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-		body := fmt.Sprintf(
-			"name=%s&initial_balance=%s",
-			"test",
-			"10000",
-		)
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
-			WithPath(accountPath).
-			WithContentType(fiber.MIMEApplicationForm).
+func TestAccountIntegrationShould(t *testing.T) {
+	t.Run("create an account when authenticated", func(t *testing.T) {
+		application, userRepository, sessionRepository := newIntegrationApp()
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
+		body := `{"name": "Ahorros", "initial_balance": "100000"}`
+		requestBuilder.
+			WithMethod("POST").
+			WithPath("/api/v1/accounts").
 			WithPayload(body).
-			WithAnonymousSession()
-
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusFound, response.StatusCode)
-		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
+			WithContentType(fiber.MIMEApplicationJSON)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
 	})
-
-	t.Run("return unauthorized when request sent cookie but session doesn't exists", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		user := userbuilder.New().Create(accountsFactory.GetUserRepository())
-		session := sessionmodel.New(user.ID())
-		body := fmt.Sprintf(
-			"name=%s&initial_balance=%s",
-			"test",
-			"10000",
-		)
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
-			WithPath(accountPath).
-			WithContentType(fiber.MIMEApplicationForm).
+	t.Run("return error when account name is empty", func(t *testing.T) {
+		application, userRepository, sessionRepository := newIntegrationApp()
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
+		body := `{"name": "", "initial_balance": "100000"}`
+		requestBuilder.
+			WithMethod("POST").
+			WithPath("/api/v1/accounts").
 			WithPayload(body).
-			WithSession(session)
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusFound, response.StatusCode)
-		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
+			WithContentType(fiber.MIMEApplicationJSON)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 }
 
-func TestGetAccountsHTMXShould(t *testing.T) {
-	t.Run("return accounts when everything is ok", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-		user := userbuilder.New().Create(accountsFactory.GetUserRepository())
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
-			WithMethod("GET").
-			WithPath(accountPath).
-			WithContentType("").
-			WithUser(user)
-
-		account0 := builders.NewAccountBuilder().
-			WithName("saving account").
-			WithUserID(user.ID()).
-			Create(accountingFactory.GetAccountRepository())
-		account1 := builders.NewAccountBuilder().
-			WithName("cash").
-			WithUserID(user.ID()).
-			Create(accountingFactory.GetAccountRepository())
-		user1 := userbuilder.New().WithEmail("some@email.com").Create(accountsFactory.GetUserRepository())
-		account2 := builders.NewAccountBuilder().
-			WithName("nu").
-			WithUserID(user1.ID()).
-			WithInitialBalance("0").
-			Create(accountingFactory.GetAccountRepository())
-
-		response, responseBody := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusOK, response.StatusCode)
-		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account0.ID(), account0.Name()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.InitialBalance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.Balance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account0.CreatedAt().Format("Monday, _2 January 2006")))
-
-		assert.Contains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s</a></td>", account1.ID(), account1.Name()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.InitialBalance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.Balance()))
-		assert.Contains(t, responseBody, fmt.Sprintf("<td>%s</td>", account1.CreatedAt().Format("Monday, _2 January 2006")))
-
-		assert.NotContains(t, responseBody, fmt.Sprintf("<td><a href=\"/accounts/%s\">%s<a></td>", account2.ID(), account2.Name()))
-		assert.NotContains(t, responseBody, fmt.Sprintf("<td>%s</td>", account2.InitialBalance()))
-		assert.NotContains(t, responseBody, fmt.Sprintf("<td>%s</td>", account2.Balance()))
+func TestLogoutIntegrationShould(t *testing.T) {
+	t.Run("terminate session when authenticated via REST", func(t *testing.T) {
+		application, userRepository, sessionRepository := newIntegrationApp()
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
+		requestBuilder.
+			WithMethod("DELETE").
+			WithPath("/api/v1/auth/logout").
+			WithContentType(fiber.MIMEApplicationJSON)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusOK, response.StatusCode)
 	})
+}
 
-	t.Run("return found when request is anonymous", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
-			WithMethod("GET").
-			WithPath(accountPath).
-			WithContentType("").
-			WithAnonymousSession()
-
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusFound, response.StatusCode)
+func TestCategoryIntegrationShould(t *testing.T) {
+	t.Run("create a category when authenticated", func(t *testing.T) {
+		application, userRepository, sessionRepository := newIntegrationApp()
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
+		body := `{"name": "Comida", "type": "expense"}`
+		requestBuilder.
+			WithMethod("POST").
+			WithPath("/api/v1/categories").
+			WithPayload(body).
+			WithContentType(fiber.MIMEApplicationJSON)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
 	})
-
-	t.Run("return found when request sent cookie but session doesn't exists", func(t *testing.T) {
-		accountingFactory := accountingrepositoryfactory.New()
-		accountsFactory := accountsrepositoryfactory.New()
-		odinApp := app.NewFiberApplication(accountingFactory, accountsFactory)
-		user := userbuilder.New().Create(accountsFactory.GetUserRepository())
-		session := sessionmodel.New(user.ID())
-		requestBuilder := builders.NewRequestBuilder(accountsFactory).
+	t.Run("retrieve categories when authenticated", func(t *testing.T) {
+		application, userRepository, sessionRepository := newIntegrationApp()
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
+		requestBuilder.
 			WithMethod("GET").
-			WithPath(accountPath).
-			WithContentType("").
-			WithSession(session)
-
-		response, _ := testutils.GetHTMLResponseFromRequestBuilder(odinApp, requestBuilder)
-
-		assert.Equal(t, fiber.StatusFound, response.StatusCode)
+			WithPath("/api/v1/categories").
+			WithContentType(fiber.MIMEApplicationJSON)
+		var responseData map[string]any
+		requestBuilder.WithResponseData(&responseData)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+	})
+	t.Run("redirect to login when not authenticated", func(t *testing.T) {
+		application, _, _ := newIntegrationApp()
+		req := httptest.NewRequest("GET", "/accounts", nil)
+		response, err := application.Test(req)
+		assert.Nil(t, err)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusFound, response.StatusCode)
 	})
 }
