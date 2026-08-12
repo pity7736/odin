@@ -23,9 +23,9 @@ func New(
 	userRepository repositories.UserRepository,
 	sessionRepository repositories.SessionRepository,
 	passwordHasher passwordhasher.PasswordHasher,
-) *SessionStarter {
+) SessionStarter {
 
-	return &SessionStarter{
+	return SessionStarter{
 		email:             email,
 		password:          password,
 		userRepository:    userRepository,
@@ -34,7 +34,7 @@ func New(
 	}
 }
 
-func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error) {
+func (self SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error) {
 	user, err := self.userRepository.GetByEmail(ctx, self.email)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, e
 	return self.start(ctx, user)
 }
 
-func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
+func (self SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
 	if user != nil && self.passwordHasher.Compare(user.HashedPassword(), self.password) {
 		return self.createSession(ctx, user)
 	}
@@ -52,7 +52,7 @@ func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (*s
 		Build()
 }
 
-func (self *SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
+func (self SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
 	session, err := sessionmodel.New(user.ID(), sessionmodel.DefaultTTL)
 	if err != nil {
 		return nil, err

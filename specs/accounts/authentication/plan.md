@@ -222,8 +222,8 @@ type SessionStarter struct {
     passwordHasher    passwordhasher.PasswordHasher
 }
 
-func New(email, password string, userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher) *SessionStarter
-func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error)
+func New(email, password string, userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher) SessionStarter
+func (self SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error)
 ```
 
 Steps:
@@ -240,8 +240,8 @@ type SessionTerminator struct {
     sessionRepository repositories.SessionRepository
 }
 
-func New(sessionRepository repositories.SessionRepository) *SessionTerminator
-func (self *SessionTerminator) Terminate(ctx context.Context, token string) error
+func New(sessionRepository repositories.SessionRepository) SessionTerminator
+func (self SessionTerminator) Terminate(ctx context.Context, token string) error
 ```
 
 Calls `sessionRepository.Delete(ctx, token)`.
@@ -253,8 +253,8 @@ type SessionValidator struct {
     sessionRepository repositories.SessionRepository
 }
 
-func New(sessionRepository repositories.SessionRepository) *SessionValidator
-func (self *SessionValidator) Validate(ctx context.Context, token string) (*sessionmodel.Session, error)
+func New(sessionRepository repositories.SessionRepository) SessionValidator
+func (self SessionValidator) Validate(ctx context.Context, token string) (*sessionmodel.Session, error)
 ```
 
 Steps:

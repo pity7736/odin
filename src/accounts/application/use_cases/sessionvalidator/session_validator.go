@@ -13,11 +13,11 @@ type SessionValidator struct {
 	sessionRepository repositories.SessionRepository
 }
 
-func New(sessionRepository repositories.SessionRepository) *SessionValidator {
-	return &SessionValidator{sessionRepository: sessionRepository}
+func New(sessionRepository repositories.SessionRepository) SessionValidator {
+	return SessionValidator{sessionRepository: sessionRepository}
 }
 
-func (self *SessionValidator) Validate(ctx context.Context, token string) (*sessionmodel.Session, error) {
+func (self SessionValidator) Validate(ctx context.Context, token string) (*sessionmodel.Session, error) {
 	session, err := self.sessionRepository.Get(ctx, token)
 	if err != nil {
 		var odinError *odinerrors.Error
