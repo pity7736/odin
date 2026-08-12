@@ -20,8 +20,8 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
 
 	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
+	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionvalidator"
 	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
-	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxloginhandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxlogouthandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
@@ -132,22 +132,7 @@ func cookieMiddleware(sessionRepository accountsrepos.SessionRepository) fiber.H
 		if cookie == "" {
 			return c.Next()
 		}
-		session, err := sessionRepository.Get(c.Context(), cookie)
-		if err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
-		}
-		if session == nil {
-			return c.Next()
-		}
-		requestCtx, err := requestcontext.New(session.UserID())
-		if err != nil {
-			return err
-		}
-		c.Locals(requestcontext.Key, requestCtx)
-		c.Locals("userID", session.UserID())
-		session.Extend(sessionmodel.DefaultTTL)
-		_ = sessionRepository.Save(c.Context(), session)
-		return c.Next()
+		return validateSession(c, sessionRepository, cookie)
 	}
 }
 
@@ -158,23 +143,26 @@ func bearerMiddleware(sessionRepository accountsrepos.SessionRepository) fiber.H
 			return c.Next()
 		}
 		token := strings.TrimPrefix(auth, "Bearer ")
-		session, err := sessionRepository.Get(c.Context(), token)
-		if err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
-		}
-		if session == nil {
-			return c.Next()
-		}
-		requestCtx, err := requestcontext.New(session.UserID())
-		if err != nil {
-			return err
-		}
-		c.Locals(requestcontext.Key, requestCtx)
-		c.Locals("userID", session.UserID())
-		session.Extend(sessionmodel.DefaultTTL)
-		_ = sessionRepository.Save(c.Context(), session)
+		return validateSession(c, sessionRepository, token)
+	}
+}
+
+func validateSession(c *fiber.Ctx, sessionRepository accountsrepos.SessionRepository, token string) error {
+	validator := sessionvalidator.New(sessionRepository)
+	session, err := validator.Validate(c.Context(), token)
+	if err != nil {
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+	if session == nil {
 		return c.Next()
 	}
+	requestCtx, err := requestcontext.New(session.UserID())
+	if err != nil {
+		return err
+	}
+	c.Locals(requestcontext.Key, requestCtx)
+	c.Locals("userID", session.UserID())
+	return c.Next()
 }
 
 func loginRequired(ctx *fiber.Ctx, handlerFn func(*fiber.Ctx) error) error {

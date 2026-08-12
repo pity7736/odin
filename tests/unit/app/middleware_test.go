@@ -15,6 +15,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
@@ -45,7 +46,8 @@ func TestCookieMiddlewareShould(t *testing.T) {
 	})
 	t.Run("redirect to login when session not found", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, "unknown-token").Return(nil, nil)
+		notFoundErr := odinerrors.NewErrorBuilder("session not found").WithTag(odinerrors.NotFound).Build()
+		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, "unknown-token").Return(nil, notFoundErr)
 		req := httptest.NewRequest("GET", "/accounts", nil)
 		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: "unknown-token"})
 		response, err := newApp(factory).Test(req)
@@ -123,7 +125,8 @@ func TestBearerMiddlewareShould(t *testing.T) {
 	})
 	t.Run("treat as anonymous when Bearer token is not found", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, "unknown-token").Return(nil, nil)
+		notFoundErr := odinerrors.NewErrorBuilder("session not found").WithTag(odinerrors.NotFound).Build()
+		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, "unknown-token").Return(nil, notFoundErr)
 		req := httptest.NewRequest("GET", "/api/v1/categories", nil)
 		req.Header.Set("Authorization", "Bearer unknown-token")
 		response, err := newApp(factory).Test(req)

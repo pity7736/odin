@@ -33,8 +33,10 @@ src/accounts/application/
 └── use_cases/
     ├── sessionstarter/
     │   └── session_starter.go                               # CREATE
-    └── sessionterminator/
-        └── session_terminator.go                            # CREATE
+    ├── sessionterminator/
+    │   └── session_terminator.go                            # CREATE
+    └── sessionvalidator/
+        └── session_validator.go                             # CREATE
 
 src/accounts/infrastructure/
 ├── api/
@@ -166,7 +168,7 @@ type SessionRepository interface {
 }
 ```
 
-- `Get` returns `nil, nil` for not found or expired sessions.
+- `Get` returns `odinerrors` with tag `NotFound` and external `"Sesión no encontrada"` for unknown tokens. Returns `odinerrors` with tag `DOMAIN` and external `"Sesión expirada"` for expired sessions (and deletes the expired session from storage).
 - `Save` updates an existing session (sliding window extension).
 - `Delete` removes a session (logout).
 
@@ -243,6 +245,26 @@ func (self *SessionTerminator) Terminate(ctx context.Context, token string) erro
 ```
 
 Calls `sessionRepository.Delete(ctx, token)`.
+
+### `SessionValidator` (`src/accounts/application/use_cases/sessionvalidator/session_validator.go`)
+
+```go
+type SessionValidator struct {
+    sessionRepository repositories.SessionRepository
+}
+
+func New(sessionRepository repositories.SessionRepository) *SessionValidator
+func (self *SessionValidator) Validate(ctx context.Context, token string) (*sessionmodel.Session, error)
+```
+
+Steps:
+1. `sessionRepository.Get(ctx, token)` — if error, check tag:
+   - `NotFound` → return `nil, nil` (continue as anonymous).
+   - `DOMAIN` (expired) → return `nil, nil` (continue as anonymous, session already deleted by repo).
+   - Other errors → propagate (caller returns 500).
+2. Call `session.Extend(DefaultTTL)`.
+3. `sessionRepository.Save(ctx, session)` — propagate error.
+4. Return session.
 
 ## Infrastructure Layer
 
@@ -334,7 +356,7 @@ func (self BcryptHasher) Compare(hashedPassword, password string) bool
 
 **`session_repository.go`:**
 - Backed by `map[string]*sessionmodel.Session` keyed by token.
-- `Get` checks `IsExpired()` before returning. Returns `nil, nil` for expired or unknown tokens.
+- `Get` returns `odinerrors` with tag `NotFound` for unknown tokens. For expired tokens, deletes the session and returns `odinerrors` with tag `DOMAIN` and external `"Sesión expirada"`.
 - `Save` updates the session in the map.
 - `Delete` removes from the map.
 
@@ -343,17 +365,17 @@ func (self BcryptHasher) Compare(hashedPassword, password string) bool
 ### Cookie middleware (global)
 
 1. Set `requestcontext.Key` to `NewAnonymous()`.
-2. Read `__Secure-odin-session` cookie. If empty, continue.
-3. `sessionRepository.Get(ctx, token)` — on error, return 500.
+2. Read `SessionName` cookie. If empty, continue.
+3. `sessionValidator.Validate(ctx, token)` — on error, return 500.
 4. If session nil, continue as anonymous.
-5. If valid, create `RequestContext`, set in `ctx.Locals`. Call `session.Extend(DefaultTTL)`, `sessionRepository.Save(ctx, session)`.
+5. If valid, create `RequestContext`, set in `ctx.Locals`.
 
 ### Bearer token middleware (`/api/v1` group)
 
 1. Read `Authorization` header. If not `Bearer <token>` format, continue.
-2. `sessionRepository.Get(ctx, token)` — on error, return 500.
+2. `sessionValidator.Validate(ctx, token)` — on error, return 500.
 3. If session nil, continue as anonymous.
-4. If valid, create `RequestContext`, set in `ctx.Locals`. Call `session.Extend(DefaultTTL)`, `sessionRepository.Save(ctx, session)`.
+4. If valid, create `RequestContext`, set in `ctx.Locals`.
 
 ### `loginRequired` function
 
