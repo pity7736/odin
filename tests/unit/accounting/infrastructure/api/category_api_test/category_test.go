@@ -13,13 +13,14 @@ import (
 
 	categorymodel "raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders/categorybuilder"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
 func newApplication(factory *testrepositoryfactory.Factory) app.Application {
-	return app.NewFiberApplication(factory, factory.GetSessionRepository(), factory.GetUserRepository())
+	return app.NewFiberApplication(factory, factory.GetSessionRepository(), factory.GetUserRepository(), bcrypthasher.New())
 }
 
 func setupAuthMocks(factory *testrepositoryfactory.Factory, token, userID string) *sessionmodel.Session {

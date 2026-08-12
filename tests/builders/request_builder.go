@@ -12,6 +12,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
@@ -102,6 +103,7 @@ func (self *RequestBuilder) Build() *http.Request {
 				password,
 				self.userRepository,
 				self.sessionRepository,
+				bcrypthasher.New(),
 			)
 			session, _ = sessionStarter.Start(context.TODO())
 		}

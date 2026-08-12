@@ -10,6 +10,7 @@ import (
 
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
 	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/pgrepositories"
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/testutils"
@@ -22,6 +23,7 @@ func newIntegrationApp() (app.Application, *pgrepositories.PGUserRepository, *pg
 		accountingrepositoryfactory.New(),
 		sessionRepository,
 		userRepository,
+		bcrypthasher.New(),
 	)
 	return application, userRepository, sessionRepository
 }

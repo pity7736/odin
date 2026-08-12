@@ -1,9 +1,6 @@
 package usermodel
 
-import (
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
-)
+import "github.com/google/uuid"
 
 type User struct {
 	id             string
@@ -11,16 +8,12 @@ type User struct {
 	hashedPassword string
 }
 
-func New(email, password string) (*User, error) {
+func New(email, hashedPassword string) (*User, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-	return &User{id: id.String(), email: email, hashedPassword: string(hash)}, nil
+	return &User{id: id.String(), email: email, hashedPassword: hashedPassword}, nil
 }
 
 func (self *User) ID() string {
@@ -33,8 +26,4 @@ func (self *User) Email() string {
 
 func (self *User) HashedPassword() string {
 	return self.hashedPassword
-}
-
-func (self *User) CheckPassword(password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(self.hashedPassword), []byte(password)) == nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
@@ -18,7 +19,7 @@ import (
 )
 
 func newApplication(factory *testrepositoryfactory.Factory) app.Application {
-	return app.NewFiberApplication(factory, factory.GetSessionRepository(), factory.GetUserRepository())
+	return app.NewFiberApplication(factory, factory.GetSessionRepository(), factory.GetUserRepository(), bcrypthasher.New())
 }
 
 func TestRestLoginShould(t *testing.T) {

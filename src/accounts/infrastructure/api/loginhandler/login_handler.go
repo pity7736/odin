@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
@@ -20,13 +21,15 @@ type LoginHandler interface {
 type loginHandler struct {
 	userRepository    repositories.UserRepository
 	sessionRepository repositories.SessionRepository
+	passwordHasher    passwordhasher.PasswordHasher
 	handler           LoginHandler
 }
 
-func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, handler LoginHandler) *loginHandler {
+func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher, handler LoginHandler) *loginHandler {
 	return &loginHandler{
 		userRepository:    userRepository,
 		sessionRepository: sessionRepository,
+		passwordHasher:    passwordHasher,
 		handler:           handler,
 	}
 }
@@ -69,6 +72,7 @@ func (self *loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
 		strings.Clone(body.Password),
 		self.userRepository,
 		self.sessionRepository,
+		self.passwordHasher,
 	)
 	session, err := starter.Start(ctx.Context())
 	if err != nil {

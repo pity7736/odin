@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
@@ -23,7 +24,7 @@ func TestSessionStarterShould(t *testing.T) {
 		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
 		sessionRepository := factory.GetSessionRepositoryMock()
 		sessionRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(nil)
-		starter := sessionstarter.New(user.Email(), builder.Password(), factory.GetUserRepository(), factory.GetSessionRepository())
+		starter := sessionstarter.New(user.Email(), builder.Password(), factory.GetUserRepository(), factory.GetSessionRepository(), bcrypthasher.New())
 		session, err := starter.Start(context.TODO())
 		assert.Nil(t, err)
 		assert.NotEmpty(t, session.Token())
@@ -35,7 +36,7 @@ func TestSessionStarterShould(t *testing.T) {
 		user := builder.Build()
 		userRepository := factory.GetUserRepositoryMock()
 		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
-		starter := sessionstarter.New(user.Email(), "wrong password", factory.GetUserRepository(), factory.GetSessionRepository())
+		starter := sessionstarter.New(user.Email(), "wrong password", factory.GetUserRepository(), factory.GetSessionRepository(), bcrypthasher.New())
 		session, err := starter.Start(context.TODO())
 		assert.Nil(t, session)
 		var odinError *odinerrors.Error
@@ -47,7 +48,7 @@ func TestSessionStarterShould(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
 		userRepository.EXPECT().GetByEmail(context.TODO(), "unknown@example.com").Return(nil, nil)
-		starter := sessionstarter.New("unknown@example.com", "password", factory.GetUserRepository(), factory.GetSessionRepository())
+		starter := sessionstarter.New("unknown@example.com", "password", factory.GetUserRepository(), factory.GetSessionRepository(), bcrypthasher.New())
 		session, err := starter.Start(context.TODO())
 		assert.Nil(t, session)
 		var odinError *odinerrors.Error
@@ -59,7 +60,7 @@ func TestSessionStarterShould(t *testing.T) {
 		repoError := errors.New("database failure")
 		userRepository := factory.GetUserRepositoryMock()
 		userRepository.EXPECT().GetByEmail(context.TODO(), "test@example.com").Return(nil, repoError)
-		starter := sessionstarter.New("test@example.com", "password", factory.GetUserRepository(), factory.GetSessionRepository())
+		starter := sessionstarter.New("test@example.com", "password", factory.GetUserRepository(), factory.GetSessionRepository(), bcrypthasher.New())
 		session, err := starter.Start(context.TODO())
 		assert.Nil(t, session)
 		assert.Equal(t, repoError, err)
@@ -73,7 +74,7 @@ func TestSessionStarterShould(t *testing.T) {
 		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
 		sessionRepository := factory.GetSessionRepositoryMock()
 		sessionRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(repoError)
-		starter := sessionstarter.New(user.Email(), builder.Password(), factory.GetUserRepository(), factory.GetSessionRepository())
+		starter := sessionstarter.New(user.Email(), builder.Password(), factory.GetUserRepository(), factory.GetSessionRepository(), bcrypthasher.New())
 		session, err := starter.Start(context.TODO())
 		assert.Nil(t, session)
 		assert.Equal(t, repoError, err)

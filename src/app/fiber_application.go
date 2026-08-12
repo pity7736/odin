@@ -19,6 +19,7 @@ import (
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
 
+	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
 	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxloginhandler"
@@ -43,6 +44,7 @@ func NewFiberApplication(
 	accountingRepositoryFactory accountingrepositoryfactory.RepositoryFactory,
 	sessionRepository accountsrepos.SessionRepository,
 	userRepository accountsrepos.UserRepository,
+	passwordHasher passwordhasher.PasswordHasher,
 ) Application {
 
 	engine := html.New(
@@ -67,7 +69,7 @@ func NewFiberApplication(
 		return ctx.Render("login", htmxloginhandler.LoginData{Error: "", Next: next})
 	})
 	app.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(userRepository, sessionRepository, htmxloginhandler.New(ctx)).Login(ctx)
+		return loginhandler.New(userRepository, sessionRepository, passwordHasher, htmxloginhandler.New(ctx)).Login(ctx)
 	})
 	app.Post("/auth/logout", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, logouthandler.New(sessionRepository, htmxlogouthandler.New(ctx)).Logout)
@@ -99,7 +101,7 @@ func NewFiberApplication(
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
 	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(userRepository, sessionRepository, restloginhandler.New(ctx)).Login(ctx)
+		return loginhandler.New(userRepository, sessionRepository, passwordHasher, restloginhandler.New(ctx)).Login(ctx)
 	})
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, logouthandler.New(sessionRepository, restlogouthandler.New(ctx)).Logout)

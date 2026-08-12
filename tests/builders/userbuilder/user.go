@@ -3,6 +3,8 @@ package userbuilder
 import (
 	"context"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
@@ -29,7 +31,8 @@ func (self *Builder) Password() string {
 }
 
 func (self *Builder) Build() *usermodel.User {
-	user, _ := usermodel.New(self.email, self.password)
+	hash, _ := bcrypt.GenerateFromPassword([]byte(self.password), bcrypt.DefaultCost)
+	user, _ := usermodel.New(self.email, string(hash))
 	return user
 }
 

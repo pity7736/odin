@@ -3,6 +3,7 @@ package sessionstarter
 import (
 	"context"
 
+	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
@@ -14,12 +15,14 @@ type SessionStarter struct {
 	password          string
 	userRepository    repositories.UserRepository
 	sessionRepository repositories.SessionRepository
+	passwordHasher    passwordhasher.PasswordHasher
 }
 
 func New(
 	email, password string,
 	userRepository repositories.UserRepository,
 	sessionRepository repositories.SessionRepository,
+	passwordHasher passwordhasher.PasswordHasher,
 ) *SessionStarter {
 
 	return &SessionStarter{
@@ -27,6 +30,7 @@ func New(
 		password:          password,
 		userRepository:    userRepository,
 		sessionRepository: sessionRepository,
+		passwordHasher:    passwordHasher,
 	}
 }
 
@@ -39,7 +43,7 @@ func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, e
 }
 
 func (self *SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
-	if user != nil && user.CheckPassword(self.password) {
+	if user != nil && self.passwordHasher.Compare(user.HashedPassword(), self.password) {
 		return self.createSession(ctx, user)
 	}
 	return nil, odinerrors.NewErrorBuilder("email or password are wrong").

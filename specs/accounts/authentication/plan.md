@@ -10,6 +10,7 @@ Architectural decisions applied:
 - Strategy pattern for handlers (inject rendering strategy + repositories)
 - Individual repository injection (no factory interfaces)
 - Test boundary at repository layer (handler tests go through real use cases with mock repos)
+- Password hashing is an application concern via `PasswordHasher` interface, not a domain concern
 
 ## Architecture & Files Summary
 
@@ -26,11 +27,14 @@ src/accounts/domain/
     ├── user.go                                              # CREATE
     └── session.go                                           # CREATE
 
-src/accounts/application/use_cases/
-├── sessionstarter/
-│   └── session_starter.go                                   # CREATE
-└── sessionterminator/
-    └── session_terminator.go                                # CREATE
+src/accounts/application/
+├── passwordhasher/
+│   └── password_hasher.go                                   # CREATE
+└── use_cases/
+    ├── sessionstarter/
+    │   └── session_starter.go                               # CREATE
+    └── sessionterminator/
+        └── session_terminator.go                            # CREATE
 
 src/accounts/infrastructure/
 ├── api/
@@ -49,6 +53,8 @@ src/accounts/infrastructure/
 │       │   └── handler.go                                   # CREATE
 │       └── restlogouthandler/
 │           └── handler.go                                   # CREATE
+├── security/bcrypthasher/
+│   └── bcrypt_hasher.go                                     # CREATE
 └── repositories/pgrepositories/
     ├── user_repository.go                                   # CREATE
     └── session_repository.go                                # CREATE
@@ -102,16 +108,14 @@ type User struct {
     hashedPassword string
 }
 
-func New(email, password string) (*User, error)
+func New(email, hashedPassword string) (*User, error)
 func (self *User) ID() string
 func (self *User) Email() string
 func (self *User) HashedPassword() string
-func (self *User) CheckPassword(password string) bool
 ```
 
-- `New` generates a UUIDv7 for the ID and hashes the password with `bcrypt.GenerateFromPassword`. Used by registration and seed data.
-- `CheckPassword` uses `bcrypt.CompareHashAndPassword`.
-- Dependency: `golang.org/x/crypto/bcrypt`.
+- `New` generates a UUIDv7 for the ID. Receives an already-hashed password — the entity has no knowledge of hashing.
+- Password hashing and comparison are handled by `PasswordHasher` in the application layer.
 
 ### `Session` entity (`src/accounts/domain/sessionmodel/session.go`)
 
@@ -195,6 +199,16 @@ func (self *RequestContext) IsAuthenticated() bool
 
 ## Application Layer
 
+### `PasswordHasher` interface (`src/accounts/application/passwordhasher/password_hasher.go`)
+
+```go
+type PasswordHasher interface {
+    Compare(hashedPassword, password string) bool
+}
+```
+
+- `Compare` checks a plain password against a hashed one.
+
 ### `SessionStarter` (`src/accounts/application/use_cases/sessionstarter/session_starter.go`)
 
 ```go
@@ -203,15 +217,16 @@ type SessionStarter struct {
     password          string
     userRepository    repositories.UserRepository
     sessionRepository repositories.SessionRepository
+    passwordHasher    passwordhasher.PasswordHasher
 }
 
-func New(email, password string, userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository) *SessionStarter
+func New(email, password string, userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher) *SessionStarter
 func (self *SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error)
 ```
 
 Steps:
 1. `userRepository.GetByEmail(ctx, email)` — propagate error.
-2. If user is nil or `CheckPassword` fails → `odinerrors` with tag `DOMAIN`, message `"email or password are wrong"`, external `"Correo o contraseña incorrectos"`.
+2. If user is nil or `passwordHasher.Compare(user.HashedPassword(), password)` fails → `odinerrors` with tag `DOMAIN`, message `"email or password are wrong"`, external `"Correo o contraseña incorrectos"`.
 3. `sessionmodel.New(userID, DefaultTTL)` — propagate error.
 4. `sessionRepository.Add(ctx, session)` — propagate error.
 5. Return session.
@@ -243,10 +258,11 @@ type LoginHandler interface {
 type loginHandler struct {
     userRepository    repositories.UserRepository
     sessionRepository repositories.SessionRepository
+    passwordHasher    passwordhasher.PasswordHasher
     handler           LoginHandler
 }
 
-func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, handler LoginHandler) *loginHandler
+func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher, handler LoginHandler) *loginHandler
 func (self *loginHandler) Login(ctx *fiber.Ctx) error
 ```
 
@@ -297,11 +313,23 @@ func (self *logoutHandler) Logout(ctx *fiber.Ctx) error
 
 - Return JSON `{"message": "session closed"}`.
 
+### Bcrypt hasher (`src/accounts/infrastructure/security/bcrypthasher/bcrypt_hasher.go`)
+
+```go
+type BcryptHasher struct{}
+
+func New() BcryptHasher
+func (self BcryptHasher) Compare(hashedPassword, password string) bool
+```
+
+- `Compare` uses `bcrypt.CompareHashAndPassword`.
+- Dependency: `golang.org/x/crypto/bcrypt`.
+
 ### In-memory repositories (`src/accounts/infrastructure/repositories/pgrepositories/`)
 
 **`user_repository.go`:**
 - Backed by `map[string]*usermodel.User` keyed by email.
-- Constructor seeds initial users via `New`.
+- Constructor seeds initial users via `usermodel.New` with pre-hashed passwords (uses bcrypt directly — infrastructure layer).
 - `GetByEmail` returns `nil, nil` for unknown emails.
 
 **`session_repository.go`:**
@@ -340,15 +368,14 @@ func loginRequired(ctx *fiber.Ctx, handler handler.Handler) error
 
 ### Route registration
 
-**`NewFiberApplication` signature** receives five individual repositories:
+**`NewFiberApplication` signature** receives repositories and the password hasher:
 
 ```go
 func NewFiberApplication(
-    categoryRepository repositories.CategoryRepository,
-    accountRepository repositories.AccountRepository,
-    incomeRepository repositories.IncomeRepository,
+    accountingRepositoryFactory accountingrepositoryfactory.RepositoryFactory,
     sessionRepository accountsrepos.SessionRepository,
     userRepository accountsrepos.UserRepository,
+    passwordHasher passwordhasher.PasswordHasher,
 ) Application
 ```
 
@@ -370,15 +397,15 @@ func NewFiberApplication(
 
 ### Entry point (`src/main.go`)
 
-Create each repository individually, pass all five to `NewFiberApplication`.
+Create each repository and the bcrypt hasher, pass to `NewFiberApplication`.
 
 ## Implementation Phases (TDD)
 
 ### Phase 1: Domain — User
 
-**Red:** `New` generates a UUIDv7 ID and hashes the password. `CheckPassword` returns true for correct password, false for wrong.
+**Red:** `New` generates a UUIDv7 ID. Entity stores email and pre-hashed password.
 
-**Green:** Implement `User` with bcrypt.
+**Green:** Implement `User` with UUIDv7. No hashing dependency.
 
 ### Phase 2: Domain — Session
 
