@@ -7,6 +7,7 @@ import (
 
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionterminator"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 type LogoutHandler interface {
@@ -35,7 +36,7 @@ func (self *logoutHandler) Logout(ctx *fiber.Ctx) error {
 }
 
 func (self *logoutHandler) extractToken(ctx *fiber.Ctx) string {
-	if cookie := ctx.Cookies("__Secure-odin-session"); cookie != "" {
+	if cookie := ctx.Cookies(handler.SessionName); cookie != "" {
 		return cookie
 	}
 	auth := ctx.Get("Authorization")

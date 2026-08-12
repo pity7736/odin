@@ -13,6 +13,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
@@ -111,7 +112,7 @@ func (self *RequestBuilder) Build() *http.Request {
 			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", session.Token()))
 		} else {
 			request.AddCookie(&http.Cookie{
-				Name:     "__Secure-odin-session",
+				Name:     handler.SessionName,
 				Value:    session.Token(),
 				Secure:   true,
 				HttpOnly: true,

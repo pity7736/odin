@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
+
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxlogouthandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restlogouthandler"
@@ -39,7 +41,7 @@ func TestHtmxLogoutShould(t *testing.T) {
 		token := "test-session-token"
 		factory.GetSessionRepositoryMock().EXPECT().Delete(mock.Anything, token).Return(errors.New("db error"))
 		req := httptest.NewRequest("POST", "/auth/logout", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newHtmxLogoutApp(factory).Test(req, -1)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -59,7 +61,7 @@ func TestHtmxLogoutShould(t *testing.T) {
 		token := "test-session-token"
 		factory.GetSessionRepositoryMock().EXPECT().Delete(mock.Anything, token).Return(nil)
 		req := httptest.NewRequest("POST", "/auth/logout", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newHtmxLogoutApp(factory).Test(req, -1)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -67,7 +69,7 @@ func TestHtmxLogoutShould(t *testing.T) {
 		assert.Equal(t, "/auth/login", response.Header.Get("HX-Redirect"))
 		var sessionCookie *http.Cookie
 		for _, cookie := range response.Cookies() {
-			if cookie.Name == "__Secure-odin-session" {
+			if cookie.Name == handler.SessionName {
 				sessionCookie = cookie
 			}
 		}

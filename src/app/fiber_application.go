@@ -31,6 +31,7 @@ import (
 
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 const categoriesPath = "/categories"
@@ -127,7 +128,7 @@ func NewFiberApplication(
 func cookieMiddleware(sessionRepository accountsrepos.SessionRepository) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		c.Locals(requestcontext.Key, requestcontext.NewAnonymous())
-		cookie := c.Cookies("__Secure-odin-session")
+		cookie := c.Cookies(handler.SessionName)
 		if cookie == "" {
 			return c.Next()
 		}

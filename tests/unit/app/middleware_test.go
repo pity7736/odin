@@ -15,6 +15,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
@@ -36,7 +37,7 @@ func TestCookieMiddlewareShould(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, "bad-token").Return(nil, errors.New("db error"))
 		req := httptest.NewRequest("GET", "/accounts", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: "bad-token"})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: "bad-token"})
 		response, err := newApp(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -46,7 +47,7 @@ func TestCookieMiddlewareShould(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, "unknown-token").Return(nil, nil)
 		req := httptest.NewRequest("GET", "/accounts", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: "unknown-token"})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: "unknown-token"})
 		response, err := newApp(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -61,7 +62,7 @@ func TestCookieMiddlewareShould(t *testing.T) {
 		factory.GetSessionRepositoryMock().EXPECT().Save(mock.Anything, session).Return(nil)
 		factory.GetAccountRepositoryMock().EXPECT().GetAll(mock.Anything).Return([]*accountmodel.Account{}, nil)
 		req := httptest.NewRequest("GET", "/accounts", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newApp(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -78,7 +79,7 @@ func TestLogoutShould(t *testing.T) {
 		factory.GetSessionRepositoryMock().EXPECT().Save(mock.Anything, session).Return(nil)
 		factory.GetSessionRepositoryMock().EXPECT().Delete(mock.Anything, token).Return(nil)
 		req := httptest.NewRequest("POST", "/auth/logout", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newApp(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()

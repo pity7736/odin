@@ -15,6 +15,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/builders/categorybuilder"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
@@ -117,7 +118,7 @@ func TestHtmxCategoryShould(t *testing.T) {
 		body := "name=Comida&type=expense"
 		req := httptest.NewRequest("POST", "/categories", strings.NewReader(body))
 		req.Header.Set("Content-Type", fiber.MIMEApplicationForm)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newApplication(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -130,7 +131,7 @@ func TestHtmxCategoryShould(t *testing.T) {
 		setupAuthMocks(factory, token, userID)
 		factory.GetCategoryRepositoryMock().EXPECT().GetAll(mock.Anything, userID).Return([]*categorymodel.Category{})
 		req := httptest.NewRequest("GET", "/categories", nil)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newApplication(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()
@@ -145,7 +146,7 @@ func TestHtmxCategoryShould(t *testing.T) {
 		body := "name=Comida&type=expense&first=true"
 		req := httptest.NewRequest("POST", "/categories", strings.NewReader(body))
 		req.Header.Set("Content-Type", fiber.MIMEApplicationForm)
-		req.AddCookie(&http.Cookie{Name: "__Secure-odin-session", Value: token})
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: token})
 		response, err := newApplication(factory).Test(req)
 		assert.Nil(t, err)
 		defer func() { _ = response.Body.Close() }()

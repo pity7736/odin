@@ -8,6 +8,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 type HtmxLoginHandler struct {
@@ -20,7 +21,7 @@ func New(ctx *fiber.Ctx) loginhandler.LoginHandler {
 
 func (self *HtmxLoginHandler) HandleResponse(session *sessionmodel.Session) error {
 	cookie := fiber.Cookie{
-		Name:     "__Secure-odin-session",
+		Name:     handler.SessionName,
 		Value:    session.Token(),
 		Secure:   true,
 		HTTPOnly: true,

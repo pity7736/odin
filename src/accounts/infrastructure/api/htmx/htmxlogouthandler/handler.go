@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 type htmxLogoutHandler struct {
@@ -16,7 +17,7 @@ func New(ctx *fiber.Ctx) logouthandler.LogoutHandler {
 
 func (self *htmxLogoutHandler) HandleResponse() error {
 	self.ctx.Cookie(&fiber.Cookie{
-		Name:     "__Secure-odin-session",
+		Name:     handler.SessionName,
 		Value:    "",
 		MaxAge:   -1,
 		Secure:   true,
