@@ -102,16 +102,14 @@ type User struct {
     hashedPassword string
 }
 
-func New(id, email, hashedPassword string) *User
-func NewWithPlainPassword(id, email, password string) (*User, error)
+func New(email, password string) (*User, error)
 func (self *User) ID() string
 func (self *User) Email() string
 func (self *User) HashedPassword() string
 func (self *User) CheckPassword(password string) bool
 ```
 
-- `NewWithPlainPassword` hashes with `bcrypt.GenerateFromPassword`. Used by registration and seed data.
-- `New` receives a pre-hashed password. Used when reconstituting from storage.
+- `New` generates a UUIDv7 for the ID and hashes the password with `bcrypt.GenerateFromPassword`. Used by registration and seed data.
 - `CheckPassword` uses `bcrypt.CompareHashAndPassword`.
 - Dependency: `golang.org/x/crypto/bcrypt`.
 
@@ -303,7 +301,7 @@ func (self *logoutHandler) Logout(ctx *fiber.Ctx) error
 
 **`user_repository.go`:**
 - Backed by `map[string]*usermodel.User` keyed by email.
-- Constructor seeds initial users via `NewWithPlainPassword`.
+- Constructor seeds initial users via `New`.
 - `GetByEmail` returns `nil, nil` for unknown emails.
 
 **`session_repository.go`:**
@@ -378,7 +376,7 @@ Create each repository individually, pass all five to `NewFiberApplication`.
 
 ### Phase 1: Domain — User
 
-**Red:** `CheckPassword` returns true for correct password, false for wrong. `NewWithPlainPassword` produces hashed (not plaintext) password. `New` with pre-hashed password works with `CheckPassword`.
+**Red:** `New` generates a UUIDv7 ID and hashes the password. `CheckPassword` returns true for correct password, false for wrong.
 
 **Green:** Implement `User` with bcrypt.
 

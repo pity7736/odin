@@ -3,8 +3,6 @@ package pgrepositories
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
@@ -14,10 +12,8 @@ type PGUserRepository struct {
 
 func NewPGUserRepository() *PGUserRepository {
 	users := make(map[string]*usermodel.User, 2)
-	id1, _ := uuid.NewV7()
-	id2, _ := uuid.NewV7()
-	user1, _ := usermodel.NewWithPlainPassword(id1.String(), "some@email.com", "password")
-	user2, _ := usermodel.NewWithPlainPassword(id2.String(), "some1@email.com", "password")
+	user1, _ := usermodel.New("some@email.com", "password")
+	user2, _ := usermodel.New("some1@email.com", "password")
 	users["some@email.com"] = user1
 	users["some1@email.com"] = user2
 	return &PGUserRepository{users: users}

@@ -3,23 +3,18 @@ package userbuilder
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
 type Builder struct {
 	email    string
-	id       string
 	password string
 }
 
 func New() *Builder {
-	id, _ := uuid.NewV7()
 	return &Builder{
 		email:    "test@raiseexception.dev",
-		id:       id.String(),
 		password: "some secure password",
 	}
 }
@@ -34,7 +29,7 @@ func (self *Builder) Password() string {
 }
 
 func (self *Builder) Build() *usermodel.User {
-	user, _ := usermodel.NewWithPlainPassword(self.id, self.email, self.password)
+	user, _ := usermodel.New(self.email, self.password)
 	return user
 }
 
