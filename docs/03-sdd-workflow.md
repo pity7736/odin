@@ -12,94 +12,22 @@ Every new feature begins with a **Specification** and a **Plan**. This ensures w
 - **Audience:** Product Managers, Stakeholders, Engineers.
 - **Purpose:** To define the business requirements, user stories, and acceptance criteria for a feature in plain, non-technical language.
 - **Specs describe intended behavior** — what the feature SHOULD do, not what the current code does. If current code has bugs, the spec is the source of truth for correct behavior.
-- **Example: `specs/accounting/accounts/spec.md`**
-
-  ```markdown
-  # Feature: Financial Accounts
-
-  ## Overview
-  Users need to manage their financial accounts to track where their money is.
-
-  ## User Story
-  As a user, I want to create and view my financial accounts so that I can
-  organize my finances by institution or purpose (savings, checking, cash).
-
-  ## Acceptance Criteria
-  - I can create an account with a name and an initial balance.
-  - I can see a list of all my accounts with their current balances.
-  - I can view the details of a specific account.
-  - Each account belongs to a single user and cannot be seen by others.
-
-  ## Expected Behavior
-
-  ### Creating an account
-  - Given I am logged in
-  - When I create an account with name "Savings" and initial balance of 100,000
-  - Then the account is created with a balance equal to the initial balance
-
-  ### Viewing my accounts
-  - Given I have accounts "Savings" and "Cash"
-  - When I view my accounts list
-  - Then I see both accounts with their names, balances, and creation dates
-  - And I do not see accounts belonging to other users
-
-  ## Out of Scope
-  - Deleting or archiving accounts
-  - Editing account names after creation
-  ```
+- **Format:** The canonical `spec.md` structure lives in the feature-spec skill at `.claude/skills/feature-spec/spec-template.md`. Copy it and fill it in.
 
 ## Plan File (The HOW)
 
 - **Audience:** Engineers.
 - **Purpose:** To describe the high-level technical implementation plan for a corresponding specification.
-- **For existing features:** The plan references existing code that satisfies requirements and flags bugs, missing tests, and gaps as items to fix.
-- **What to include:**
-  - Component/package structure
-  - Key interfaces and function signatures
-  - Data flow between components
-  - Implementation phases (as TDD Red-Green-Refactor steps)
-  - Existing code that already satisfies requirements (with file paths)
-  - Bugs or gaps to fix
-  - Quality Pillars section (see below)
-  - Files summary (CREATE / MODIFY)
+- **Lifecycle — two phases:** A `plan.md` is a **work order** while the feature is being built (it carries the gaps to fix, the type/signature shapes, the TDD guidance). Once the feature ships it is **pruned into a living design doc** — the durable record of the *how* and, above all, the *why*. The transient work-order sections are deleted; the design decisions, architecture, data flow, contract, and Quality Pillars remain.
+- **Source of truth:** After a feature ships, the **code** is the source of truth for *how it is built* and the **spec** for *what it does*. The pruned plan is the durable record of the design **rationale** — the reasoning the code cannot capture — not a prose mirror of the code.
+- **For existing features:** The plan shows the touched files (real paths) in its architecture tree and flags bugs, missing tests, and gaps as items to fix.
 - **What NOT to include:**
   - Full implementation of functions
   - Complete method bodies with business logic
   - Detailed error handling beyond error types
-- **Example: `specs/accounting/accounts/plan.md`**
-
-  ```markdown
-  # Technical Plan: Financial Accounts
-
-  **Corresponds to Spec:** `specs/accounting/accounts/spec.md`
-
-  ## Overview
-  Account creation and listing already exist. This plan documents the current
-  implementation and identifies gaps.
-
-  ## Existing Code
-  - Domain: `src/accounting/domain/account/account.go`
-  - Use Case: `src/accounting/application/use_cases/accountcreator/`
-  - Handlers: REST and HTMX variants in `src/accounting/infrastructure/api/handlers/accounthandler/`
-  - Repository: `src/accounting/infrastructure/repositories/pgrepositories/account_repository.go`
-
-  ## Gaps
-  - [ ] Missing REST handlers for GET /accounts and GET /accounts/:id
-  - [ ] No input sanitization on account name
-
-  ## Quality Pillars
-  - **Security:** Ownership validation via requestContext — done
-  - **Reliability:** Decimal arithmetic for balances, NOT_FOUND error tagging — done
-  - **Performance:** Deferred — no bottleneck risk at current scale
-  - **Observability:** Deferred — no production infrastructure yet
-
-  ## Files Summary
-  | Action | File |
-  |--------|------|
-  | MODIFY | `src/accounting/infrastructure/api/handlers/accounthandler/...` |
-  | CREATE | `specs/accounting/accounts/spec.md` |
-  | CREATE | `specs/accounting/accounts/plan.md` |
-  ```
+  - SQL / query text / any code-level implementation — name the approach, not the code
+  - In the pruned living doc: prose copies of code the source owns (exact signatures, field lists), which only drift
+- **Format:** The canonical `plan.md` structure lives in the feature-spec skill at `.claude/skills/feature-spec/plan-template.md`. Copy it and fill it in.
 
 ## Quality Pillars in Plans
 
@@ -114,13 +42,10 @@ Each pillar must have at least one line stating what applies to this feature. **
 
 ## Updating a Feature
 
-When an existing feature needs to change:
+First confirm the change really is an update to *this* feature. A cross-cutting or infrastructural change (for example, swapping storage from in-memory to Postgres) is a **new feature** with its own `specs/` folder, not an update here. Because plans reference ports (interfaces), not concrete adapters, many infrastructure changes touch no feature plan at all.
 
-1. **Update the spec:** The spec always reflects the current intended behavior. Modify it to describe the feature as it should be *after* the change. Git history preserves previous versions.
-2. **Write a new plan:** Create a new plan scoped to the change only, describing the delta from current implementation to the updated spec. Name it descriptively: `plan-<change-description>.md`.
-3. **Keep the original plan:** It documents the initial implementation and remains useful for context.
+When an existing feature's own behavior or implementation genuinely changes, there is still one `spec.md` and one `plan.md` per feature — edited in place; git history preserves prior versions. **Do not create per-change files** (`plan-<change-description>.md`).
 
-For example:
-- `specs/accounting/accounts/spec.md` — updated to include currency support
-- `specs/accounting/accounts/plan.md` — original implementation plan (unchanged)
-- `specs/accounting/accounts/plan-add-currency-support.md` — describes only what changes
+1. **Edit the spec in place:** Modify `spec.md` to describe the feature as it should be after the change. The spec is always living.
+2. **Re-open the plan into a work order:** The pruned `plan.md` (a living design doc) is re-opened for this change — add back the transient sections (types/signatures, gaps to fix) for the delta and update the design rationale.
+3. **Prune it again after shipping:** Once the change ships, prune the plan back into a living design doc, exactly as for a new feature.
