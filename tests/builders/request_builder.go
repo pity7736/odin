@@ -28,7 +28,6 @@ type RequestBuilder struct {
 	sessionRepository repositories.SessionRepository
 	withSession       bool
 	user              *usermodel.User
-	rawPassword       string
 }
 
 func NewRequestBuilder(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository) *RequestBuilder {
@@ -78,9 +77,8 @@ func (self *RequestBuilder) WithAnonymousSession() *RequestBuilder {
 	return self
 }
 
-func (self *RequestBuilder) WithUser(user *usermodel.User, password string) *RequestBuilder {
+func (self *RequestBuilder) WithUser(user *usermodel.User) *RequestBuilder {
 	self.user = user
-	self.rawPassword = password
 	return self
 }
 
@@ -93,15 +91,12 @@ func (self *RequestBuilder) Build() *http.Request {
 		session := self.session
 		if session == nil {
 			user := self.user
-			password := self.rawPassword
 			if user == nil {
-				builder := userbuilder.New()
-				user = builder.Create(self.userRepository)
-				password = builder.Password()
+				user = userbuilder.New().Create(self.userRepository)
 			}
 			sessionStarter := sessionstarter.New(
 				user.Email(),
-				password,
+				userbuilder.DefaultPassword,
 				self.userRepository,
 				self.sessionRepository,
 				bcrypthasher.New(),

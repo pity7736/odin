@@ -9,6 +9,8 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
 
+const DefaultPassword = "some secure password"
+
 type Builder struct {
 	email    string
 	password string
@@ -17,7 +19,7 @@ type Builder struct {
 func New() *Builder {
 	return &Builder{
 		email:    "test@raiseexception.dev",
-		password: "some secure password",
+		password: DefaultPassword,
 	}
 }
 
