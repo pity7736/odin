@@ -26,6 +26,7 @@ Each plan should address relevant structural issues (error handling, auth, routi
 ## Tech Debt
 
 - [ ] Extend `RequestBuilder` to support partial/broken requests (raw cookies, raw headers) and remove duplicate utility functions in `tests/testutils/requests.go`
+- [ ] Review HTMX implementation: verify correct use of hx-* attributes, swap strategies, response handling config, and overall patterns across templates and handlers
 
 ## Priority 2 — New Features
 
