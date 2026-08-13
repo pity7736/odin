@@ -25,7 +25,7 @@ func New(id, name string, t constants.CategoryType, userID string) *Category {
 func (self *Category) ValidateOwnership(requestContext *requestcontext.RequestContext) error {
 	if self.UserID() != requestContext.UserID() {
 		return odinerrors.NewErrorBuilder("categoría no pertenece a usuario logueado").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("la categoría no pertenece al usuario logueado").
 			Build()
 	}

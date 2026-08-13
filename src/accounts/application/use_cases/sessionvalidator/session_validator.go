@@ -21,7 +21,7 @@ func (self SessionValidator) Validate(ctx context.Context, token string) (*sessi
 	session, err := self.sessionRepository.Get(ctx, token)
 	if err != nil {
 		var odinError *odinerrors.Error
-		if errors.As(err, &odinError) && (odinError.Tag() == odinerrors.NotFound || odinError.Tag() == odinerrors.DOMAIN) {
+		if errors.As(err, &odinError) && (odinError.Tag() == odinerrors.NotFound || odinError.Tag() == odinerrors.Domain) {
 			return nil, nil
 		}
 		return nil, err

@@ -37,7 +37,7 @@ func Test_givenNewAccountFromRepository_WhenIDIsEmpty_ThenReturnError(t *testing
 	ok := errors.As(err, &odinError)
 	assert.True(t, ok)
 	assert.Equal(t, "id cannot be empty", odinError.ExternalError())
-	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	assert.Equal(t, odinerrors.Domain, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenNameIsEmpty_ThenReturnError(t *testing.T) {
@@ -48,7 +48,7 @@ func Test_givenNewAccountFromRepository_WhenNameIsEmpty_ThenReturnError(t *testi
 	ok := errors.As(err, &odinError)
 	assert.True(t, ok)
 	assert.Equal(t, "name cannot be empty", odinError.ExternalError())
-	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	assert.Equal(t, odinerrors.Domain, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenUserIDIsEmpty_ThenReturnError(t *testing.T) {
@@ -59,7 +59,7 @@ func Test_givenNewAccountFromRepository_WhenUserIDIsEmpty_ThenReturnError(t *tes
 	ok := errors.As(err, &odinError)
 	assert.True(t, ok)
 	assert.Equal(t, "user id cannot be empty", odinError.ExternalError())
-	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	assert.Equal(t, odinerrors.Domain, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenNegativeInitialBalance_ThenReturnError(t *testing.T) {
@@ -71,7 +71,7 @@ func Test_givenNewAccountFromRepository_WhenNegativeInitialBalance_ThenReturnErr
 	ok := errors.As(err, &odinError)
 	assert.True(t, ok)
 	assert.Equal(t, "initial balance must be positive", odinError.ExternalError())
-	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	assert.Equal(t, odinerrors.Domain, odinError.Tag())
 }
 
 func Test_givenNewAccountFromRepository_WhenNegativeBalance_ThenReturnError(t *testing.T) {
@@ -82,7 +82,7 @@ func Test_givenNewAccountFromRepository_WhenNegativeBalance_ThenReturnError(t *t
 	var odinError *odinerrors.Error
 	errors.As(err, &odinError)
 	assert.Equal(t, "balance must be positive", odinError.ExternalError())
-	assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+	assert.Equal(t, odinerrors.Domain, odinError.Tag())
 }
 
 func TestCreateIncomeShould(t *testing.T) {
@@ -97,7 +97,7 @@ func TestCreateIncomeShould(t *testing.T) {
 		errors.As(err, &odinError)
 		assert.Nil(t, income)
 		assert.Equal(t, "el monto debe ser mayor o igual a 1", odinError.ExternalError())
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 
 	t.Run("return error when date is before than account creation", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestCreateIncomeShould(t *testing.T) {
 		errors.As(err, &odinError)
 		assert.Nil(t, income)
 		assert.Equal(t, "la fecha del ingreso debe ser posterior a la fecha de creación de la cuenta", odinError.ExternalError())
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 
 	t.Run("return error when date is before than account creation", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestCreateIncomeShould(t *testing.T) {
 		errors.As(err, &odinError)
 		assert.Nil(t, income)
 		assert.Equal(t, "la fecha del ingreso debe ser posterior a la fecha de creación de la cuenta", odinError.ExternalError())
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 
 	t.Run("return error when category is not income type", func(t *testing.T) {
@@ -151,7 +151,7 @@ func TestCreateIncomeShould(t *testing.T) {
 		errors.As(err, &odinError)
 		assert.Nil(t, income)
 		assert.Equal(t, "la categoría no es de ingreso", odinError.ExternalError())
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 
 	t.Run("return income and add amount to account balance", func(t *testing.T) {

@@ -42,7 +42,7 @@ func TestSessionStarterShould(t *testing.T) {
 		var odinError *odinerrors.Error
 		assert.True(t, errors.As(err, &odinError))
 		assert.Equal(t, "Correo o contraseña incorrectos", odinError.ExternalError())
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 	t.Run("return error when user is not found", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)

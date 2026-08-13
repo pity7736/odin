@@ -54,31 +54,31 @@ func NewFromRepository(id, name, userID string, initialBalance, balance moneymod
 func validateData(id, name, userID string, initialBalance, balance moneymodel.Money) error {
 	if initialBalance.IsNegative() {
 		return odinerrors.NewErrorBuilder("initial balance must be positive").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("initial balance must be positive").
 			Build()
 	}
 	if balance.IsNegative() {
 		return odinerrors.NewErrorBuilder("balance must be positive").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("balance must be positive").
 			Build()
 	}
 	if id == "" {
 		return odinerrors.NewErrorBuilder("id cannot be empty").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("id cannot be empty").
 			Build()
 	}
 	if name == "" {
 		return odinerrors.NewErrorBuilder("name cannot be empty").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("name cannot be empty").
 			Build()
 	}
 	if userID == "" {
 		return odinerrors.NewErrorBuilder("user id cannot be empty").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("user id cannot be empty").
 			Build()
 	}
@@ -88,7 +88,7 @@ func validateData(id, name, userID string, initialBalance, balance moneymodel.Mo
 func (self *Account) ValidateOwnership(requestContext *requestcontext.RequestContext) error {
 	if self.UserID() != requestContext.UserID() {
 		return odinerrors.NewErrorBuilder("cuenta no pertenece a usuario logueado").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("la cuenta no pertenece al usuario logueado").
 			Build()
 	}
@@ -123,19 +123,19 @@ func (self *Account) CreateIncome(amount moneymodel.Money, date time.Time, categ
 	minimalAmount := moneymodel.MustNew("1")
 	if amount.Less(minimalAmount) {
 		return nil, odinerrors.NewErrorBuilder("amount error").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("el monto debe ser mayor o igual a 1").
 			Build()
 	}
 	if self.createdAt.After(date) {
 		return nil, odinerrors.NewErrorBuilder("date error").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("la fecha del ingreso debe ser posterior a la fecha de creación de la cuenta").
 			Build()
 	}
 	if !category.IsIncome() {
 		return nil, odinerrors.NewErrorBuilder("category error").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage("la categoría no es de ingreso").
 			Build()
 	}

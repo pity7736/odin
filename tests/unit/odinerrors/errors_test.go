@@ -40,19 +40,19 @@ func TestNewError(t *testing.T) {
 
 	t.Run("when has a tag", func(t *testing.T) {
 		odinError := odinerrors.NewErrorBuilder("some domain error").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			Build()
 		var err *odinerrors.Error
 		ok := errors.As(odinError, &err)
 
 		assert.True(t, ok)
-		assert.Equal(t, odinerrors.DOMAIN, err.Tag())
+		assert.Equal(t, odinerrors.Domain, err.Tag())
 	})
 
 	t.Run("when new error wraps base error", func(t *testing.T) {
 		domainMessage := "some domain error"
 		applicationMessage := "some application error"
-		baseError := odinerrors.NewErrorBuilder(domainMessage).WithTag(odinerrors.DOMAIN).Build()
+		baseError := odinerrors.NewErrorBuilder(domainMessage).WithTag(odinerrors.Domain).Build()
 		externalError := "unexpected error"
 		wrapError := odinerrors.NewErrorBuilder(applicationMessage).
 			WithWrapped(baseError).
@@ -70,7 +70,7 @@ func TestNewError(t *testing.T) {
 		domainMessage := "some domain error"
 		domainExternalMessage := "account name cannot be empty"
 		baseError := odinerrors.NewErrorBuilder(domainMessage).
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			WithExternalMessage(domainExternalMessage).
 			Build()
 		applicationExternalMessage := "unexpected error"

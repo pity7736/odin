@@ -48,19 +48,19 @@ func (self *loginHandler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) e
 	if err := ctx.BodyParser(body); err != nil {
 		return odinerrors.NewErrorBuilder("wrong body").
 			WithExternalMessage("Datos de solicitud inválidos").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			Build()
 	}
 	if body.Email == "" {
 		return odinerrors.NewErrorBuilder("email is required").
 			WithExternalMessage("El correo es obligatorio").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			Build()
 	}
 	if body.Password == "" {
 		return odinerrors.NewErrorBuilder("password is required").
 			WithExternalMessage("La contraseña es obligatoria").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			Build()
 	}
 	return nil

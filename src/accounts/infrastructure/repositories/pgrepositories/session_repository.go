@@ -32,7 +32,7 @@ func (self *PGSessionRepository) Get(ctx context.Context, token string) (*sessio
 		delete(self.sessions, token)
 		return nil, odinerrors.NewErrorBuilder("session expired").
 			WithExternalMessage("Sesión expirada").
-			WithTag(odinerrors.DOMAIN).
+			WithTag(odinerrors.Domain).
 			Build()
 	}
 	return session, nil

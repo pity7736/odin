@@ -191,7 +191,7 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 	ok := errors.As(err, &odinError)
 	if ok {
 		switch odinError.Tag() {
-		case odinerrors.DOMAIN:
+		case odinerrors.Domain:
 			code = http.StatusBadRequest
 		case odinerrors.NotFound:
 			code = http.StatusNotFound

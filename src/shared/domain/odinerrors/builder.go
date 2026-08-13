@@ -44,7 +44,7 @@ func (self *OdinErrorBuilder) Build() error {
 	if self.err == nil {
 		err.location = getLocation()
 	} else {
-		if self.tag == UNKNOWN {
+		if self.tag == Unknown {
 			self.tag = self.err.Tag()
 		}
 	}
