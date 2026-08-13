@@ -56,20 +56,16 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 	})
 
 	t.Run("not overwrite buffer when creating multiple accounts", func(t *testing.T) {
-		// 1. Setup
 		repository := mocks.NewMockAccountRepository(t)
 		createAccountHandler := restcreateaccounthandler.New(repository)
 
-		// This slice will store pointers to the accounts passed to repository.Add
 		var capturedAccounts []*accountmodel.Account
 
-		// We configure the mock to capture the account object from each call
 		repository.On("Add", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 			account := args.Get(1).(*accountmodel.Account)
 			capturedAccounts = append(capturedAccounts, account)
 		}).Return(nil)
 
-		// 2. First request to create "nequi"
 		ctxBuilder1 := builders.NewFiberContextBuilder()
 		ctxBuilder1.WithMethod("POST").WithContentType(fiber.MIMEApplicationJSON)
 		ctxBuilder1.WithBody([]byte(`{"name": "nequi", "initial_balance": "100"}`))
@@ -78,7 +74,6 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		err1 := createAccountHandler.Handle(ctxBuilder1.Build())
 		assert.NoError(t, err1)
 
-		// 3. Second request to create "nu"
 		ctxBuilder2 := builders.NewFiberContextBuilder()
 		ctxBuilder2.WithMethod("POST").WithContentType(fiber.MIMEApplicationJSON)
 		ctxBuilder2.WithBody([]byte(`{"name": "nu", "initial_balance": "200"}`))
@@ -87,13 +82,8 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		err2 := createAccountHandler.Handle(ctxBuilder2.Build())
 		assert.NoError(t, err2)
 
-		// 4. Verification
-		// Check that two accounts were "saved"
 		assert.Equal(t, 2, len(capturedAccounts), "Expected two accounts to be captured")
 
-		// The crucial check: The first captured account's name must NOT have changed.
-		// If the fix is not applied, this will fail with:
-		// "Expected: 'nequi', Actual: 'nuqui'"
 		assert.Equal(t, "nequi", capturedAccounts[0].Name(), "The first account's name was overwritten")
 		assert.Equal(t, "nu", capturedAccounts[1].Name(), "The second account's name is incorrect")
 
