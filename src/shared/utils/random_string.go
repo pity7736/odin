@@ -1,13 +1,20 @@
 package utils
 
-import "math/rand"
+import (
+	"crypto/rand"
+	"math/big"
+)
 
 const letters string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func RandomString(length uint8) string {
+func RandomString(length uint8) (string, error) {
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = letters[n.Int64()]
 	}
-	return string(b)
+	return string(b), nil
 }

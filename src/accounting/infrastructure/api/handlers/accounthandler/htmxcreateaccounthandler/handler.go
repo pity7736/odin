@@ -23,7 +23,7 @@ func (self HTMXCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 		if renderError != nil {
 			return odinerrors.NewErrorBuilder("error rendering create account error block").
 				WithWrapped(renderError).
-				WithTag(odinerrors.RENDER).
+				WithTag(odinerrors.Render).
 				Build()
 		}
 		return odinerrors.NewErrorBuilder("error creating account").
@@ -35,7 +35,7 @@ func (self HTMXCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 	if renderError != nil {
 		return odinerrors.NewErrorBuilder("error rendering create account block").
 			WithWrapped(renderError).
-			WithTag(odinerrors.RENDER).
+			WithTag(odinerrors.Render).
 			Build()
 	}
 	return nil

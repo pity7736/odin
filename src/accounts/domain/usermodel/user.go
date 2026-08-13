@@ -1,13 +1,19 @@
 package usermodel
 
+import "github.com/google/uuid"
+
 type User struct {
-	email    string
-	id       string
-	password string
+	id             string
+	email          string
+	hashedPassword string
 }
 
-func New(id, email, password string) *User {
-	return &User{email: email, id: id, password: password}
+func New(email, hashedPassword string) (*User, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, err
+	}
+	return &User{id: id.String(), email: email, hashedPassword: hashedPassword}, nil
 }
 
 func (self *User) ID() string {
@@ -18,10 +24,6 @@ func (self *User) Email() string {
 	return self.email
 }
 
-func (self *User) Password() string {
-	return self.password
-}
-
-func (self *User) CheckPassword(password string) bool {
-	return self.password == password
+func (self *User) HashedPassword() string {
+	return self.hashedPassword
 }

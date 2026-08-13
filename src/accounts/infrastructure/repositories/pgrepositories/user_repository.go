@@ -3,7 +3,7 @@ package pgrepositories
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 )
@@ -14,11 +14,16 @@ type PGUserRepository struct {
 
 func NewPGUserRepository() *PGUserRepository {
 	users := make(map[string]*usermodel.User, 2)
-	id, _ := uuid.NewV7()
-	id2, _ := uuid.NewV7()
-	users["some@email.com"] = usermodel.New(id.String(), "some@email.com", "password")
-	users["some1@email.com"] = usermodel.New(id2.String(), "some1@email.com", "password")
+	user1, _ := usermodel.New("some@email.com", hashPassword("password"))
+	user2, _ := usermodel.New("some1@email.com", hashPassword("password"))
+	users["some@email.com"] = user1
+	users["some1@email.com"] = user2
 	return &PGUserRepository{users: users}
+}
+
+func hashPassword(password string) string {
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash)
 }
 
 func (self *PGUserRepository) GetByEmail(ctx context.Context, email string) (*usermodel.User, error) {

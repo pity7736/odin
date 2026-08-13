@@ -36,3 +36,31 @@ func GetJSONResponseFromRequestBuilder(application app.Application, requestBuild
 	}
 	return response
 }
+
+func GetHTMLResponseFromRequest(application app.Application, req *http.Request) (*http.Response, string) {
+	response, err := application.Test(req)
+	if err != nil {
+		panic(fmt.Errorf("error making request: %w", err))
+	}
+	defer func() { _ = response.Body.Close() }()
+	data := make([]byte, response.ContentLength)
+	_, _ = response.Body.Read(data)
+	return response, string(data)
+}
+
+func GetJSONResponseFromRequest(application app.Application, req *http.Request, responseData any) *http.Response {
+	response, err := application.Test(req)
+	if err != nil {
+		panic(fmt.Errorf("error making request: %w", err))
+	}
+	defer func() { _ = response.Body.Close() }()
+	if responseData != nil {
+		data := make([]byte, response.ContentLength)
+		_, _ = response.Body.Read(data)
+		err = json.Unmarshal(data, responseData)
+		if err != nil {
+			panic(fmt.Errorf("error unmarshalling response body: %w", err))
+		}
+	}
+	return response
+}

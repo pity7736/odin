@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type PGSessionRepository struct {
@@ -20,5 +21,29 @@ func (self *PGSessionRepository) Add(ctx context.Context, session *sessionmodel.
 }
 
 func (self *PGSessionRepository) Get(ctx context.Context, token string) (*sessionmodel.Session, error) {
-	return self.sessions[token], nil
+	session := self.sessions[token]
+	if session == nil {
+		return nil, odinerrors.NewErrorBuilder("session not found").
+			WithExternalMessage("Sesión no encontrada").
+			WithTag(odinerrors.NotFound).
+			Build()
+	}
+	if session.IsExpired() {
+		delete(self.sessions, token)
+		return nil, odinerrors.NewErrorBuilder("session expired").
+			WithExternalMessage("Sesión expirada").
+			WithTag(odinerrors.Domain).
+			Build()
+	}
+	return session, nil
+}
+
+func (self *PGSessionRepository) Save(ctx context.Context, session *sessionmodel.Session) error {
+	self.sessions[session.Token()] = session
+	return nil
+}
+
+func (self *PGSessionRepository) Delete(ctx context.Context, token string) error {
+	delete(self.sessions, token)
+	return nil
 }

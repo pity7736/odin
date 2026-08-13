@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
@@ -17,17 +18,21 @@ import (
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
+func newApplication(factory *testrepositoryfactory.Factory) app.Application {
+	return app.NewFiberApplication(factory, factory.GetSessionRepository(), factory.GetUserRepository(), bcrypthasher.New())
+}
+
 func TestRest(t *testing.T) {
 	t.Run("non existing email", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
+		application := newApplication(factory)
+		builder := userbuilder.New()
 		email := "some@email.com"
-		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, email, user.Password())
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, email, builder.Password())
 		var responseData map[string]string
 		repository := factory.GetUserRepositoryMock()
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/api/v1/auth/login").
 			WithPayload(body).
 			WithResponseData(&responseData).
@@ -37,15 +42,16 @@ func TestRest(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-		assert.Equal(t, "email or password are wrong", responseData["error"])
+		assert.Equal(t, "Correo o contraseña incorrectos", responseData["error"])
 		assert.Empty(t, responseData["token"])
 		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
 	})
 
 	t.Run("login with wrong data", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
+		application := newApplication(factory)
+		builder := userbuilder.New()
+		user := builder.Build()
 		testCases := []struct {
 			name          string
 			body          string
@@ -53,35 +59,35 @@ func TestRest(t *testing.T) {
 		}{
 			{
 				"when email is missing",
-				fmt.Sprintf(`{"password": "%s"}`, user.Password()),
-				"email is required",
+				fmt.Sprintf(`{"password": "%s"}`, builder.Password()),
+				"El correo es obligatorio",
 			},
 			{
 				"when email is empty",
-				fmt.Sprintf(`{"email": "", "password": "%s"}`, user.Password()),
-				"email is required",
+				fmt.Sprintf(`{"email": "", "password": "%s"}`, builder.Password()),
+				"El correo es obligatorio",
 			},
 			{
 				"when password is missing",
 				fmt.Sprintf(`{"email": "%s"}`, user.Email()),
-				"password is required",
+				"La contraseña es obligatoria",
 			},
 			{
 				"when password is empty",
 				fmt.Sprintf(`{"email": "%s", "password": ""}`, user.Email()),
-				"password is required",
+				"La contraseña es obligatoria",
 			},
 			{
 				"when body is wrong",
 				fmt.Sprintf(`{"email": "%s" "password": ""}`, user.Email()),
-				"wrong body",
+				"Datos de solicitud inválidos",
 			},
 		}
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
 				var responseData map[string]string
 				repository := factory.GetUserRepositoryMock()
-				requestBuilder := builders.NewRequestBuilder(factory).
+				requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 					WithPath("/api/v1/auth/login").
 					WithPayload(testCase.body).
 					WithResponseData(&responseData).
@@ -101,15 +107,16 @@ func TestRest(t *testing.T) {
 
 	t.Run("when email and password are correct", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), user.Password())
+		application := newApplication(factory)
+		builder := userbuilder.New()
+		user := builder.Build()
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), builder.Password())
 		var responseData map[string]string
 		userRepositoryMock := factory.GetUserRepositoryMock()
 		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
 		sessionRepositoryMock := factory.GetSessionRepositoryMock()
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/api/v1/auth/login").
 			WithPayload(body).
 			WithResponseData(&responseData).
@@ -128,8 +135,8 @@ func TestRest(t *testing.T) {
 func TestHTMX(t *testing.T) {
 	t.Run("get login form", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		requestBuilder := builders.NewRequestBuilder(factory).
+		application := newApplication(factory)
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/auth/login").
 			WithMethod("GET").
 			WithContentType("").
@@ -150,13 +157,13 @@ func TestHTMX(t *testing.T) {
 
 	t.Run("non existing email", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
+		application := newApplication(factory)
+		builder := userbuilder.New()
 		email := "some@email.com"
-		body := fmt.Sprintf("email=%s&password=%s", email, user.Password())
+		body := fmt.Sprintf("email=%s&password=%s", email, builder.Password())
 		repository := factory.GetUserRepositoryMock()
 		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/auth/login").
 			WithPayload(body).
 			WithContentType(fiber.MIMEApplicationForm).
@@ -165,20 +172,21 @@ func TestHTMX(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-		assert.True(t, strings.Contains(responseData, "email or password are wrong"))
+		assert.True(t, strings.Contains(responseData, "Correo o contraseña incorrectos"))
 		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
 	})
 
 	t.Run("when email and password are correct", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
-		application := app.NewFiberApplication(factory, factory)
-		user := userbuilder.New().Build()
-		body := fmt.Sprintf("email=%s&password=%s", user.Email(), user.Password())
+		application := newApplication(factory)
+		builder := userbuilder.New()
+		user := builder.Build()
+		body := fmt.Sprintf("email=%s&password=%s", user.Email(), builder.Password())
 		userRepositoryMock := factory.GetUserRepositoryMock()
 		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(user, nil)
 		sessionRepositoryMock := factory.GetSessionRepositoryMock()
 		sessionRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
-		requestBuilder := builders.NewRequestBuilder(factory).
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/auth/login").
 			WithPayload(body).
 			WithContentType(fiber.MIMEApplicationForm).

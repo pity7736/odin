@@ -139,7 +139,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 
 		assert.Nil(t, income)
 		assert.True(t, ok)
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 		assert.Equal(t, "la categoría no pertenece al usuario logueado", odinError.ExternalError())
 		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})
@@ -179,7 +179,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 
 		assert.Nil(t, income)
 		assert.True(t, ok)
-		assert.Equal(t, odinerrors.DOMAIN, odinError.Tag())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 		assert.Equal(t, "la cuenta no pertenece al usuario logueado", odinError.ExternalError())
 		incomeRepositoryMock.AssertNotCalled(t, "Add")
 	})

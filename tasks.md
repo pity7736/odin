@@ -13,32 +13,25 @@ Safety net that protects everything else. Must be in place before feature work.
 - [x] Set up test coverage measurement and establish baseline threshold (91.9%)
 - [x] Pre-commit hook (lint + test)
 
-## Priority 1 — Foundation
-
-Fix structural issues before specifying features.
-
-- [ ] `specs/shared/error-handling/` — Centralize error-to-HTTP mapping, fix empty response bodies, complete NOT_FOUND handling, error response format for REST and HTMX. Includes: add test cases for ignored Render errors in `htmxcreateincomehandler`, add test cases for ignored Create errors in category handler calls (`fiber_application.go`), and define how application-level validation errors (not domain errors) propagate to HTTP status codes
-- [ ] `specs/accounts/authentication/` — Consolidate auth (loginRequired everywhere, fix REST API nil dereference on invalid Bearer token, cookie + Bearer token handling)
-- [ ] `specs/shared/routing/` — Extract route registration from the god function in fiber_application.go, consistent auth middleware for all routes
-
-## Priority 2 — Core Accounting
+## Priority 1 — Core Accounting
 
 Existing features that need specs to document intended behavior and fix known bugs.
+Each plan should address relevant structural issues (error handling, auth, routing) as they arise.
 
-- [ ] `specs/accounting/accounts/` — Create, list, get account (known bugs: none after buffer fix)
-- [ ] `specs/accounting/categories/` — Create, list categories
-- [ ] `specs/accounting/income/` — Create income (known bug: balance subtracts instead of adds)
+- [ ] `specs/accounts/authentication/` — Login, session management, loginRequired consolidation, fix REST API nil dereference on invalid Bearer token
+- [ ] `specs/accounting/accounts/` — Create, list, get account
+- [ ] `specs/accounting/categories/` — Create, list categories. Plan must address: category handler Create error propagation (application errors vs domain errors). BUG: validation errors (empty name, empty type, invalid type) return 500 instead of 400 — commented-out tests in `tests/unit/accounting/infrastructure/api/category_api_test/category_test.go`
+- [ ] `specs/accounting/income/` — Create income (known bug: balance subtracts instead of adds). Plan must address: ignored Render errors in htmxcreateincomehandler, ignored Add/Save errors in incomecreator (needs transaction design)
 
-## Priority 3 — New Features
+## Tech Debt
+
+- [ ] Extend `RequestBuilder` to support partial/broken requests (raw cookies, raw headers) and remove duplicate utility functions in `tests/testutils/requests.go`
+- [ ] Review HTMX implementation: verify correct use of hx-* attributes, swap strategies, response handling config, and overall patterns across templates and handlers
+
+## Priority 2 — New Features
 
 Features from the original roadmap that need specs before implementation.
 
 - [ ] `specs/accounting/expenses/` — Create, list expenses
 - [ ] `specs/accounting/transfers/` — Create, list transfers
 - [ ] `specs/shared/postgres-repositories/` — Real DB implementation for all entities
-
-## Priority 4 — Hardening
-
-- [ ] `specs/shared/input-validation/` — Unique names for accounts and categories, payload validation
-- [ ] `specs/accounts/user-management/` — User invitations
-- [ ] `specs/accounting/financial-institutions/` — Create, get, link to accounts

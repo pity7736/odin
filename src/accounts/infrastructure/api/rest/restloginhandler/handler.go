@@ -1,10 +1,13 @@
 package restloginhandler
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type RestLoginHandler struct {
@@ -20,7 +23,9 @@ func (self *RestLoginHandler) HandleResponse(session *sessionmodel.Session) erro
 }
 
 func (self *RestLoginHandler) HandleBadRequest(err error) error {
-	return self.ctx.JSON(response{Token: "", Error: err.Error()})
+	var odinError *odinerrors.Error
+	errors.As(err, &odinError)
+	return self.ctx.JSON(response{Token: "", Error: odinError.ExternalError()})
 }
 
 func (self *RestLoginHandler) ContentType() string {

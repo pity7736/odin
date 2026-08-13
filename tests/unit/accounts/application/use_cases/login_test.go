@@ -1,4 +1,4 @@
-package login_test
+package use_cases_test
 
 import (
 	"context"
@@ -10,13 +10,16 @@ import (
 
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
 func TestLogin(t *testing.T) {
 	t.Run("Should be able to login", func(t *testing.T) {
-		user := userbuilder.New().Build()
+		builder := userbuilder.New()
+		user := builder.Build()
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
 		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
@@ -24,8 +27,10 @@ func TestLogin(t *testing.T) {
 		sessionRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(nil)
 		sessionStarter := sessionstarter.New(
 			user.Email(),
-			user.Password(),
-			factory,
+			builder.Password(),
+			factory.GetUserRepository(),
+			factory.GetSessionRepository(),
+			bcrypthasher.New(),
 		)
 		session, err := sessionStarter.Start(context.TODO())
 
@@ -36,7 +41,8 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Should not be able to login when repository return error", func(t *testing.T) {
-		user := userbuilder.New().Build()
+		builder := userbuilder.New()
+		user := builder.Build()
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
 		userRepository.EXPECT().GetByEmail(context.TODO(), user.Email()).Return(user, nil)
@@ -45,8 +51,10 @@ func TestLogin(t *testing.T) {
 		sessionRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(repoErr)
 		sessionStarter := sessionstarter.New(
 			user.Email(),
-			user.Password(),
-			factory,
+			builder.Password(),
+			factory.GetUserRepository(),
+			factory.GetSessionRepository(),
+			bcrypthasher.New(),
 		)
 		session, err := sessionStarter.Start(context.TODO())
 
@@ -56,7 +64,8 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Should not be able to login", func(t *testing.T) {
-		user := userbuilder.New().Build()
+		builder := userbuilder.New()
+		user := builder.Build()
 		factory := testrepositoryfactory.New(t)
 		sessionRepository := factory.GetSessionRepositoryMock()
 		testCases := []struct {
@@ -74,7 +83,7 @@ func TestLogin(t *testing.T) {
 			{
 				"when email is wrong",
 				"wrong@test.dev",
-				user.Password(),
+				builder.Password(),
 				nil,
 			},
 		}
@@ -82,15 +91,19 @@ func TestLogin(t *testing.T) {
 			t.Run(testCase.name, func(t *testing.T) {
 				userRepository := factory.GetUserRepositoryMock()
 				userRepository.EXPECT().GetByEmail(context.TODO(), testCase.email).Return(testCase.expectedUser, nil)
-				repoErr := errors.New("email or password are wrong")
 				sessionStarter := sessionstarter.New(
 					testCase.email,
 					testCase.password,
-					factory,
+					factory.GetUserRepository(),
+					factory.GetSessionRepository(),
+					bcrypthasher.New(),
 				)
 				session, err := sessionStarter.Start(context.TODO())
 
-				assert.Equal(t, repoErr, err)
+				var odinError *odinerrors.Error
+				assert.True(t, errors.As(err, &odinError))
+				assert.Equal(t, "Correo o contraseña incorrectos", odinError.ExternalError())
+				assert.Equal(t, odinerrors.Domain, odinError.Tag())
 				assert.Nil(t, session)
 				userRepository.AssertCalled(t, "GetByEmail", context.TODO(), testCase.email)
 				sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
@@ -99,7 +112,8 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Should not be able to login when user repository return err", func(t *testing.T) {
-		user := userbuilder.New().Build()
+		builder := userbuilder.New()
+		user := builder.Build()
 		factory := testrepositoryfactory.New(t)
 		userRepository := factory.GetUserRepositoryMock()
 		repoErr := errors.New("error getting user")
@@ -107,8 +121,10 @@ func TestLogin(t *testing.T) {
 		sessionRepository := factory.GetSessionRepositoryMock()
 		sessionStarter := sessionstarter.New(
 			user.Email(),
-			user.Password(),
-			factory,
+			builder.Password(),
+			factory.GetUserRepository(),
+			factory.GetSessionRepository(),
+			bcrypthasher.New(),
 		)
 		session, err := sessionStarter.Start(context.TODO())
 

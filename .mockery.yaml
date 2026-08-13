@@ -7,8 +7,8 @@ packages:
     interfaces:
       CategoryRepository:
       AccountRepository:
+      IncomeRepository:
   raiseexception.dev/odin/src/accounts/domain/repositories:
     interfaces:
       SessionRepository:
       UserRepository:
-      IncomeRepository:

@@ -1,10 +1,14 @@
 package htmxloginhandler
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 type HtmxLoginHandler struct {
@@ -17,7 +21,7 @@ func New(ctx *fiber.Ctx) loginhandler.LoginHandler {
 
 func (self *HtmxLoginHandler) HandleResponse(session *sessionmodel.Session) error {
 	cookie := fiber.Cookie{
-		Name:     "__Secure-odin-session",
+		Name:     handler.SessionName,
 		Value:    session.Token(),
 		Secure:   true,
 		HTTPOnly: true,
@@ -29,7 +33,9 @@ func (self *HtmxLoginHandler) HandleResponse(session *sessionmodel.Session) erro
 }
 
 func (self *HtmxLoginHandler) HandleBadRequest(err error) error {
-	return self.ctx.Render("login_error", LoginData{err.Error(), "/"}, "")
+	var odinError *odinerrors.Error
+	errors.As(err, &odinError)
+	return self.ctx.Render("login_error", LoginData{Error: odinError.ExternalError(), Next: "/"}, "")
 }
 
 func (self *HtmxLoginHandler) ContentType() string {

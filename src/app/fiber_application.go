@@ -8,23 +8,30 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
+
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxcreateaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccounthandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/htmxgetaccountshandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/restcreateaccounthandler"
-	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/incomehandler/htmxcreateincomehandler"
-	"raiseexception.dev/odin/src/shared/domain/odinerrors"
-	"raiseexception.dev/odin/src/shared/domain/requestcontext"
-	"raiseexception.dev/odin/src/shared/infrastructure/api"
-
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/categoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/htmx/htmxcategoryhandler"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/incomehandler/htmxcreateincomehandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/rest/restcategoryhandler"
 	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
-	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
+
+	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
+	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionvalidator"
+	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxloginhandler"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/htmx/htmxlogouthandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restloginhandler"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restlogouthandler"
+
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
+	"raiseexception.dev/odin/src/shared/domain/requestcontext"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 const categoriesPath = "/categories"
@@ -34,8 +41,11 @@ type fibberApplication struct {
 	app *fiber.App
 }
 
-func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory.RepositoryFactory,
-	accountsRepositoryFactory accountsrepositoryfactory.AccountsRepositoryFactory,
+func NewFiberApplication(
+	accountingRepositoryFactory accountingrepositoryfactory.RepositoryFactory,
+	sessionRepository accountsrepos.SessionRepository,
+	userRepository accountsrepos.UserRepository,
+	passwordHasher passwordhasher.PasswordHasher,
 ) Application {
 
 	engine := html.New(
@@ -48,124 +58,123 @@ func NewFiberApplication(accountingRepositoryFactory accountingrepositoryfactory
 		ErrorHandler: errorHandler,
 	})
 	app.Use(logger.New())
+	app.Use(cookieMiddleware(sessionRepository))
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
-	app.Use(func(c *fiber.Ctx) error {
-		cookie := c.Cookies("__Secure-odin-session")
-		c.Locals(requestcontext.Key, requestcontext.NewAnonymous())
-		if cookie != "" {
-			session, _ := accountsRepositoryFactory.GetSessionRepository().Get(c.Context(), cookie)
-			if session != nil {
-				c.Locals("userID", session.UserID())
-				requestContext, err := requestcontext.New(session.UserID())
-				if err != nil {
-					return err
-				}
-				c.Locals(requestcontext.Key, requestContext)
-			}
-		}
-		return c.Next()
-	})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", nil)
-	})
-	api := app.Group("/api")
-	apiV1 := api.Group("/v1")
-	apiV1.Use(func(c *fiber.Ctx) error {
-		authHeader := strings.Split(c.Get("Authorization", ""), " ")
-		if len(authHeader) == 2 {
-			session, _ := accountsRepositoryFactory.GetSessionRepository().Get(c.Context(), authHeader[1])
-			c.Locals("userID", session.UserID())
-		}
-		return c.Next()
-	})
-	apiV1.Post(categoriesPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			// TODO: handle error. design a way to handle app errors
-			_ = categoryhandler.New(
-				accountingRepositoryFactory.GetCategoryRepository(),
-				restcategoryhandler.New(ctx),
-			).Create(ctx)
-			return nil
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			return nil
-		}
-	})
-	apiV1.Get(categoriesPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			return categoryhandler.New(
-				accountingRepositoryFactory.GetCategoryRepository(),
-				restcategoryhandler.New(ctx),
-			).GetAll(ctx)
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			return nil
-		}
-	})
-	app.Post(categoriesPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			// TODO: handle error. design a way to handle app errors
-			_ = categoryhandler.New(
-				accountingRepositoryFactory.GetCategoryRepository(),
-				htmxcategoryhandler.New(ctx),
-			).Create(ctx)
-			return nil
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			return nil
-		}
-	})
-	app.Get(categoriesPath, func(ctx *fiber.Ctx) error {
-		if ctx.Locals("userID") != nil {
-			return categoryhandler.New(
-				accountingRepositoryFactory.GetCategoryRepository(),
-				htmxcategoryhandler.New(ctx),
-			).GetAll(ctx)
-		} else {
-			ctx.Status(http.StatusUnauthorized)
-			return nil
-		}
-	})
-	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(
-			accountsRepositoryFactory,
-			restloginhandler.New(ctx),
-		).Login(ctx)
-	})
-	apiV1.Post(accountPath, func(ctx *fiber.Ctx) error {
-		return restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle(ctx)
 	})
 	app.Get("/auth/login", func(ctx *fiber.Ctx) error {
 		next := ctx.Query("next", "/")
 		return ctx.Render("login", htmxloginhandler.LoginData{Error: "", Next: next})
 	})
 	app.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(
-			accountsRepositoryFactory,
-			htmxloginhandler.New(ctx),
-		).Login(ctx)
+		return loginhandler.New(userRepository, sessionRepository, passwordHasher, htmxloginhandler.New(ctx)).Login(ctx)
+	})
+	app.Post("/auth/logout", func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, logouthandler.New(sessionRepository, htmxlogouthandler.New(ctx)).Logout)
+	})
+	app.Post(categoriesPath, func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, categoryhandler.New(
+			accountingRepositoryFactory.GetCategoryRepository(),
+			htmxcategoryhandler.New(ctx),
+		).Create)
+	})
+	app.Get(categoriesPath, func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, categoryhandler.New(
+			accountingRepositoryFactory.GetCategoryRepository(),
+			htmxcategoryhandler.New(ctx),
+		).GetAll)
 	})
 	app.Get("/accounts/:accountID", func(ctx *fiber.Ctx) error {
-		return loginRequired(
-			ctx,
-			htmxgetaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()),
-		)
+		return loginRequired(ctx, htmxgetaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle)
 	})
 	app.Post("/accounts/:accountID/incomes", func(ctx *fiber.Ctx) error {
-		return loginRequired(
-			ctx,
-			htmxcreateincomehandler.New(accountingRepositoryFactory),
-		)
+		return loginRequired(ctx, htmxcreateincomehandler.New(accountingRepositoryFactory).Handle)
 	})
 	app.Post(accountPath, func(ctx *fiber.Ctx) error {
-		return loginRequired(ctx, htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()))
+		return loginRequired(ctx, htmxcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle)
 	})
 	app.Get(accountPath, func(ctx *fiber.Ctx) error {
-		return loginRequired(ctx, htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()))
+		return loginRequired(ctx, htmxgetaccountshandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle)
+	})
+	apiV1 := app.Group("/api/v1")
+	apiV1.Use(bearerMiddleware(sessionRepository))
+	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
+		return loginhandler.New(userRepository, sessionRepository, passwordHasher, restloginhandler.New(ctx)).Login(ctx)
+	})
+	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, logouthandler.New(sessionRepository, restlogouthandler.New(ctx)).Logout)
+	})
+	apiV1.Post(categoriesPath, func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, categoryhandler.New(
+			accountingRepositoryFactory.GetCategoryRepository(),
+			restcategoryhandler.New(ctx),
+		).Create)
+	})
+	apiV1.Get(categoriesPath, func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, categoryhandler.New(
+			accountingRepositoryFactory.GetCategoryRepository(),
+			restcategoryhandler.New(ctx),
+		).GetAll)
+	})
+	apiV1.Post(accountPath, func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, restcreateaccounthandler.New(accountingRepositoryFactory.GetAccountRepository()).Handle)
 	})
 	return &fibberApplication{app: app}
+}
+
+func cookieMiddleware(sessionRepository accountsrepos.SessionRepository) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		c.Locals(requestcontext.Key, requestcontext.NewAnonymous())
+		cookie := c.Cookies(handler.SessionName)
+		if cookie == "" {
+			return c.Next()
+		}
+		return validateSession(c, sessionRepository, cookie)
+	}
+}
+
+func bearerMiddleware(sessionRepository accountsrepos.SessionRepository) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		auth := c.Get("Authorization")
+		if !strings.HasPrefix(auth, "Bearer ") {
+			return c.Next()
+		}
+		token := strings.TrimPrefix(auth, "Bearer ")
+		return validateSession(c, sessionRepository, token)
+	}
+}
+
+func validateSession(c *fiber.Ctx, sessionRepository accountsrepos.SessionRepository, token string) error {
+	validator := sessionvalidator.New(sessionRepository)
+	session, err := validator.Validate(c.Context(), token)
+	if err != nil {
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+	if session == nil {
+		return c.Next()
+	}
+	requestCtx, err := requestcontext.New(session.UserID())
+	if err != nil {
+		return err
+	}
+	c.Locals(requestcontext.Key, requestCtx)
+	c.Locals("userID", session.UserID())
+	return c.Next()
+}
+
+func loginRequired(ctx *fiber.Ctx, handlerFn func(*fiber.Ctx) error) error {
+	requestCtx := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
+	if requestCtx.IsAuthenticated() {
+		return handlerFn(ctx)
+	}
+	if strings.HasPrefix(ctx.Path(), "/api/") {
+		return ctx.SendStatus(http.StatusUnauthorized)
+	}
+	ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
+	return ctx.Redirect("/auth/login?next=" + ctx.Path())
 }
 
 func (self *fibberApplication) Start() error {
@@ -176,27 +185,13 @@ func (self *fibberApplication) Test(request *http.Request) (*http.Response, erro
 	return self.app.Test(request, -1)
 }
 
-func loginRequired(ctx *fiber.Ctx, handler handler.Handler) error {
-	requestContext := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext)
-	if requestContext.IsAuthenticated() {
-		return handler.Handle(ctx)
-	}
-	if ctx.Get("Content-Type", "") == fiber.MIMEApplicationJSON {
-		ctx.Status(http.StatusUnauthorized)
-		ctx.Set("Content-Type", fiber.MIMEApplicationJSON)
-		return nil
-	}
-	ctx.Set("Content-Type", fiber.MIMETextHTMLCharsetUTF8)
-	return ctx.Redirect("/auth/login?next=" + ctx.Path())
-}
-
 func errorHandler(ctx *fiber.Ctx, err error) error {
 	var odinError *odinerrors.Error
 	code := http.StatusInternalServerError
 	ok := errors.As(err, &odinError)
 	if ok {
 		switch odinError.Tag() {
-		case odinerrors.DOMAIN:
+		case odinerrors.Domain:
 			code = http.StatusBadRequest
 		case odinerrors.NotFound:
 			code = http.StatusNotFound

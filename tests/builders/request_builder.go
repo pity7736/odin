@@ -9,31 +9,35 @@ import (
 	"net/http/httptest"
 
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
+	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
-	"raiseexception.dev/odin/src/accounts/infrastructure/accountsrepositoryfactory"
+	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
 type RequestBuilder struct {
-	method          string
-	path            string
-	contentType     string
-	payload         io.Reader
-	responseData    any
-	session         *sessionmodel.Session
-	accountsFactory accountsrepositoryfactory.AccountsRepositoryFactory
-	withSession     bool
-	user            *usermodel.User
+	method            string
+	path              string
+	contentType       string
+	payload           io.Reader
+	responseData      any
+	session           *sessionmodel.Session
+	userRepository    repositories.UserRepository
+	sessionRepository repositories.SessionRepository
+	withSession       bool
+	user              *usermodel.User
 }
 
-func NewRequestBuilder(accountsFactory accountsrepositoryfactory.AccountsRepositoryFactory) *RequestBuilder {
+func NewRequestBuilder(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository) *RequestBuilder {
 	return &RequestBuilder{
-		method:          "POST",
-		path:            "/",
-		contentType:     "",
-		withSession:     true,
-		accountsFactory: accountsFactory,
+		method:            "POST",
+		path:              "/",
+		contentType:       "",
+		withSession:       true,
+		userRepository:    userRepository,
+		sessionRepository: sessionRepository,
 	}
 }
 
@@ -85,19 +89,25 @@ func (self *RequestBuilder) Build() *http.Request {
 	}
 	if self.withSession {
 		session := self.session
-		user := self.user
 		if session == nil {
+			user := self.user
 			if user == nil {
-				user = userbuilder.New().Create(self.accountsFactory.GetUserRepository())
+				user = userbuilder.New().Create(self.userRepository)
 			}
-			sessionStarter := sessionstarter.New(user.Email(), user.Password(), self.accountsFactory)
+			sessionStarter := sessionstarter.New(
+				user.Email(),
+				userbuilder.DefaultPassword,
+				self.userRepository,
+				self.sessionRepository,
+				bcrypthasher.New(),
+			)
 			session, _ = sessionStarter.Start(context.TODO())
 		}
 		if self.contentType == "application/json" {
 			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", session.Token()))
 		} else {
 			request.AddCookie(&http.Cookie{
-				Name:     "__Secure-odin-session",
+				Name:     handler.SessionName,
 				Value:    session.Token(),
 				Secure:   true,
 				HttpOnly: true,

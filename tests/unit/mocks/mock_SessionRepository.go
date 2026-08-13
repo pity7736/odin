@@ -129,6 +129,100 @@ func (_c *MockSessionRepository_Get_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// Save provides a mock function with given fields: ctx, session
+func (_m *MockSessionRepository) Save(ctx context.Context, session *sessionmodel.Session) error {
+	ret := _m.Called(ctx, session)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Save")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *sessionmodel.Session) error); ok {
+		r0 = rf(ctx, session)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockSessionRepository_Save_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Save'
+type MockSessionRepository_Save_Call struct {
+	*mock.Call
+}
+
+// Save is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session *sessionmodel.Session
+func (_e *MockSessionRepository_Expecter) Save(ctx interface{}, session interface{}) *MockSessionRepository_Save_Call {
+	return &MockSessionRepository_Save_Call{Call: _e.mock.On("Save", ctx, session)}
+}
+
+func (_c *MockSessionRepository_Save_Call) Run(run func(ctx context.Context, session *sessionmodel.Session)) *MockSessionRepository_Save_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*sessionmodel.Session))
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_Save_Call) Return(_a0 error) *MockSessionRepository_Save_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockSessionRepository_Save_Call) RunAndReturn(run func(context.Context, *sessionmodel.Session) error) *MockSessionRepository_Save_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Delete provides a mock function with given fields: ctx, token
+func (_m *MockSessionRepository) Delete(ctx context.Context, token string) error {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockSessionRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockSessionRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *MockSessionRepository_Expecter) Delete(ctx interface{}, token interface{}) *MockSessionRepository_Delete_Call {
+	return &MockSessionRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, token)}
+}
+
+func (_c *MockSessionRepository_Delete_Call) Run(run func(ctx context.Context, token string)) *MockSessionRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_Delete_Call) Return(_a0 error) *MockSessionRepository_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockSessionRepository_Delete_Call) RunAndReturn(run func(context.Context, string) error) *MockSessionRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockSessionRepository creates a new instance of MockSessionRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockSessionRepository(t interface {
