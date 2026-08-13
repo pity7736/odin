@@ -20,8 +20,12 @@ Each plan should address relevant structural issues (error handling, auth, routi
 
 - [ ] `specs/accounts/authentication/` — Login, session management, loginRequired consolidation, fix REST API nil dereference on invalid Bearer token
 - [ ] `specs/accounting/accounts/` — Create, list, get account
-- [ ] `specs/accounting/categories/` — Create, list categories. Plan must address: category handler Create error propagation (application errors vs domain errors)
+- [ ] `specs/accounting/categories/` — Create, list categories. Plan must address: category handler Create error propagation (application errors vs domain errors). BUG: validation errors (empty name, empty type, invalid type) return 500 instead of 400 — commented-out tests in `tests/unit/accounting/infrastructure/api/category_api_test/category_test.go`
 - [ ] `specs/accounting/income/` — Create income (known bug: balance subtracts instead of adds). Plan must address: ignored Render errors in htmxcreateincomehandler, ignored Add/Save errors in incomecreator (needs transaction design)
+
+## Tech Debt
+
+- [ ] Extend `RequestBuilder` to support partial/broken requests (raw cookies, raw headers) and remove duplicate utility functions in `tests/testutils/requests.go`
 
 ## Priority 2 — New Features
 
