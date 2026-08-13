@@ -132,6 +132,47 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		assert.Equal(t, odinerrors.Render, odinError.Tag())
 	})
 
+	t.Run("return error when body is malformed", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody([]byte("%%%invalid%%%"))
+		createAccountHandler := htmxcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Contains(t, odinError.ExternalError(), "error creating account")
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
+	})
+
+	t.Run("return error when repository returns error", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		repositoryError := errors.New("some repository error")
+		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(repositoryError)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody(fmt.Appendf(nil,
+			"name=%s&initial_balance=%s",
+			"test",
+			"1000000",
+		))
+		createAccountHandler := htmxcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
+	})
+
 	t.Run("be able to create an account", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)

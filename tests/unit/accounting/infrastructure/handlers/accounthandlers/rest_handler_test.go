@@ -100,6 +100,25 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		repository.AssertNumberOfCalls(t, "Add", 2)
 	})
 
+	t.Run("return error when name is empty", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationJSON)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody([]byte(`{"name":"","initial_balance":"1000000"}`))
+		createAccountHandler := restcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, "validation error: name cannot be empty", odinError.ExternalError())
+		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+	})
+
 	t.Run("return error when initial balance is not valid", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		ctxBuilder := builders.NewFiberContextBuilder()
@@ -129,18 +148,13 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType("application/json")
 		defer ctxBuilder.Release()
-		initialBalance := "some value"
-		ctxBuilder.WithBody([]byte(fmt.Sprintf(
-			`"name":"%s","initial_balance": %s"`,
-			"test",
-			initialBalance,
-		)))
+		ctxBuilder.WithBody([]byte(`"name":"test","initial_balance": some value"`))
 		createAccountHandler := restcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 
 		err := createAccountHandler.Handle(ctx)
 
-		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "invalid character")
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
 	})
 
