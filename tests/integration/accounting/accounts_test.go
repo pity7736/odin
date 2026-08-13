@@ -173,6 +173,15 @@ func TestGetAccountsHTMXShould(t *testing.T) {
 
 		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 	})
+
+	t.Run("redirect to login when not authenticated", func(t *testing.T) {
+		application, _, _, _ := newIntegrationApp()
+		req := httptest.NewRequest("GET", "/accounts", nil)
+		response, err := application.Test(req)
+		assert.Nil(t, err)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusFound, response.StatusCode)
+	})
 }
 
 func TestAccountIntegrationShould(t *testing.T) {
@@ -201,56 +210,5 @@ func TestAccountIntegrationShould(t *testing.T) {
 		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-	})
-}
-
-func TestLogoutIntegrationShould(t *testing.T) {
-	t.Run("terminate session when authenticated via REST", func(t *testing.T) {
-		application, _, userRepository, sessionRepository := newIntegrationApp()
-		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
-		requestBuilder.
-			WithMethod("DELETE").
-			WithPath("/api/v1/auth/logout").
-			WithContentType(fiber.MIMEApplicationJSON)
-		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
-		defer func() { _ = response.Body.Close() }()
-		assert.Equal(t, http.StatusOK, response.StatusCode)
-	})
-}
-
-func TestCategoryIntegrationShould(t *testing.T) {
-	t.Run("create a category when authenticated", func(t *testing.T) {
-		application, _, userRepository, sessionRepository := newIntegrationApp()
-		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
-		body := `{"name": "Comida", "type": "expense"}`
-		requestBuilder.
-			WithMethod("POST").
-			WithPath("/api/v1/categories").
-			WithPayload(body).
-			WithContentType(fiber.MIMEApplicationJSON)
-		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
-		defer func() { _ = response.Body.Close() }()
-		assert.Equal(t, http.StatusCreated, response.StatusCode)
-	})
-	t.Run("retrieve categories when authenticated", func(t *testing.T) {
-		application, _, userRepository, sessionRepository := newIntegrationApp()
-		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
-		requestBuilder.
-			WithMethod("GET").
-			WithPath("/api/v1/categories").
-			WithContentType(fiber.MIMEApplicationJSON)
-		var responseData map[string]any
-		requestBuilder.WithResponseData(&responseData)
-		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
-		defer func() { _ = response.Body.Close() }()
-		assert.Equal(t, http.StatusOK, response.StatusCode)
-	})
-	t.Run("redirect to login when not authenticated", func(t *testing.T) {
-		application, _, _, _ := newIntegrationApp()
-		req := httptest.NewRequest("GET", "/accounts", nil)
-		response, err := application.Test(req)
-		assert.Nil(t, err)
-		defer func() { _ = response.Body.Close() }()
-		assert.Equal(t, http.StatusFound, response.StatusCode)
 	})
 }
