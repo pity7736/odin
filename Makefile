@@ -9,7 +9,7 @@ test:
 mocks:
 	go run github.com/vektra/mockery/v3
 
-COVERAGE_THRESHOLD := 91.8
+COVERAGE_THRESHOLD := 92
 
 coverage:
 	go test -coverprofile=coverage.out -coverpkg=./src/... ./...

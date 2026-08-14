@@ -103,7 +103,7 @@ func TestLogin(t *testing.T) {
 				var odinError *odinerrors.Error
 				assert.True(t, errors.As(err, &odinError))
 				assert.Equal(t, "Correo o contraseña incorrectos", odinError.ExternalError())
-				assert.Equal(t, odinerrors.Domain, odinError.Tag())
+				assert.Equal(t, odinerrors.Unauthorized, odinError.Tag())
 				assert.Nil(t, session)
 				userRepository.AssertCalled(t, "GetByEmail", context.TODO(), testCase.email)
 				sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)

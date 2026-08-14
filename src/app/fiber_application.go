@@ -162,6 +162,7 @@ func validateSession(c *fiber.Ctx, sessionRepository accountsrepos.SessionReposi
 	}
 	c.Locals(requestcontext.Key, requestCtx)
 	c.Locals("userID", session.UserID())
+	c.Locals(handler.SessionTokenKey, session.Token())
 	return c.Next()
 }
 
@@ -195,6 +196,8 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 			code = http.StatusBadRequest
 		case odinerrors.NotFound:
 			code = http.StatusNotFound
+		case odinerrors.Unauthorized:
+			code = http.StatusUnauthorized
 		default:
 		}
 	}

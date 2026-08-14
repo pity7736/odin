@@ -1,0 +1,9 @@
+name: local
+variables:
+  - name: host
+    value: http://localhost:8000/api/v1
+  - secret: true
+    name: token
+    description: Session token captured from the login response; sent as the Bearer token on login-required requests
+  - secret: true
+    name: password

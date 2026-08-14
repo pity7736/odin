@@ -102,6 +102,25 @@ func TestLogoutShould(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 	})
+	t.Run("REST logout terminates the bearer session even when a session cookie is also present", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		bearerToken := "bearer-token"
+		cookieToken := "cookie-token"
+		bearerSession := sessionmodel.NewFromRepository(bearerToken, "user-id", time.Now(), time.Now().Add(sessionmodel.DefaultTTL))
+		cookieSession := sessionmodel.NewFromRepository(cookieToken, "user-id", time.Now(), time.Now().Add(sessionmodel.DefaultTTL))
+		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, cookieToken).Return(cookieSession, nil)
+		factory.GetSessionRepositoryMock().EXPECT().Save(mock.Anything, cookieSession).Return(nil)
+		factory.GetSessionRepositoryMock().EXPECT().Get(mock.Anything, bearerToken).Return(bearerSession, nil)
+		factory.GetSessionRepositoryMock().EXPECT().Save(mock.Anything, bearerSession).Return(nil)
+		factory.GetSessionRepositoryMock().EXPECT().Delete(mock.Anything, bearerToken).Return(nil)
+		req := httptest.NewRequest("DELETE", "/api/v1/auth/logout", nil)
+		req.Header.Set("Authorization", "Bearer "+bearerToken)
+		req.AddCookie(&http.Cookie{Name: handler.SessionName, Value: cookieToken})
+		response, err := newApp(factory).Test(req)
+		assert.Nil(t, err)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+	})
 }
 
 func TestBearerMiddlewareShould(t *testing.T) {
