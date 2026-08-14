@@ -1,0 +1,27 @@
+info:
+  name: reject not logged in
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Nu",
+        "initial_balance": "100000",
+        "type": "savings",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  No Authorization header. Expect 401; the account is not created.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

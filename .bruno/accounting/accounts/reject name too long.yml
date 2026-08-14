@@ -1,0 +1,31 @@
+info:
+  name: reject name too long
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "initial_balance": "100000",
+        "type": "savings",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  Name is 256 characters (limit is 255). Expect 400 with body
+  { "error": "El nombre es demasiado largo" }.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

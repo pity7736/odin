@@ -37,7 +37,11 @@ func (self *CreateAccountHandler) Handle(ctx *fiber.Ctx) (*accountmodel.Account,
 func (self *CreateAccountHandler) createCommand(ctx *fiber.Ctx) (accountcreator.CreateAccountCommand, error) {
 	var body createAccountBody
 	if err := ctx.BodyParser(&body); err != nil {
-		return accountcreator.CreateAccountCommand{}, err
+		return accountcreator.CreateAccountCommand{}, odinerrors.NewErrorBuilder("wrong body").
+			WithExternalMessage("Datos de solicitud inválidos").
+			WithTag(odinerrors.Domain).
+			WithWrapped(err).
+			Build()
 	}
 	return body.toCommand()
 }

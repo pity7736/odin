@@ -1,0 +1,31 @@
+info:
+  name: create savings account
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Bancolombia Ahorros",
+        "initial_balance": "1500000.50",
+        "type": "savings",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  Happy path. Expect 201 with the full account in the body: id, name,
+  initial_balance, balance, type, currency, user_id, created_at.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

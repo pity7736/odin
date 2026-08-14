@@ -1,0 +1,32 @@
+info:
+  name: reject duplicate name and currency
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "cash",
+        "initial_balance": "100000",
+        "type": "cash",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  Run "create cash account" first so the (name, currency) already exists for
+  this user. Expect 400 with body
+  { "error": "Ya tienes una cuenta con ese nombre en esa moneda" }.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

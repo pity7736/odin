@@ -48,6 +48,22 @@ both HTMX (web) and REST (mobile).
   and translating the prefixes (which only turns clean redundancy into Spanish
   redundancy). A single generic Spanish fallback at the presentation boundary
   covers errors that carry no external at all.
+- **Each interface handler formats its own error body; the global `errorHandler`
+  owns only the `tag → status` mapping** — choice: on a failed create, the HTMX
+  handler renders the Spanish message as an HTML fragment and the REST handler
+  serializes it as `{"error": <external>}`; both then `return err`, and the
+  shared `errorHandler` (`src/app/fiber_application.go`) sets the HTTP status
+  from the error tag without writing a body. Reason: the *error* must be the
+  same across interfaces (same status, same Spanish external message), only the
+  *format* differs — HTML for the browser, JSON for the client — so formatting
+  belongs in each interface's own handler while the status mapping stays shared
+  and identical. This mirrors the pattern the HTMX handler already used.
+  Rejected: content-negotiation inside the global `errorHandler` (couples the
+  shared handler to a feature's template and OOB target) and letting the global
+  handler write a JSON body for everyone (would put JSON on HTMX error
+  responses). The Spanish fallback for a message-less error
+  (`"No se pudo crear la cuenta"`) is shared by both handlers via a single
+  `externalOrFallback` helper.
 - **Credit-card capacity/semantics deferred** — choice: initial balance ≥ 0 for
   all types; no credit-limit field. Reason: a limit only does work at spending
   time, which doesn't exist yet; adding a field with no consumer is speculative.
@@ -92,8 +108,14 @@ src/accounting/infrastructure/
     ├── restcreateaccounthandler/handler.go
     └── htmxcreateaccounthandler/handler.go
 
+src/shared/infrastructure/api/
+└── external_error.go
+
 src/shared/infrastructure/templates/pages/
 └── accounts.gohtml
+
+tests/unit/accounting/infrastructure/handlers/accounthandlers/
+└── rest_handler_test.go
 ```
 
 ## Data Flow
@@ -102,6 +124,7 @@ src/shared/infrastructure/templates/pages/
 POST /accounts  |  POST /api/v1/accounts   (loginRequired → RequestContext in Locals)
   → createaccounthandler.Handle
       parse body → name, raw initial balance, type, currency (strings.Clone each)
+      if body is not valid JSON → Domain error "Datos de solicitud inválidos" (400)
       if rawInitialBalance == "" → Domain error "El saldo inicial es obligatorio"  (missing)
       currency := moneymodel.CurrencyFromString(currencyCode)  → Domain error if not {COP,USD}
       accountType := accounttypemodel.NewFromString(typeCode)  → Domain error if not {savings,credit_card,cash}
@@ -114,8 +137,12 @@ POST /accounts  |  POST /api/v1/accounts   (loginRequired → RequestContext in 
     ← account (id, name, initialBalance, balance, type, currency, userID, createdAt)
   → HTMX: build an account view model (Spanish type label, ISO date); render the
     created row prepended at the top of the table via an out-of-band swap; on
-    error render the Spanish message into the #account-error container (also OOB).
-  → REST: JSON response with the type code, currency code, and RFC3339 created_at.
+    error render the Spanish message into the #account-error container (also OOB),
+    then return the error so errorHandler sets the status.
+  → REST: on success, JSON with the type code, currency code, and RFC3339
+    created_at; on error, JSON { "error": <Spanish external | fallback> }, then
+    return the error so errorHandler sets the status. The error body is written
+    by the REST handler itself — errorHandler writes no body.
 ```
 
 ## Request & Response
@@ -139,11 +166,15 @@ Owner is NOT a request field — it comes from the authenticated session.
 { "id": "...", "name": "Global66", "initial_balance": "1500000.50",
   "balance": "1500000.50", "type": "savings", "currency": "COP",
   "user_id": "...", "created_at": "<RFC3339>" }
-// error 400 — Spanish external message via the global errorHandler
+// error 400 — Spanish external message, written by the REST handler;
+//            status set from the error tag by the global errorHandler
 { "error": "El saldo inicial es obligatorio" }
 ```
 The type and currency stay as codes and `created_at` as RFC3339; a client
-localizes for display.
+localizes for display. Every rejection (blank/too-long name, duplicate
+name+currency, missing/invalid type, missing/invalid currency, missing/negative
+initial balance) returns the same `{ "error": <message> }` shape; a
+message-less error falls back to `"No se pudo crear la cuenta"`.
 
 **HTMX** — `POST /accounts` (form in `accounts.gohtml`)
 - Form fields: `name`, `initial_balance`, `type` (select), `currency` (select).
@@ -183,7 +214,10 @@ localizes for display.
 - **Reliability:** Uniqueness check prevents duplicate `(user, name, currency)`
   accounts; value objects make invalid type/currency unrepresentable; no panics
   in the create path; no ignored errors (render errors handled and tested).
-  Known non-atomicity of the in-memory uniqueness check is documented above.
+  Every rejection returns its Spanish reason in the response body (HTML for HTMX,
+  JSON for REST), guarded by a reproduction test per rejection path so no path
+  can silently regress to an empty body. Known non-atomicity of the in-memory
+  uniqueness check is documented above.
 - **Performance:** Deferred — single user, in-memory repository. The uniqueness
   check is an O(n) scan over the user's accounts, negligible at this scale;
   revisit with an indexed lookup in the Postgres feature.
