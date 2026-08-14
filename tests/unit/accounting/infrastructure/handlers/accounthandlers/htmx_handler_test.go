@@ -28,24 +28,23 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
-		initialBalance := "some value"
 		ctxBuilder.WithBody(fmt.Appendf(nil,
-			"name=%s&initial_balance=%s",
+			"name=%s&initial_balance=%s&type=savings&currency=COP",
 			"test",
-			initialBalance,
+			"some value",
 		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
 
 		err := createAccountHandler.Handle(ctx)
 		responseBody := string(ctx.Response().Body())
-		errorValue := fmt.Sprintf("%s is not valid money value", initialBalance)
+
 		var odinError *odinerrors.Error
 		ok := errors.As(err, &odinError)
 		assert.True(t, ok)
-		assert.Equal(t, fmt.Sprintf("error creating account: %s", errorValue), odinError.ExternalError())
+		assert.Equal(t, "El valor ingresado no es un monto válido", odinError.ExternalError())
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
-		assert.True(t, strings.Contains(responseBody, errorValue))
+		assert.True(t, strings.Contains(responseBody, "El valor ingresado no es un monto válido"))
 		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 
@@ -55,9 +54,33 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		ctxBuilder.WithBody(fmt.Appendf(nil,
-			"name=%s&initial_balance=%s",
+			"name=%s&initial_balance=%s&type=savings&currency=COP",
 			"",
 			"1000000",
+		))
+		repository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
+		createAccountHandler := htmxcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		responseBody := string(ctx.Response().Body())
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, "El nombre es obligatorio", odinError.ExternalError())
+		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
+		assert.True(t, strings.Contains(responseBody, "El nombre es obligatorio"))
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+	})
+
+	t.Run("return error when initial balance is missing", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody(fmt.Appendf(nil,
+			"name=test&type=savings&currency=COP",
 		))
 		createAccountHandler := htmxcreateaccounthandler.New(repository)
 		ctx := ctxBuilder.Build()
@@ -65,24 +88,67 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		err := createAccountHandler.Handle(ctx)
 
 		responseBody := string(ctx.Response().Body())
-		errorValue := "validation error: name cannot be empty"
 		var odinError *odinerrors.Error
 		ok := errors.As(err, &odinError)
 		assert.True(t, ok)
-		assert.Equal(t, fmt.Sprintf("error creating account: %s", errorValue), odinError.ExternalError())
-		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
-		assert.True(t, strings.Contains(responseBody, errorValue))
+		assert.Equal(t, "El saldo inicial es obligatorio", odinError.ExternalError())
+		assert.True(t, strings.Contains(responseBody, "El saldo inicial es obligatorio"))
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+	})
+
+	t.Run("return error when type is invalid", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody(fmt.Appendf(nil,
+			"name=test&initial_balance=1000&type=invalid&currency=COP",
+		))
+		createAccountHandler := htmxcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		responseBody := string(ctx.Response().Body())
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, "Tipo de cuenta inválido", odinError.ExternalError())
+		assert.True(t, strings.Contains(responseBody, "Tipo de cuenta inválido"))
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+	})
+
+	t.Run("return error when currency is invalid", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody(fmt.Appendf(nil,
+			"name=test&initial_balance=1000&type=savings&currency=EUR",
+		))
+		createAccountHandler := htmxcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		responseBody := string(ctx.Response().Body())
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, "Moneda inválida", odinError.ExternalError())
+		assert.True(t, strings.Contains(responseBody, "Moneda inválida"))
 		assert.Equal(t, odinerrors.Domain, odinError.Tag())
 	})
 
 	t.Run("return error when render fails on success", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
+		repository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		ctxBuilder.WithBody(fmt.Appendf(nil,
-			"name=%s&initial_balance=%s",
+			"name=%s&initial_balance=%s&type=savings&currency=COP",
 			"test",
 			"1000000",
 		))
@@ -110,7 +176,7 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		ctxBuilder.WithBody(fmt.Appendf(nil,
-			"name=%s&initial_balance=%s",
+			"name=%s&initial_balance=%s&type=savings&currency=COP",
 			"test",
 			"some value",
 		))
@@ -142,23 +208,26 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctx := ctxBuilder.Build()
 
 		err := createAccountHandler.Handle(ctx)
+		responseBody := string(ctx.Response().Body())
 
 		var odinError *odinerrors.Error
 		ok := errors.As(err, &odinError)
 		assert.True(t, ok)
-		assert.Contains(t, odinError.ExternalError(), "error creating account")
+		assert.Equal(t, "El saldo inicial es obligatorio", odinError.ExternalError())
+		assert.Contains(t, responseBody, "El saldo inicial es obligatorio")
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 	})
 
 	t.Run("return error when repository returns error", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
 		repositoryError := errors.New("some repository error")
+		repository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(repositoryError)
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
 		defer ctxBuilder.Release()
 		ctxBuilder.WithBody(fmt.Appendf(nil,
-			"name=%s&initial_balance=%s",
+			"name=%s&initial_balance=%s&type=savings&currency=COP",
 			"test",
 			"1000000",
 		))
@@ -166,15 +235,16 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		ctx := ctxBuilder.Build()
 
 		err := createAccountHandler.Handle(ctx)
+		responseBody := string(ctx.Response().Body())
 
-		var odinError *odinerrors.Error
-		ok := errors.As(err, &odinError)
-		assert.True(t, ok)
+		assert.Equal(t, repositoryError, err)
+		assert.Contains(t, responseBody, "No se pudo crear la cuenta")
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 	})
 
 	t.Run("be able to create an account", func(t *testing.T) {
 		repository := mocks.NewMockAccountRepository(t)
+		repository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		repository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		ctxBuilder := builders.NewFiberContextBuilder()
 		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationForm)
@@ -182,7 +252,7 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		accountName := "test"
 		initialBalance := "1000000"
 		ctxBuilder.WithBody(fmt.Appendf(nil,
-			"name=%s&initial_balance=%s",
+			"name=%s&initial_balance=%s&type=savings&currency=COP",
 			accountName,
 			initialBalance,
 		))
@@ -195,9 +265,10 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 		assert.True(t, strings.Contains(responseBody, accountName))
+		assert.True(t, strings.Contains(responseBody, "<td>Ahorros</td>"))
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", initialBalance)))
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", initialBalance)))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", time.Now().Format("Monday, _2 January 2006"))))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", time.Now().Format("2006-01-02"))))
 	})
 }
 
@@ -313,6 +384,7 @@ func TestGetAccountHTMXHandlerShould(t *testing.T) {
 
 		accountRepository := factory.GetAccountRepositoryMock()
 		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		accountRepository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepository)
 		accountRepository.EXPECT().GetByID(mock.Anything, "some id").Return(nil, errors.New("account not found"))
 		ctxBuilder := builders.NewFiberContextBuilder()
@@ -337,6 +409,7 @@ func TestGetAccountHTMXHandlerShould(t *testing.T) {
 
 		accountRepository := factory.GetAccountRepositoryMock()
 		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
+		accountRepository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		account := builders.NewAccountBuilder().
 			WithUserID(user.ID()).
 			Create(accountRepository)

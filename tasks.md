@@ -20,11 +20,13 @@ Each plan should address relevant structural issues (error handling, auth, routi
 
 - [ ] `specs/accounts/authentication/` — Login, session management, loginRequired consolidation, fix REST API nil dereference on invalid Bearer token
 - [ ] `specs/accounting/accounts/` — Create, list, get account
+  - [x] `specs/accounting/accounts/create/` — Create account
 - [ ] `specs/accounting/categories/` — Create, list categories. Plan must address: category handler Create error propagation (application errors vs domain errors). BUG: validation errors (empty name, empty type, invalid type) return 500 instead of 400 — commented-out tests in `tests/unit/accounting/infrastructure/api/category_api_test/category_test.go`
 - [ ] `specs/accounting/income/` — Create income (known bug: balance subtracts instead of adds). Plan must address: ignored Render errors in htmxcreateincomehandler, ignored Add/Save errors in incomecreator (needs transaction design)
 
 ## Tech Debt
 
+- [ ] Fix `.mockery.yaml` to use mockery v3 config syntax (`with-expecter` and `outpkg` are v2 keys rejected by v3) so `make mocks` works correctly and mocks are never hand-edited again
 - [ ] Extend `RequestBuilder` to support partial/broken requests (raw cookies, raw headers) and remove duplicate utility functions in `tests/testutils/requests.go`
 - [ ] Review HTMX implementation: verify correct use of hx-* attributes, swap strategies, response handling config, and overall patterns across templates and handlers
 
@@ -35,3 +37,4 @@ Features from the original roadmap that need specs before implementation.
 - [ ] `specs/accounting/expenses/` — Create, list expenses
 - [ ] `specs/accounting/transfers/` — Create, list transfers
 - [ ] `specs/shared/postgres-repositories/` — Real DB implementation for all entities
+- [ ] `specs/shared/i18n/` — Translation/localization system for all user-facing strings (labels, account type names, error messages) and localized long-form dates. Deferred until a second locale is needed; today the UI hardcodes Spanish. Would let clients (and the accounts-list view) share one source of localized labels instead of duplicating per view.

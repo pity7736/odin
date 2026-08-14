@@ -78,6 +78,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		categoryRepositoryMock.EXPECT().GetByID(ctx, categoryID).Return(nil, categoryError)
 
 		accountRepositoryMock := accountingFactory.GetAccountRepositoryMock()
+		accountRepositoryMock.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		accountRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepositoryMock)
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
@@ -118,6 +119,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		categoryRepositoryMock.EXPECT().GetByID(ctx, category.ID()).Return(category, nil)
 
 		accountRepositoryMock := accountingFactory.GetAccountRepositoryMock()
+		accountRepositoryMock.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		accountRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepositoryMock)
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
@@ -158,6 +160,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		//categoryRepositoryMock.EXPECT().GetByID(ctx, category.ID()).Return(category, nil)
 
 		accountRepositoryMock := accountingFactory.GetAccountRepositoryMock()
+		accountRepositoryMock.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		accountRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		account := builders.NewAccountBuilder().Create(accountRepositoryMock)
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)
@@ -198,6 +201,7 @@ func TestIncomeCreatorShould(t *testing.T) {
 		categoryRepositoryMock.EXPECT().GetByID(ctx, category.ID()).Return(category, nil)
 
 		accountRepositoryMock := accountingFactory.GetAccountRepositoryMock()
+		accountRepositoryMock.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		accountRepositoryMock.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepositoryMock)
 		accountRepositoryMock.EXPECT().GetByID(ctx, account.ID()).Return(account, nil)

@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
+	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -39,6 +40,60 @@ func (_m *MockAccountRepository) Add(ctx context.Context, account *accountmodel.
 	}
 
 	return r0
+}
+
+// ExistsByNameAndCurrency provides a mock function with given fields: ctx, name, currency
+func (_m *MockAccountRepository) ExistsByNameAndCurrency(ctx context.Context, name string, currency moneymodel.Currency) (bool, error) {
+	ret := _m.Called(ctx, name, currency)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExistsByNameAndCurrency")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, moneymodel.Currency) (bool, error)); ok {
+		return rf(ctx, name, currency)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, moneymodel.Currency) bool); ok {
+		r0 = rf(ctx, name, currency)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, moneymodel.Currency) error); ok {
+		r1 = rf(ctx, name, currency)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockAccountRepository_ExistsByNameAndCurrency_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistsByNameAndCurrency'
+type MockAccountRepository_ExistsByNameAndCurrency_Call struct {
+	*mock.Call
+}
+
+func (_e *MockAccountRepository_Expecter) ExistsByNameAndCurrency(ctx interface{}, name interface{}, currency interface{}) *MockAccountRepository_ExistsByNameAndCurrency_Call {
+	return &MockAccountRepository_ExistsByNameAndCurrency_Call{Call: _e.mock.On("ExistsByNameAndCurrency", ctx, name, currency)}
+}
+
+func (_c *MockAccountRepository_ExistsByNameAndCurrency_Call) Run(run func(ctx context.Context, name string, currency moneymodel.Currency)) *MockAccountRepository_ExistsByNameAndCurrency_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(moneymodel.Currency))
+	})
+	return _c
+}
+
+func (_c *MockAccountRepository_ExistsByNameAndCurrency_Call) Return(_a0 bool, _a1 error) *MockAccountRepository_ExistsByNameAndCurrency_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockAccountRepository_ExistsByNameAndCurrency_Call) RunAndReturn(run func(context.Context, string, moneymodel.Currency) (bool, error)) *MockAccountRepository_ExistsByNameAndCurrency_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // MockAccountRepository_Add_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Add'

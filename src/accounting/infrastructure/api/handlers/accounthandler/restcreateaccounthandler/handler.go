@@ -27,6 +27,8 @@ func (self RestCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 		ID:             account.ID(),
 		InitialBalance: account.InitialBalance().String(),
 		Balance:        account.Balance().String(),
+		Type:           account.Type().String(),
+		Currency:       account.Currency().String(),
 		UserID:         account.UserID(),
 		CreatedAt:      account.CreatedAt().Format(time.RFC3339),
 	})
@@ -36,6 +38,8 @@ type createAccountResponse struct {
 	Name           string `json:"name"`
 	InitialBalance string `json:"initial_balance"`
 	Balance        string `json:"balance"`
+	Type           string `json:"type"`
+	Currency       string `json:"currency"`
 	ID             string `json:"id"`
 	UserID         string `json:"user_id"`
 	CreatedAt      string `json:"created_at"`
