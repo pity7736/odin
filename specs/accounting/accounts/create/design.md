@@ -1,4 +1,4 @@
-# Technical Plan: Create Account
+# Technical Design: Create Account
 
 **Corresponds to Spec:** `specs/accounting/accounts/create/spec.md`
 

@@ -1,4 +1,4 @@
-# Technical Plan: Authentication
+# Technical Design: Authentication
 
 **Corresponds to Spec:** `specs/accounts/authentication/spec.md`
 

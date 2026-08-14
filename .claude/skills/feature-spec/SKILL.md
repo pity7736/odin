@@ -1,16 +1,35 @@
 ---
 name: feature-spec
-description: Spec-Driven Development workflow for Odin — covers starting a new feature, updating an existing one, AND fixing a bug in one. Use whenever creating or updating a feature's spec.md or plan.md under specs/, or fixing a defect in a feature's behavior, before writing any feature code. Produces a business-focused spec (the WHAT) and a technical plan (the HOW) using the canonical templates. Triggers on requests to "new feature", "write a spec", "create a plan", "update a feature", "fix a bug", "fix", or any work referencing specs/<module>/<feature>/.
+description: Spec-Driven Development workflow for Odin — covers starting a new feature, updating an existing one, AND fixing a bug in one. Use whenever creating or updating a feature's spec.md, design.md, or plan.md under specs/, or fixing a defect in a feature's behavior, before writing any feature code. Produces a business-focused spec (the WHAT), a per-change plan work order, and a durable technical design (the HOW/WHY) using the canonical templates. Triggers on requests to "new feature", "write a spec", "create a plan", "write a design", "update a feature", "fix a bug", "fix", or any work referencing specs/<module>/<feature>/.
 ---
 
 # Feature Spec Workflow (SDD)
 
 Every feature begins with **discovery** — questions to the user — because the
 spec's content lives in the user's head, not in a template or the code. Only
-after discovery come the **spec** (the WHAT) and the **plan** (the HOW), each
-written and reviewed before any code. This skill operationalizes that workflow.
-The human-facing narrative lives in `docs/03-sdd-workflow.md`; the canonical file
-formats live in the two templates beside this file.
+after discovery come the **spec** (the WHAT) and the **plan** (the work order for
+one change), each written and reviewed before any code. This skill operationalizes
+that workflow. The human-facing narrative lives in `docs/03-sdd-workflow.md`; the
+canonical file formats live in the three templates beside this file.
+
+**Three documents per feature — each with ONE stable role:**
+- **`spec.md`** — the WHAT, in business language. Living.
+- **`design.md`** — the durable HOW and WHY. Living, and the **single source of
+  truth** for anything durable. When design.md and a plan.md disagree, design.md
+  wins.
+- **`plan.md`** — the WORK ORDER for the *current* change (new feature, update,
+  or bug fix). Disposable: **overwritten wholesale** by the next change; git
+  history keeps every prior work order. It is never pruned or morphed — it is
+  simply rewritten each time.
+
+**Two rules keep this from degrading (do not skip either):**
+- **Hydrate before merge.** Before a change merges, the durable decisions the
+  work order introduced MUST be promoted into `design.md`. A decision that lives
+  only in `plan.md` is invisible to anyone reading `design.md`.
+- **Freeze after ship.** The moment a change merges, `plan.md` becomes a
+  read-only historical record. You do not keep editing it — it sits untouched
+  until the next change rewrites it from scratch. That is what stops it drifting
+  back into a shape-shifting doc.
 
 ## Discovery (ALWAYS do this first)
 
@@ -45,16 +64,18 @@ Only when the picture is complete do you proceed to write the spec.
 ## Files this skill owns
 
 - `spec-template.md` — canonical structure for every `spec.md`
+- `design-template.md` — canonical structure for every `design.md`
 - `plan-template.md` — canonical structure for every `plan.md`
 
-These templates are the single source of truth for spec/plan structure. Do not
-reconstruct the format from memory — always start from the template.
+These templates are the single source of truth for spec/design/plan structure.
+Do not reconstruct the format from memory — always start from the template.
 
 ## Location
 
-Both files go in a feature-specific folder, organized by module:
-`specs/<module>/<feature>/`. For atomic per-operation features, add an operation
-subfolder: `specs/accounting/accounts/create/`.
+All three files go in a feature-specific folder, organized by module:
+`specs/<module>/<feature>/` — `spec.md`, `design.md`, `plan.md`. For atomic
+per-operation features, add an operation subfolder:
+`specs/accounting/accounts/create/`.
 
 ## Workflow
 
@@ -86,19 +107,23 @@ Discovery (above) must be complete first.
       the plan until the user says yes. This is a separate approval from the
       plan review in step 5.
 
-4. **Write the plan** from the agreed discussion — at this stage it is a WORK
-   ORDER (it gets pruned to a living design doc after shipping, step 8). Copy
-   `plan-template.md` to the feature folder as `plan.md`. Capture the Design
-   Decisions & Rationale (the WHY), show touched files by real path in the
-   architecture tree, list bugs/gaps as checklist items, and complete the
-   mandatory Quality Pillars section (all four; "Deferred" only with
-   justification).
+4. **Write the plan (work order)** from the agreed discussion. Copy
+   `plan-template.md` to the feature folder as `plan.md`, **overwriting** any
+   previous work order (git keeps it). Fill the Change section (what/why + the
+   spec scenarios it satisfies), the delta architecture tree annotated
+   CREATE/MODIFY/REGEN (only the files THIS change touches), Key Types &
+   Signatures, Gaps / Bugs to Fix as checklist items, and the "Design decisions
+   to hydrate into design.md" checklist (every durable decision this change
+   introduces — this is the pre-merge hydrate list). The plan is the work order;
+   the durable design lives in `design.md` and is written/updated at the hydrate
+   gate (step 11), not now.
 
 5. **STOP for review.** The user approves the written plan before implementation.
 
-6. **Implement** in a FRESH session or subagent that works only from `spec.md`
-   and `plan.md` — not from the design conversation. If it cannot build from the
-   spec and plan alone, the plan was incomplete; that is useful signal, so stop
+6. **Implement** in a FRESH session or subagent that works only from `spec.md`,
+   the current `plan.md` work order, and (for an update or bug fix) the feature's
+   `design.md` — not from the design conversation. If it cannot build from those
+   files alone, the plan was incomplete; that is useful signal, so stop
    and fix the plan rather than filling gaps from memory. Follow TDD
    (Red-Green-Refactor): implement test-first in dependency order
    (domain → application → infrastructure); every spec scenario and every gap in
@@ -122,8 +147,9 @@ Discovery (above) must be complete first.
      `CLAUDE.md` (self receiver, no source comments, 100% coverage on business
      logic, descriptive names, internal errors English / external Spanish,
      `strings.Clone` on Fiber body data, constructor-after-struct ordering).
-   - **Plan conformance:** the implementation built what the plan describes, and
-     NO tests or functionality were removed unless the plan called for it.
+   - **Plan conformance:** the implementation built what the `plan.md` work order
+     describes, and NO tests or functionality were removed unless the plan called
+     for it.
    Report findings, discuss, and fix. After fixes, re-run `make check` GREEN.
    (Ad-hoc subagents for now; revisit dedicated implementer/reviewer agents with
    fixed model+effort later if feedback warrants.)
@@ -166,15 +192,22 @@ Discovery (above) must be complete first.
      not describe; that makes the spec lie.
    GATE on the user's approval.
 
-11. **Prune the plan into a living design doc** once everything above passes and
-   the feature ships. `plan.md` stops being a work order and becomes the durable record of
-   HOW and WHY. Delete the TRANSIENT sections (Key Types & Signatures, Gaps /
-   Bugs to Fix) and strip the CREATE/MODIFY/REGEN annotations from the
-   architecture tree. Keep the DURABLE sections (Overview, Design Decisions &
-   Rationale, architecture shape, Data Flow, Request & Response, Quality
-   Pillars). Do NOT keep a prose copy of code the source owns (signatures, field
-   lists) — that only drifts. The rationale is the point: it is what the code
-   cannot tell a future reader.
+11. **Hydrate `design.md`, then freeze `plan.md`** once everything above passes,
+   BEFORE the change merges. This is the hydrate gate — the one bit of discipline
+   the disposable-plan model depends on.
+   - **Hydrate:** work through the plan's "Design decisions to hydrate into
+     design.md" checklist. For a NEW feature, create `design.md` from
+     `design-template.md`, filled from the work order and the shipped code. For an
+     update or bug fix, edit the existing `design.md` in place so every durable
+     decision, data-flow change, contract change, and new limitation this change
+     introduced is reflected there. `design.md` must match the shipped code when
+     you are done. Do NOT copy code the source owns (signatures, field lists) —
+     capture the rationale, the thing the code cannot tell a future reader.
+   - **Freeze:** leave `plan.md` exactly as it is — it is now the historical work
+     order for this change. Do NOT prune it, do NOT edit it further. The next
+     change to this feature overwrites it from scratch; git keeps this one.
+   If a decision lives only in `plan.md` after this step, it is effectively lost —
+   that is the failure this gate exists to prevent.
 
 ## Updating an existing feature
 
@@ -187,24 +220,26 @@ plan at all — check before assuming this path applies.
 
 Discovery (above) must be complete first — including what is changing and why.
 
-There is one `spec.md` and one `plan.md` per feature; git preserves prior
-versions. Do NOT create per-change files (`plan-<change>.md`). The `spec.md` is
-always living. The `plan.md` at rest is a living design doc; an update re-opens
-it into a work order, then it is pruned back.
+There is one `spec.md`, one `design.md`, and one `plan.md` per feature. `spec.md`
+and `design.md` are living; `plan.md` is overwritten per change. Do NOT create
+per-change files (`plan-<change>.md`) — git history holds prior work orders.
 
 - Edit `spec.md` in place to reflect the new intended behavior. STOP for review
   before the plan.
-- Run the same **Plan investigation & discussion** step as the Workflow (read
-  the existing code, surface findings, discuss, and pass the "are you good with
-  the discussion?" gate) before writing anything.
-- Re-open `plan.md` into a WORK ORDER for this change: add back the transient
-  Key Types & Signatures and Gaps / Bugs to Fix for the delta, and update the
-  Design Decisions & Rationale.
+- Run the same **Plan investigation & discussion** step as the Workflow — and
+  read the existing `design.md` first, since it is the living record of how the
+  feature works today. Surface findings, discuss, and pass the "are you good with
+  the discussion?" gate before writing anything.
+- Write a fresh `plan.md` work order for this change from `plan-template.md`,
+  **overwriting** the previous work order (git keeps it). Fill the Change,
+  delta architecture tree, Key Types & Signatures, Gaps / Bugs to Fix, and the
+  "Design decisions to hydrate into design.md" checklist for the delta.
 - STOP for review before implementation.
 - Then implement, verify, review, manually review, update the Bruno collection,
-  manually test, and PRUNE exactly as Workflow steps 6–11 (fresh implementer;
-  `make check` gate; separate reviewer; your manual code review; Bruno REST
-  requests; your manual test; prune back to a living design doc).
+  manually test, and — at the hydrate gate — update `design.md` in place and
+  freeze `plan.md`, exactly as Workflow steps 6–11 (fresh implementer; `make
+  check` gate; separate reviewer; your manual code review; Bruno REST requests;
+  your manual test; hydrate `design.md`, freeze `plan.md`).
 
 ## Fixing a bug in an existing feature
 
@@ -231,7 +266,7 @@ first. For example, "rejections return an empty response body" is not one case �
 it is every rejection path: empty name, duplicate name+currency, invalid type,
 invalid currency, not-found, unauthorized, and so on. Missing one scenario
 leaves that path unguarded and free to regress. Add each reproduction test to
-the plan's Gaps / Bugs to Fix as its own checklist item.
+the `plan.md` work order's Gaps / Bugs to Fix as its own checklist item.
 
 Put these tests at the RIGHT LEVEL — the layer where the defect actually lives
 (see docs/04-tdd-workflow.md). A bug in domain or application logic is a unit
@@ -251,13 +286,14 @@ Then split by KIND (the same split as Workflow step 10):
   behavior and its Expected Behavior has a scenario for the case that broke; if
   that scenario is missing, add it (this is a spec gap, review it as in Workflow
   step 2). Otherwise go straight to **Plan investigation & discussion**: read the
-  feature's code, find the root cause, and discuss it. Re-open `plan.md` into a
-  WORK ORDER whose Gaps / Bugs to Fix names the actual defect and root cause,
-  and update Design Decisions & Rationale if the fix changes a decision. Then
-  implement, verify, review, manually review, update Bruno, manually test, and
-  PRUNE exactly as Workflow steps 6–11. The implementer works test-first: a
-  FAILING test that reproduces the bug comes before the fix (Red), then the fix
-  makes it green.
+  feature's `design.md` and code, find the root cause, and discuss it. Write a
+  fresh `plan.md` work order (overwriting the previous one) whose Gaps / Bugs to
+  Fix names the actual defect and root cause, and whose "Design decisions to
+  hydrate into design.md" checklist captures any decision the fix changes. Then
+  implement, verify, review, manually review, update Bruno, manually test, and —
+  at the hydrate gate — update `design.md` and freeze `plan.md`, exactly as
+  Workflow steps 6–11. The implementer works test-first: a FAILING test that
+  reproduces the bug comes before the fix (Red), then the fix makes it green.
 
 - **The spec itself is wrong or silent** (a behavior problem — the code does
   what the spec says, but the spec specifies the wrong thing) → this is not a
@@ -271,15 +307,25 @@ Then split by KIND (the same split as Workflow step 10):
 - Expected Behavior covers the happy path AND every rejection/edge case.
 - Out of Scope section present.
 
-## Checklist before handing a plan for review
+## Checklist before handing a plan (work order) for review
 
-- Corresponds-to-Spec link present.
-- Design Decisions & Rationale present (the WHY behind non-obvious choices, not a
-  copy of the code).
-- Gaps/bugs listed as actionable checklist items.
-- All four Quality Pillars addressed; any "Deferred" is justified.
-- Architecture & Files Summary tree present, laid out by layer, annotated
-  CREATE / MODIFY / REGEN.
-- Request & Response contract present (REST + HTMX), or explicitly "N/A — no
-  external interface". For HTMX, the swap is specified: target, strategy
-  (append/prepend decided), any out-of-band updates, or redirect/trigger.
+- Links to `design.md` and `spec.md` present.
+- Change section describes what this change does and why, and the spec scenarios
+  it satisfies.
+- Delta architecture tree present — ONLY the touched files, laid out by layer,
+  annotated CREATE / MODIFY / REGEN.
+- Gaps / Bugs to Fix listed as actionable checklist items; every spec scenario
+  and every gap has a test (for a bug, a FAILING reproduction test per path).
+- "Design decisions to hydrate into design.md" checklist present — every durable
+  decision this change introduces (empty only if nothing durable changed).
+
+## Checklist before merge (the hydrate gate)
+
+- `design.md` exists (created for a new feature) and matches the shipped code.
+- Every item on the plan's "Design decisions to hydrate into design.md" checklist
+  is now reflected in `design.md`: Design Decisions & Rationale, Data Flow,
+  Request & Response, Known Limitations, Quality Pillars (all four).
+- `design.md` contains no code the source owns (signatures, field lists) — only
+  the durable shape and the rationale.
+- `plan.md` is left frozen as the historical work order — not pruned, not edited
+  further.
