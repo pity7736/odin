@@ -101,6 +101,7 @@ func TestHTMXCreateIncomeHandlerShould(t *testing.T) {
 		user := userbuilder.New().Create(userRepository)
 
 		accountRepository := factory.GetAccountRepositoryMock()
+		accountRepository.EXPECT().ExistsByNameAndCurrency(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
 		accountRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		account := builders.NewAccountBuilder().WithUserID(user.ID()).Create(accountRepository)
 		accountRepository.EXPECT().GetByID(mock.Anything, account.ID()).Return(account, nil)

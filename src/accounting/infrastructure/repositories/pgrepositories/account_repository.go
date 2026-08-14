@@ -2,8 +2,10 @@ package pgrepositories
 
 import (
 	"context"
+	"strings"
 
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
+	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 )
@@ -19,6 +21,20 @@ func NewAccountRepository() *PGAccountRepository {
 func (self *PGAccountRepository) Add(ctx context.Context, account *accountmodel.Account) error {
 	self.accounts[account.ID()] = account
 	return nil
+}
+
+func (self *PGAccountRepository) ExistsByNameAndCurrency(ctx context.Context, name string, currency moneymodel.Currency) (bool, error) {
+	requestContext := ctx.Value(requestcontext.Key).(*requestcontext.RequestContext)
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	for _, account := range self.accounts {
+		if account.UserID() == requestContext.UserID() &&
+			strings.ToLower(account.Name()) == normalizedName &&
+			account.Currency().Equals(currency) {
+
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (self *PGAccountRepository) GetAll(ctx context.Context) ([]*accountmodel.Account, error) {
@@ -46,6 +62,5 @@ func (self *PGAccountRepository) GetByID(ctx context.Context, id string) (*accou
 }
 
 func (self *PGAccountRepository) Save(ctx context.Context, account *accountmodel.Account) error {
-	//TODO implement me
 	panic("implement me")
 }

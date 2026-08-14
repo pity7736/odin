@@ -37,7 +37,7 @@ const accountPath = "/accounts"
 func TestCreateAccountHtmxShould(t *testing.T) {
 	t.Run("create account when everything is ok", func(t *testing.T) {
 		application, _, userRepository, sessionRepository := newIntegrationApp()
-		body := fmt.Sprintf("name=%s&initial_balance=%s", "test", "10000")
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=COP", "test", "10000")
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
 			WithPath(accountPath).
 			WithContentType(fiber.MIMEApplicationForm).
@@ -50,9 +50,9 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
 	})
 
-	t.Run("return bad request when data is wrong", func(t *testing.T) {
+	t.Run("return bad request when balance is invalid", func(t *testing.T) {
 		application, _, userRepository, sessionRepository := newIntegrationApp()
-		body := fmt.Sprintf("name=%s&initial_balance=%s", "test", "aoeu")
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=COP", "test", "aoeu")
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
 			WithPath(accountPath).
 			WithContentType(fiber.MIMEApplicationForm).
@@ -65,9 +65,37 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
 	})
 
+	t.Run("return bad request when type is invalid", func(t *testing.T) {
+		application, _, userRepository, sessionRepository := newIntegrationApp()
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=invalid&currency=COP", "test", "10000")
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath(accountPath).
+			WithContentType(fiber.MIMEApplicationForm).
+			WithPayload(body)
+
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode)
+	})
+
+	t.Run("return bad request when currency is invalid", func(t *testing.T) {
+		application, _, userRepository, sessionRepository := newIntegrationApp()
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=EUR", "test", "10000")
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath(accountPath).
+			WithContentType(fiber.MIMEApplicationForm).
+			WithPayload(body)
+
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode)
+	})
+
 	t.Run("return redirect when request is anonymous", func(t *testing.T) {
 		application, _, userRepository, sessionRepository := newIntegrationApp()
-		body := fmt.Sprintf("name=%s&initial_balance=%s", "test", "10000")
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=COP", "test", "10000")
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
 			WithPath(accountPath).
 			WithContentType(fiber.MIMEApplicationForm).
@@ -85,7 +113,7 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 		application, _, userRepository, sessionRepository := newIntegrationApp()
 		user := userbuilder.New().Create(userRepository)
 		session, _ := sessionmodel.New(user.ID(), sessionmodel.DefaultTTL)
-		body := fmt.Sprintf("name=%s&initial_balance=%s", "test", "10000")
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=COP", "test", "10000")
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
 			WithPath(accountPath).
 			WithContentType(fiber.MIMEApplicationForm).
@@ -97,6 +125,70 @@ func TestCreateAccountHtmxShould(t *testing.T) {
 
 		assert.Equal(t, fiber.StatusFound, response.StatusCode)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, response.Header.Get("content-type"))
+	})
+
+	t.Run("reject duplicate name and currency for same user", func(t *testing.T) {
+		application, accountingFactory, userRepository, sessionRepository := newIntegrationApp()
+		user := userbuilder.New().Create(userRepository)
+		builders.NewAccountBuilder().
+			WithName("Global66").
+			WithUserID(user.ID()).
+			Create(accountingFactory.GetAccountRepository())
+
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=COP", "Global66", "10000")
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath(accountPath).
+			WithContentType(fiber.MIMEApplicationForm).
+			WithPayload(body).
+			WithUser(user)
+
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode)
+	})
+
+	t.Run("allow same name and currency for different users", func(t *testing.T) {
+		application, accountingFactory, userRepository, sessionRepository := newIntegrationApp()
+		user1 := userbuilder.New().Create(userRepository)
+		user2 := userbuilder.New().WithEmail("other@email.com").Create(userRepository)
+		builders.NewAccountBuilder().
+			WithName("Global66").
+			WithUserID(user1.ID()).
+			Create(accountingFactory.GetAccountRepository())
+
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=COP", "Global66", "10000")
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath(accountPath).
+			WithContentType(fiber.MIMEApplicationForm).
+			WithPayload(body).
+			WithUser(user2)
+
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, fiber.StatusCreated, response.StatusCode)
+	})
+
+	t.Run("allow same name in different currency for same user", func(t *testing.T) {
+		application, accountingFactory, userRepository, sessionRepository := newIntegrationApp()
+		user := userbuilder.New().Create(userRepository)
+		builders.NewAccountBuilder().
+			WithName("Global66").
+			WithUserID(user.ID()).
+			Create(accountingFactory.GetAccountRepository())
+
+		body := fmt.Sprintf("name=%s&initial_balance=%s&type=savings&currency=USD", "Global66", "10000")
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath(accountPath).
+			WithContentType(fiber.MIMEApplicationForm).
+			WithPayload(body).
+			WithUser(user)
+
+		response, _ := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, fiber.StatusCreated, response.StatusCode)
 	})
 }
 
@@ -188,7 +280,7 @@ func TestAccountIntegrationShould(t *testing.T) {
 	t.Run("create an account when authenticated", func(t *testing.T) {
 		application, _, userRepository, sessionRepository := newIntegrationApp()
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
-		body := `{"name": "Ahorros", "initial_balance": "100000"}`
+		body := `{"name": "Ahorros", "initial_balance": "100000", "type": "savings", "currency": "COP"}`
 		requestBuilder.
 			WithMethod("POST").
 			WithPath("/api/v1/accounts").
@@ -198,10 +290,11 @@ func TestAccountIntegrationShould(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 	})
+
 	t.Run("return error when account name is empty", func(t *testing.T) {
 		application, _, userRepository, sessionRepository := newIntegrationApp()
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository)
-		body := `{"name": "", "initial_balance": "100000"}`
+		body := `{"name": "", "initial_balance": "100000", "type": "savings", "currency": "COP"}`
 		requestBuilder.
 			WithMethod("POST").
 			WithPath("/api/v1/accounts").

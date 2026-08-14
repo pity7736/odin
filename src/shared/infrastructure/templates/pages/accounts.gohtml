@@ -1,11 +1,23 @@
 {{ define "create_account_form" }}
     <p>Crear cuenta</p>
+    <div id="account-error"></div>
     <div>
         <form hx-post="/accounts" hx-swap="none">
             <label for="name">Nombre</label>
             <input id="name" name="name" placeholder="nombre">
             <label for="initial_balance">Saldo inicial</label>
             <input id="initial_balance" name="initial_balance" placeholder="saldo inicial">
+            <label for="type">Tipo</label>
+            <select id="type" name="type">
+                <option value="savings">Ahorros</option>
+                <option value="credit_card">Tarjeta de crédito</option>
+                <option value="cash">Efectivo</option>
+            </select>
+            <label for="currency">Moneda</label>
+            <select id="currency" name="currency">
+                <option value="COP">COP</option>
+                <option value="USD">USD</option>
+            </select>
             <button type="submit">Crear</button>
         </form>
     </div>
@@ -17,6 +29,8 @@
         <thead>
             <tr>
                 <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Moneda</th>
                 <th>Saldo inicial</th>
                 <th>Saldo actual</th>
                 <th>Fecha apertura</th>
@@ -31,17 +45,20 @@
 {{ end }}
 
 {{ define "create_account_error" }}
-    {{ if .ExternalError }}
-        <p>{{ .ExternalError }}</p>
-    {{ end }}
+    <div id="account-error" hx-swap-oob="true">
+        {{ if .ExternalError }}
+            <p>{{ .ExternalError }}</p>
+        {{ end }}
+    </div>
 {{ end }}
 
 {{ define "account_created" }}
      <tr hx-swap-oob="afterbegin:#accounts-view" >
         <td><a href="/accounts/{{ .ID }}">{{ .Name }}</a></td>
+        <td>{{ .Type }}</td>
+        <td>{{ .Currency }}</td>
         <td>{{ .InitialBalance }}</td>
         <td>{{ .Balance }}</td>
         <td>{{ .CreatedAt.Format "Monday, _2 January 2006" }}</td>
      </tr>
 {{ end }}
-

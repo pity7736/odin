@@ -6,6 +6,7 @@ import (
 	accountmodel "raiseexception.dev/odin/src/accounting/domain/account"
 	"raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/incomemodel"
+	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
 )
 
 type CategoryRepository interface {
@@ -16,6 +17,7 @@ type CategoryRepository interface {
 
 type AccountRepository interface {
 	Add(ctx context.Context, account *accountmodel.Account) error
+	ExistsByNameAndCurrency(ctx context.Context, name string, currency moneymodel.Currency) (bool, error)
 	GetAll(ctx context.Context) ([]*accountmodel.Account, error)
 	GetByID(ctx context.Context, id string) (*accountmodel.Account, error)
 	Save(ctx context.Context, account *accountmodel.Account) error

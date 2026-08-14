@@ -1,9 +1,11 @@
 package accountmodel
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"raiseexception.dev/odin/src/accounting/domain/accounttypemodel"
 	categorymodel "raiseexception.dev/odin/src/accounting/domain/category"
 	"raiseexception.dev/odin/src/accounting/domain/incomemodel"
 	moneymodel "raiseexception.dev/odin/src/accounting/domain/money"
@@ -12,16 +14,17 @@ import (
 )
 
 type Account struct {
-	name           string
+	incomes        []*incomemodel.Income
 	initialBalance moneymodel.Money
-	userID         string
-	id             string
 	balance        moneymodel.Money
 	createdAt      time.Time
-	incomes        []*incomemodel.Income
+	accountType    accounttypemodel.AccountType
+	name           string
+	userID         string
+	id             string
 }
 
-func New(name, userID string, initialBalance moneymodel.Money) (*Account, error) {
+func New(name, userID string, initialBalance moneymodel.Money, accountType accounttypemodel.AccountType) (*Account, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
@@ -32,36 +35,39 @@ func New(name, userID string, initialBalance moneymodel.Money) (*Account, error)
 		userID,
 		initialBalance,
 		initialBalance,
+		accountType,
 		time.Now(),
 	)
 }
 
-func NewFromRepository(id, name, userID string, initialBalance, balance moneymodel.Money, createdAt time.Time) (*Account, error) {
-	err := validateData(id, name, userID, initialBalance, balance)
+func NewFromRepository(id, name, userID string, initialBalance, balance moneymodel.Money, accountType accounttypemodel.AccountType, createdAt time.Time) (*Account, error) {
+	trimmedName := strings.TrimSpace(name)
+	err := validateData(id, trimmedName, userID, initialBalance, balance)
 	if err != nil {
 		return nil, err
 	}
 	return &Account{
 		id:             id,
-		name:           name,
+		name:           trimmedName,
 		initialBalance: initialBalance,
 		userID:         userID,
 		balance:        balance,
+		accountType:    accountType,
 		createdAt:      createdAt,
 	}, nil
 }
 
 func validateData(id, name, userID string, initialBalance, balance moneymodel.Money) error {
 	if initialBalance.IsNegative() {
-		return odinerrors.NewErrorBuilder("initial balance must be positive").
+		return odinerrors.NewErrorBuilder("initial balance must not be negative").
 			WithTag(odinerrors.Domain).
-			WithExternalMessage("initial balance must be positive").
+			WithExternalMessage("El saldo inicial no puede ser negativo").
 			Build()
 	}
 	if balance.IsNegative() {
-		return odinerrors.NewErrorBuilder("balance must be positive").
+		return odinerrors.NewErrorBuilder("balance must not be negative").
 			WithTag(odinerrors.Domain).
-			WithExternalMessage("balance must be positive").
+			WithExternalMessage("El saldo no puede ser negativo").
 			Build()
 	}
 	if id == "" {
@@ -73,7 +79,13 @@ func validateData(id, name, userID string, initialBalance, balance moneymodel.Mo
 	if name == "" {
 		return odinerrors.NewErrorBuilder("name cannot be empty").
 			WithTag(odinerrors.Domain).
-			WithExternalMessage("name cannot be empty").
+			WithExternalMessage("El nombre es obligatorio").
+			Build()
+	}
+	if len([]rune(name)) > 255 {
+		return odinerrors.NewErrorBuilder("name is too long").
+			WithTag(odinerrors.Domain).
+			WithExternalMessage("El nombre es demasiado largo").
 			Build()
 	}
 	if userID == "" {
@@ -115,6 +127,14 @@ func (self *Account) Balance() moneymodel.Money {
 	return self.balance
 }
 
+func (self *Account) Type() accounttypemodel.AccountType {
+	return self.accountType
+}
+
+func (self *Account) Currency() moneymodel.Currency {
+	return self.balance.Currency()
+}
+
 func (self *Account) CreatedAt() time.Time {
 	return self.createdAt
 }
@@ -139,7 +159,6 @@ func (self *Account) CreateIncome(amount moneymodel.Money, date time.Time, categ
 			WithExternalMessage("la categoría no es de ingreso").
 			Build()
 	}
-	// TODO: handle error
 	incomeID, _ := uuid.NewV7()
 	income := incomemodel.New(incomeID.String(), amount, date)
 	self.balance = self.balance.Subtract(amount)

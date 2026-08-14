@@ -20,12 +20,20 @@ func New(command CreateAccountCommand, repository repositories.AccountRepository
 
 func (self *AccountCreator) Create(ctx context.Context) (*accountmodel.Account, error) {
 	requestContext := ctx.Value(requestcontext.Key).(*requestcontext.RequestContext)
-	account, err := accountmodel.New(self.command.Name(), requestContext.UserID(), self.command.InitialBalance())
+	currency := self.command.InitialBalance().Currency()
+	exists, err := self.repository.ExistsByNameAndCurrency(ctx, self.command.Name(), currency)
 	if err != nil {
-		return nil, odinerrors.NewErrorBuilder("error creating a new account").
-			WithWrapped(err).
-			WithExternalMessage("validation error").
+		return nil, err
+	}
+	if exists {
+		return nil, odinerrors.NewErrorBuilder("account with name and currency already exists for user").
+			WithExternalMessage("Ya tienes una cuenta con ese nombre en esa moneda").
+			WithTag(odinerrors.Domain).
 			Build()
+	}
+	account, err := accountmodel.New(self.command.Name(), requestContext.UserID(), self.command.InitialBalance(), self.command.AccountType())
+	if err != nil {
+		return nil, err
 	}
 	err = self.repository.Add(ctx, account)
 	if err != nil {
