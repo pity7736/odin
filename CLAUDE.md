@@ -32,12 +32,12 @@ Personal finance management application with dual interface: HTMX for web, REST 
 1. **READ DOCS FIRST:** Before implementing ANY feature, READ these files - This is MANDATORY:
    - `docs/02-architecture.md` - Understand the component structure
    - `docs/05-code-standards.md` - Follow coding conventions
-2. **Spec First:** Create `specs/<feature>/spec.md` and `plan.md` before coding
+2. **Spec First:** Create `specs/<feature>/spec.md` and a `plan.md` work order before coding; a feature also has a durable `design.md` (hydrated from the plan before merge). See `docs/03-sdd-workflow.md`.
    - **Specs must be business-focused, NOT technical** - Product managers must understand them
    - **NO technical terms in specs**: No Fiber, HTMX, Postgres, HTTP, API endpoints, etc.
    - Use business language: "users", "accounts", "income", "balance", etc.
    - Specs must include "Expected Behavior" section with Given/When/Then scenarios
-   - **ALL technical details go in plan.md ONLY**
+   - **ALL technical details go in `plan.md` / `design.md` ONLY**, never the spec
 3. **TDD Always:** Red-Green-Refactor for all business logic
 4. **Clean Architecture:** Domain -> Application -> Infrastructure (dependencies point inward)
 

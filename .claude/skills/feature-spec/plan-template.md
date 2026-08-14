@@ -3,132 +3,97 @@ CANONICAL PLAN FORMAT. This template is the single source of truth for the
 structure of a plan.md. Copy it into specs/<module>/<feature>/plan.md and fill
 every section, then DELETE all HTML comments.
 
-LIFECYCLE — a plan.md has TWO phases:
-- WORK ORDER (while building): all sections present; it guides implementation.
-- LIVING DESIGN DOC (after shipping): PRUNE it into a durable design + rationale
-  doc that matches the shipped feature. Pruning = delete the TRANSIENT sections
-  (Key Types & Signatures, Gaps / Bugs to Fix) and strip the CREATE/MODIFY
-  annotations from the tree. Keep the DURABLE sections (rationale, architecture
-  shape, data flow, contract, Quality Pillars). Never keep a prose copy of code
-  the source already owns (signatures, field lists) — that only drifts.
-Each section below is marked DURABLE or TRANSIENT.
+WHAT plan.md IS:
+- The WORK ORDER for ONE change to the feature (new feature, update, or bug fix).
+- Disposable and point-in-time. It guides the implementer for THIS change only.
+- Overwritten wholesale by the next change to the feature. git history keeps
+  every prior work order (`git log -- specs/<module>/<feature>/plan.md`), so
+  nothing is lost — there is no need to keep old plans in the tree, and NO
+  per-change filenames (plan-<change>.md). One plan.md, rewritten each time.
 
-RULES (from docs/03-sdd-workflow.md):
-- Audience: engineers. This is the HOW; the spec is the WHAT.
-- For EXISTING features: show the touched files (with real paths, annotated
-  MODIFY) in the Architecture & Files Summary tree, and flag bugs, missing
-  tests, and gaps as checklist items in Gaps / Bugs to Fix.
-- INCLUDE: Design Decisions & Rationale, an Architecture & Files Summary tree,
-  data flow, Quality Pillars, and — when the feature has an external interface —
-  a Request & Response contract. During the work-order phase also include Key
-  Types & Signatures and Gaps / Bugs to Fix (both pruned after shipping).
-- REFERENCE SWAPPABLE DEPENDENCIES BY THEIR PORT, NOT THEIR ADAPTER: a feature
-  plan depends on the repository INTERFACE (domain port), never the concrete
-  implementation (e.g. an in-memory or Postgres adapter). The concrete adapter
-  is owned by that adapter's own feature/plan and wired at the composition root,
-  so infra swaps do not touch feature plans.
-- DO NOT INCLUDE: full function bodies, complete business logic, detailed error
-  handling beyond naming the error types, OR any code-level implementation such
-  as SQL / query text / concrete queries — name the APPROACH, not the code. The
-  code is the single source of truth for the code; duplicating it here only
-  guarantees drift.
-- The Quality Pillars section is MANDATORY and must address all four pillars.
-  "Deferred" is allowed ONLY with a short justification (see docs/06-quality-pillars.md).
+LIFECYCLE:
+- WORK ORDER (while building): all sections present; it guides implementation.
+- FROZEN (after the change ships): the moment the change merges, plan.md becomes
+  a read-only historical record of that change. Do NOT keep editing it. It sits
+  untouched until the NEXT change rewrites it from scratch.
+
+THE HYDRATE GATE (do not skip):
+- Before a change merges, the DURABLE decisions this work order introduced MUST
+  be promoted ("hydrated") into design.md. design.md is the living source of
+  truth; plan.md is a snapshot. If a decision lives only in plan.md, it is lost
+  to future readers who read design.md. Hydrate first, then freeze.
+
+RULES:
+- design.md is the authority for anything durable. plan.md never restates the
+  full design — it references design.md and records only what THIS change does.
+- name the APPROACH, not the code: shapes/signatures to guide the implementer,
+  not full bodies or SQL. These are transient and the source owns them.
 -->
 
-# Technical Plan: <feature name>
+# Work Order: <feature name> — <this change in a few words>
 
+**Feature design:** `specs/<module>/<feature>/design.md` (the living source of truth)
 **Corresponds to Spec:** `specs/<module>/<feature>/spec.md`
 
-## Overview
-<!-- DURABLE. What this feature is, technically. For existing features, what
-     already exists vs what this plan changes (the "changes" framing is trimmed
-     to the durable description once the feature ships). -->
+> Work order for: **<this change>**. Disposable — overwritten by the next change
+> (git keeps the history). The living design is in design.md; hydrate it before
+> this change merges, then freeze this file.
 
-## Design Decisions & Rationale
-<!-- DURABLE — the heart of the living doc. The non-obvious choices and WHY, the
-     thing the code does NOT capture. One bullet per decision: the choice + the
-     reason + the alternative rejected. E.g. "Currency is derived from Money, not
-     stored on the account — avoids a second source of truth; rejected a separate
-     currency field." -->
-- ...
+## Change
+<!-- What this change does and WHY, in a few sentences. For a new feature: the
+     scope being built. For an update: what behavior changes and why. For a bug
+     fix: the observed wrong behavior, the expected behavior, and the root cause.
+     Link the spec scenarios this change satisfies. -->
 
-## Architecture & Files Summary
-<!-- DURABLE structure (TRANSIENT annotations). An annotated file-tree of the
-     packages/files this feature touches, laid out by layer (domain / application
-     / infrastructure / tests), annotated CREATE / MODIFY / REGEN. Doubles as the
-     architecture view AND the file manifest — no separate flat table. On pruning,
-     keep the tree structure, strip the CREATE/MODIFY/REGEN annotations. -->
+## Architecture & Files (this change)
+<!-- ONLY the files this change touches, annotated CREATE / MODIFY / REGEN, laid
+     out by layer. Not the whole feature tree (that lives in design.md) — just
+     the delta. -->
 ```
-src/<module>/domain/
-└── ...                                    # CREATE
-
-src/<module>/application/
-└── ...                                    # MODIFY
-
-src/<module>/infrastructure/
-└── ...                                    # MODIFY
+src/<module>/...
+└── ...                                    # CREATE | MODIFY | REGEN
 
 tests/...
-└── ...                                    # CREATE
-
-specs/<module>/<feature>/
-├── spec.md                                # CREATE
-└── plan.md                                # CREATE
+└── ...                                    # CREATE | MODIFY
 ```
-
-## Data Flow
-<!-- DURABLE. How a request moves through the layers for this operation. Keep it
-     to the sequence of components and what each one produces. -->
-
-## Request & Response
-<!-- DURABLE. ONLY when the feature has an external interface (a client sends data
-     and/or receives a response). For a purely internal change (domain refactor,
-     shared value object, background job) write "N/A — no external interface" and
-     skip. Show the CONTRACT/shape, illustrative — not implementation. Cover BOTH
-     interfaces where they differ: REST = JSON body/response; HTMX = form fields
-     in, rendered fragment or redirect out. -->
-
-**Request data** (fields the client provides):
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| ... | ... | ... | ... |
-
-**REST** — `<METHOD> /api/v1/<path>`
-```json
-// request
-{ ... }
-// success <status>
-{ ... }
-// error <status>
-{ ... }
-```
-
-**HTMX** — `<METHOD> /<path>`
-- Form fields: `...`
-- Success:
-  - Rendered fragment: `<template>` (e.g. the new list row)
-  - Target & swap: `<target element>`, `<strategy>` — for a list, choose
-    append (`beforeend`) vs prepend (`afterbegin`); DECIDE per feature.
-  - Out-of-band updates: `<e.g. reset the form, bump a counter>` (`hx-swap-oob`)
-  - Or, instead of a swap: `HX-Redirect` / `HX-Trigger: <event>`
-- Error: renders `<error template>` into `<target>`
 
 ## Key Types & Signatures
-<!-- TRANSIENT — pruned after shipping (the code owns these). Interfaces/type
-     shapes/signatures that guide the implementer. Ports, entity constructors,
-     command shapes, repository methods. Shapes, not bodies. -->
+<!-- Interfaces/type shapes/signatures that guide the implementer for THIS
+     change: ports, entity constructors, command shapes, repository methods.
+     Shapes, not bodies. Transient — the source owns these once written. Keep it
+     TERSE — do not describe every type in prose; that is code the source owns. -->
 
-## Gaps / Bugs to Fix
-<!-- TRANSIENT — pruned after shipping (all closed). Checklist. Each item: what is
-     wrong, where (file:line), and the correct behavior per the spec. -->
+## Implementation Phases (TDD)
+<!-- The ordered work for THIS change, phase by phase, in DEPENDENCY ORDER
+     (domain → application → infrastructure → mock regeneration). This is the
+     single list of what to build/fix and in what sequence — the implementer
+     follows it top to bottom.
+
+     Each phase states, concretely:
+     - Red:   the tests to write FIRST, and what they assert. Every spec scenario
+              and every gap MUST appear as a Red assertion somewhere.
+     - Green: what to implement to make them pass.
+
+     For a BUG FIX, Phase 1 is the FAILING reproduction tests — one Red assertion
+     per rejection/edge path the defect touches (see the SKILL's "cover EVERY
+     scenario the defect touches" rule) — and later phases are the fix. Put the
+     tests at the RIGHT LEVEL (the layer where the defect lives).
+
+     End with a mock-regeneration phase if any repository interface changed:
+     run `go run github.com/vektra/mockery/v3` after the interfaces are final. -->
+
+### Phase 1: <layer / concern>
+**Red:** <the tests to write first and what they assert>
+**Green:** <what to implement to make them pass>
+
+### Phase 2: <layer / concern>
+**Red:** ...
+**Green:** ...
+
+## Design decisions to hydrate into design.md
+<!-- The pre-merge checklist for the HYDRATE GATE. List every durable decision
+     THIS change introduced or altered that must be promoted into design.md
+     (Design Decisions & Rationale, Data Flow, Request & Response, Known
+     Limitations, Quality Pillars). Tick each once it is in design.md. Empty
+     only if the change genuinely altered nothing durable. -->
 - [ ] ...
-
-## Quality Pillars
-<!-- DURABLE. MANDATORY — one line minimum per pillar. "Deferred" needs a
-     justification. -->
-- **Security:** ...
-- **Reliability:** ...
-- **Performance:** ...
-- **Observability:** ...
