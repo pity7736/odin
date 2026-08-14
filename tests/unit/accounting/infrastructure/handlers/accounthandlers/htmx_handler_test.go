@@ -265,9 +265,10 @@ func TestCreateAccountHTMXHandlerShould(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, fiber.MIMETextHTMLCharsetUTF8, string(ctx.Response().Header.ContentType()))
 		assert.True(t, strings.Contains(responseBody, accountName))
+		assert.True(t, strings.Contains(responseBody, "<td>Ahorros</td>"))
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", initialBalance)))
 		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", initialBalance)))
-		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", time.Now().Format("Monday, _2 January 2006"))))
+		assert.True(t, strings.Contains(responseBody, fmt.Sprintf("<td>%s</td>", time.Now().Format("2006-01-02"))))
 	})
 }
 

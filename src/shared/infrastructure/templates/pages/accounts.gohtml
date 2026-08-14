@@ -2,7 +2,7 @@
     <p>Crear cuenta</p>
     <div id="account-error"></div>
     <div>
-        <form hx-post="/accounts" hx-swap="none">
+        <form hx-post="/accounts" hx-target="#account-error" hx-swap="innerHTML">
             <label for="name">Nombre</label>
             <input id="name" name="name" placeholder="nombre">
             <label for="initial_balance">Saldo inicial</label>
@@ -26,7 +26,7 @@
 {{ define "accounts" }}
     {{ template "create_account_form"}}
     <table id="accounts-table">
-        <thead>
+        <thead id="accounts-header">
             <tr>
                 <th>Nombre</th>
                 <th>Tipo</th>
@@ -45,20 +45,29 @@
 {{ end }}
 
 {{ define "create_account_error" }}
-    <div id="account-error" hx-swap-oob="true">
-        {{ if .ExternalError }}
-            <p>{{ .ExternalError }}</p>
-        {{ end }}
-    </div>
+<p>{{ .ExternalError }}</p>
 {{ end }}
 
 {{ define "account_created" }}
-     <tr hx-swap-oob="afterbegin:#accounts-view" >
+    <tr>
         <td><a href="/accounts/{{ .ID }}">{{ .Name }}</a></td>
         <td>{{ .Type }}</td>
         <td>{{ .Currency }}</td>
         <td>{{ .InitialBalance }}</td>
         <td>{{ .Balance }}</td>
         <td>{{ .CreatedAt.Format "Monday, _2 January 2006" }}</td>
-     </tr>
+    </tr>
+{{ end }}
+
+{{ define "account_created_oob" }}
+<tbody hx-swap-oob="afterend:#accounts-header">
+    <tr>
+        <td><a href="/accounts/{{ .ID }}">{{ .Name }}</a></td>
+        <td>{{ .Type }}</td>
+        <td>{{ .Currency }}</td>
+        <td>{{ .InitialBalance }}</td>
+        <td>{{ .Balance }}</td>
+        <td>{{ .CreatedAt }}</td>
+    </tr>
+</tbody>
 {{ end }}

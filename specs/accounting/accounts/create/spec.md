@@ -21,11 +21,15 @@ and current balance, so that I can start tracking my money in Odin.
   accounts with the same name in the same currency. Two different users may each
   have an account with the same name and currency.
 - The account type is required and must be one of: savings, credit card, cash.
+- The account type is shown to the user in Spanish: Ahorros (savings), Tarjeta
+  de crédito (credit card), Efectivo (cash).
 - The account currency is required and must be one of: COP, USD.
 - The initial balance is required, cannot be negative, and may include decimals.
 - At creation time the account's balance equals its initial balance.
 - The system assigns the account a unique identifier.
 - The system records the date the account was created.
+- The creation date is shown to the user in numeric year-month-day form (for
+  example, 2026-08-13).
 - When creation succeeds, all of the account's data is returned to the user.
 
 ## Expected Behavior

@@ -58,6 +58,22 @@ on `(owner, name, currency)`, and user-facing error messages in Spanish.
   spending time, which doesn't exist yet; adding a field with no consumer is
   speculative. Rejected: modeling credit-card debt/available-credit during
   creation.
+- **Display is product-facing, mapped in a reusable handler view model** —
+  choice: the Spanish type label (Ahorros / Tarjeta de crédito / Efectivo) and
+  the ISO `yyyy-mm-dd` creation date are built in a small reusable view model in
+  the handler layer; the created row renders from it, and the template stays
+  dumb. Reason: these are product decisions (in the spec), and mapping them in
+  Go keeps the domain free of localization and the mapping unit-testable —
+  unlike branching in an untestable template. `AccountType.String()` and the REST
+  response keep the English *code* AND the machine-readable RFC3339 `created_at`
+  (no mobile app yet; a future client localizes) — only the web view model
+  produces the Spanish label + ISO date. The view model is written
+  to be reused, but the **accounts-list rendering is NOT modified here** (listing
+  is a separate feature) — so a newly-created row shows Spanish/ISO while existing
+  list rows stay as-is until the list feature adopts the view model. Rejected:
+  branching in the template, and a Spanish label on the domain value object.
+  Full i18n (a translation system, localized long-form dates) remains a deferred
+  separate feature.
 
 ## Architecture & Files Summary
 
@@ -81,12 +97,13 @@ src/accounting/infrastructure/
 ├── repositories/pgrepositories/
 │   └── account_repository.go                               # MODIFY (implement ExistsByNameAndCurrency)
 └── api/handlers/accounthandler/
+    ├── accountviewmodel/account_view_model.go              # CREATE (reusable: Spanish type label + ISO date)
     ├── createaccounthandler/handler.go                     # MODIFY (body: type/currency, missing-balance check, Clone)
     ├── restcreateaccounthandler/handler.go                 # MODIFY (response: type/currency)
-    └── htmxcreateaccounthandler/handler.go                 # MODIFY (drop external wrap, generic fallback, audit ignored render errors)
+    └── htmxcreateaccounthandler/handler.go                 # MODIFY (drop external wrap, generic fallback, render created row from view model)
 
 src/shared/infrastructure/templates/pages/
-└── accounts.gohtml                                         # MODIFY (form type/currency inputs, row+header cols, OOB error target)
+└── accounts.gohtml                                         # MODIFY (form type/currency inputs, row+header cols, OOB error target, created row from view model — list render untouched)
 
 tests/
 ├── builders/account_builder.go                             # MODIFY (WithType/WithCurrency)
@@ -97,6 +114,7 @@ tests/
 ├── unit/accounting/application/use_cases/account/
 │   └── create_account_test.go                              # MODIFY
 ├── unit/accounting/infrastructure/handlers/accounthandlers/
+│   ├── account_view_model_test.go                          # CREATE (label + ISO date mapping)
 │   ├── rest_handler_test.go                                # MODIFY
 │   └── htmx_handler_test.go                                # MODIFY
 ├── integration/accounting/accounts_test.go                 # MODIFY
@@ -353,8 +371,25 @@ type AccountRepository interface {
 - [ ] **Audit ignored errors** in the create-path HTMX handler render calls; any
       `_ =` suppression must be handled and covered by a test (see project
       convention on ignored errors).
+- [ ] **Type shows the English code; date shows English long-form.** The created
+      row renders `{{ .Type }}` (the code `savings`) and
+      `CreatedAt.Format("Monday, _2 January 2006")` (English month/weekday). The
+      spec requires the type in Spanish and the date as ISO `yyyy-mm-dd`.
+      Introduce a small **reusable account view model** in the accounting handler
+      layer that maps the type code → Spanish label (Ahorros / Tarjeta de crédito
+      / Efectivo) and formats `CreatedAt` as `2006-01-02`; render the created row
+      from it and keep the template dumb. Keep `AccountType.String()` and the REST
+      response as the English code. Cover the mapping with a unit test. Do NOT
+      modify the accounts-list handler or its template (see known limitation).
 
 ### Known limitations (flagged, NOT fixed here)
+- The accounts-**list** rows (owned by the separate list feature) are not updated
+  to the Spanish-label / ISO-date view model, so existing rows keep the English
+  code/long-form date until the list feature adopts the reusable view model. Only
+  the newly-created row reflects the new display.
+- Full i18n (a translation system and localized long-form dates) is deferred to
+  its own future feature; this change hardcodes the single Spanish locale in the
+  view model, consistent with the rest of the app.
 - The uniqueness check is **not atomic** in the in-memory adapter (check-then-add).
   Acceptable for single-user/in-memory; revisit with the Postgres feature.
 - `PGAccountRepository.Save` panics and the repo is in-memory only. Create uses

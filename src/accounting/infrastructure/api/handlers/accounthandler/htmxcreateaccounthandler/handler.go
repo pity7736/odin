@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
+	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/accountviewmodel"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/createaccounthandler"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
@@ -30,7 +31,7 @@ func (self HTMXCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 		}
 		return err
 	}
-	renderErr := ctx.Render("account_created", account, "")
+	renderErr := ctx.Render("account_created_oob", accountviewmodel.New(account), "")
 	if renderErr != nil {
 		return odinerrors.NewErrorBuilder("error rendering create account block").
 			WithWrapped(renderErr).
