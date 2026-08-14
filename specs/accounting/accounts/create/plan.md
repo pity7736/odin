@@ -2,12 +2,6 @@
 
 **Corresponds to Spec:** `specs/accounting/accounts/create/spec.md`
 
-> **WORK ORDER (re-opened):** fix — REST rejections return the correct status but
-> an empty response body, so the user is never told why creation failed
-> (spec.md: every rejection scenario ends "the user is told …", and criterion
-> "the user is told the reason"). See **Gaps / Bugs to Fix**. Prune back to a
-> living design doc once shipped.
-
 ## Overview
 
 Registering a financial account: the user provides a name, an account type
@@ -111,17 +105,17 @@ src/accounting/infrastructure/
 └── api/handlers/accounthandler/
     ├── accountviewmodel/account_view_model.go
     ├── createaccounthandler/handler.go
-    ├── restcreateaccounthandler/handler.go          # MODIFY (write JSON error body)
-    └── htmxcreateaccounthandler/handler.go          # MODIFY (use shared externalOrFallback)
+    ├── restcreateaccounthandler/handler.go
+    └── htmxcreateaccounthandler/handler.go
 
 src/shared/infrastructure/api/
-└── external_error.go                                # CREATE (package handler: ExternalOrFallback)
+└── external_error.go
 
 src/shared/infrastructure/templates/pages/
 └── accounts.gohtml
 
 tests/unit/accounting/infrastructure/handlers/accounthandlers/
-└── rest_handler_test.go                             # MODIFY (assert error body on rejections)
+└── rest_handler_test.go
 ```
 
 ## Data Flow
@@ -209,62 +203,6 @@ message-less error falls back to `"No se pudo crear la cuenta"`.
 - `odinerrors.ExternalError()` emits a leading `": "` when a wrapping node has an
   empty external; not triggered here because errors are created once at origin and
   not chained, so left as-is.
-
-## Key Types & Signatures
-
-Shared fallback helper, moved out of the HTMX handler package so both handlers
-use one implementation:
-
-```
-package handler  // src/shared/infrastructure/api (dir already hosts package handler)
-func ExternalOrFallback(err error, fallback string) string
-```
-- Returns the error's Spanish `ExternalError()` when present, else `fallback`.
-- HTMX handler passes fallback `"No se pudo crear la cuenta"`; REST handler
-  passes the same fallback.
-
-REST handler error path (`restcreateaccounthandler/handler.go`):
-```
-account, err := self.handler.Handle(ctx)
-if err != nil {
-    _ = ctx.JSON(fiber.Map{"error": api.ExternalOrFallback(err, "No se pudo crear la cuenta")})
-    return err                 // errorHandler sets the status from the tag
-}
-```
-Content-type is already `application/json` (set before delegating). `errorHandler`
-is unchanged — it maps `tag → status` and writes no body.
-
-## Gaps / Bugs to Fix
-
-- [ ] **REST rejections return an empty body.** `restcreateaccounthandler/handler.go`
-      returns the error without writing a response body; the global `errorHandler`
-      (`src/app/fiber_application.go:204-205`) sets the status and writes nothing,
-      so every rejected create yields the right status with no message. Fix: the
-      REST handler writes `{ "error": ExternalOrFallback(err, …) }` before
-      returning the error.
-- [ ] **Extract `externalOrFallback` to `src/shared/infrastructure/api`** as
-      `ExternalOrFallback(err, fallback)`; update the HTMX handler to use it
-      (interim — ahead of the broader error-handling task).
-- [ ] **Reproduction tests (Red first) in `rest_handler_test.go`** — one per
-      rejection, asserting the response body carries the Spanish external
-      message: blank name → `El nombre es obligatorio`; duplicate name+currency →
-      `Ya tienes una cuenta con ese nombre en esa moneda`; missing initial
-      balance → `El saldo inicial es obligatorio`; invalid type → `Tipo de cuenta
-      inválido`; invalid currency → `Moneda inválida`; negative initial balance →
-      `El saldo inicial no puede ser negativo`; and the fallback branch
-      (message-less error, e.g. malformed body) → `No se pudo crear la cuenta`.
-      Extend the existing "return error when name is empty" and "initial balance
-      is not valid" tests with a body assertion rather than duplicating them.
-- [ ] **Delete `tests/unit/app/account_error_response_test.go`** — a premature
-      app-level file from the wrong first diagnosis; the defect is observable at
-      the REST handler's own unit level, so the tests belong in `rest_handler_test.go`.
-- [ ] **Malformed body returned 500, not 400** (found in manual test).
-      `createaccounthandler.createCommand` returned the raw `ctx.BodyParser` error
-      untagged, so the global `errorHandler` fell through to its 500 default. Fix:
-      wrap it as a `Domain`-tagged `odinError` with external "Datos de solicitud
-      inválidos" (mirrors `loginhandler.validateRequestBody`), preserving the parse
-      cause via `WithWrapped`. Guarded by the "return error when body is not valid"
-      test asserting `Tag() == Domain` and the message in the body.
 
 ## Quality Pillars
 
