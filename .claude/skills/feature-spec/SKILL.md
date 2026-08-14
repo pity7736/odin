@@ -112,9 +112,11 @@ Discovery (above) must be complete first.
    previous work order (git keeps it). Fill the Change section (what/why + the
    spec scenarios it satisfies), the delta architecture tree annotated
    CREATE/MODIFY/REGEN (only the files THIS change touches), Key Types &
-   Signatures, Gaps / Bugs to Fix as checklist items, and the "Design decisions
-   to hydrate into design.md" checklist (every durable decision this change
-   introduces — this is the pre-merge hydrate list). The plan is the work order;
+   Signatures, the **Implementation Phases (TDD)** — the ordered work in
+   dependency order (domain → application → infrastructure → mock regen), each
+   phase with its Red (tests first) and Green (implementation) — and the "Design
+   decisions to hydrate into design.md" checklist (every durable decision this
+   change introduces — this is the pre-merge hydrate list). The plan is the work order;
    the durable design lives in `design.md` and is written/updated at the hydrate
    gate (step 11), not now.
 
@@ -232,8 +234,8 @@ per-change files (`plan-<change>.md`) — git history holds prior work orders.
   the discussion?" gate before writing anything.
 - Write a fresh `plan.md` work order for this change from `plan-template.md`,
   **overwriting** the previous work order (git keeps it). Fill the Change,
-  delta architecture tree, Key Types & Signatures, Gaps / Bugs to Fix, and the
-  "Design decisions to hydrate into design.md" checklist for the delta.
+  delta architecture tree, Key Types & Signatures, Implementation Phases (TDD),
+  and the "Design decisions to hydrate into design.md" checklist for the delta.
 - STOP for review before implementation.
 - Then implement, verify, review, manually review, update the Bruno collection,
   manually test, and — at the hydrate gate — update `design.md` in place and
@@ -265,8 +267,8 @@ distinct test. Enumerate them before writing the fix and do not stop at the
 first. For example, "rejections return an empty response body" is not one case —
 it is every rejection path: empty name, duplicate name+currency, invalid type,
 invalid currency, not-found, unauthorized, and so on. Missing one scenario
-leaves that path unguarded and free to regress. Add each reproduction test to
-the `plan.md` work order's Gaps / Bugs to Fix as its own checklist item.
+leaves that path unguarded and free to regress. Add each reproduction test as a
+Red assertion in Phase 1 of the `plan.md` work order's Implementation Phases.
 
 Put these tests at the RIGHT LEVEL — the layer where the defect actually lives
 (see docs/04-tdd-workflow.md). A bug in domain or application logic is a unit
@@ -287,9 +289,10 @@ Then split by KIND (the same split as Workflow step 10):
   that scenario is missing, add it (this is a spec gap, review it as in Workflow
   step 2). Otherwise go straight to **Plan investigation & discussion**: read the
   feature's `design.md` and code, find the root cause, and discuss it. Write a
-  fresh `plan.md` work order (overwriting the previous one) whose Gaps / Bugs to
-  Fix names the actual defect and root cause, and whose "Design decisions to
-  hydrate into design.md" checklist captures any decision the fix changes. Then
+  fresh `plan.md` work order (overwriting the previous one) whose Implementation
+  Phases open with the failing reproduction tests (Phase 1) and name the actual
+  defect and root cause, and whose "Design decisions to hydrate into design.md"
+  checklist captures any decision the fix changes. Then
   implement, verify, review, manually review, update Bruno, manually test, and —
   at the hydrate gate — update `design.md` and freeze `plan.md`, exactly as
   Workflow steps 6–11. The implementer works test-first: a FAILING test that
@@ -314,8 +317,10 @@ Then split by KIND (the same split as Workflow step 10):
   it satisfies.
 - Delta architecture tree present — ONLY the touched files, laid out by layer,
   annotated CREATE / MODIFY / REGEN.
-- Gaps / Bugs to Fix listed as actionable checklist items; every spec scenario
-  and every gap has a test (for a bug, a FAILING reproduction test per path).
+- Implementation Phases (TDD) present, ordered by dependency (domain → app →
+  infra → mock regen), each with Red (tests first) and Green; every spec scenario
+  and every gap appears as a Red assertion (for a bug, a FAILING reproduction
+  test per path in Phase 1).
 - "Design decisions to hydrate into design.md" checklist present — every durable
   decision this change introduces (empty only if nothing durable changed).
 

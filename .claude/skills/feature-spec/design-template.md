@@ -13,7 +13,7 @@ WHAT design.md IS:
 
 WHAT design.md IS NOT:
 - Not a work order. The per-change, disposable "what I'm about to do" lives in
-  plan.md (see plan-template.md). design.md never holds Gaps/Bugs checklists,
+  plan.md (see plan-template.md). design.md never holds Implementation Phases,
   CREATE/MODIFY annotations, or literal code signatures the source owns.
 
 RULES (from docs/03-sdd-workflow.md):

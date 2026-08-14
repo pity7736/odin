@@ -39,7 +39,7 @@ skill (`.claude/skills/feature-spec/SKILL.md`). This document is the narrative.
 ## Plan File (The work order for one change)
 
 - **Audience:** Engineers (and the implementer subagent).
-- **Purpose:** To guide the implementer through **one change** — a new feature, an update, or a bug fix. It carries the change description, the delta architecture (touched files, annotated CREATE/MODIFY/REGEN), the type/signature shapes, the gaps/bugs to fix as a checklist, and the list of durable decisions to hydrate into `design.md`.
+- **Purpose:** To guide the implementer through **one change** — a new feature, an update, or a bug fix. It carries the change description, the delta architecture (touched files, annotated CREATE/MODIFY/REGEN), the type/signature shapes, the **Implementation Phases (TDD)** — the ordered work in dependency order, each phase with its Red (tests first) and Green (implementation) — and the list of durable decisions to hydrate into `design.md`.
 - **Disposable and point-in-time.** There is one `plan.md` per feature, **overwritten wholesale** by the next change. git history keeps every prior work order (`git log -- specs/<module>/<feature>/plan.md`), so nothing is lost. **Do not create per-change files** (`plan-<change>.md`).
 - **Frozen after ship.** The moment a change merges, `plan.md` becomes a read-only historical record of that change. It is not pruned and not edited further — it sits untouched until the next change rewrites it from scratch.
 - **For existing features:** the plan shows only the touched files (real paths) in its delta tree and flags bugs, missing tests, and gaps as items to fix.
@@ -82,6 +82,6 @@ When an existing feature's own behavior or implementation genuinely changes:
 
 1. **Edit the spec in place** (only if intended behavior changes). For a bug where the spec is already correct, the spec does not change — the code diverges from it.
 2. **Read the existing `design.md`** — it is the living record of how the feature works today — then investigate the code and discuss the change.
-3. **Write a fresh `plan.md` work order** for this change, overwriting the previous one (git keeps it). For a bug fix, its Gaps / Bugs to Fix lists a FAILING reproduction test per path the defect touches.
+3. **Write a fresh `plan.md` work order** for this change, overwriting the previous one (git keeps it). For a bug fix, its Implementation Phases open with a FAILING reproduction test (Phase 1) per path the defect touches.
 4. **Implement, review, and manually test** following TDD.
 5. **At the hydrate gate:** update `design.md` in place to reflect the change, then freeze `plan.md`.

@@ -60,14 +60,35 @@ tests/...
 ## Key Types & Signatures
 <!-- Interfaces/type shapes/signatures that guide the implementer for THIS
      change: ports, entity constructors, command shapes, repository methods.
-     Shapes, not bodies. Transient — the source owns these once written. -->
+     Shapes, not bodies. Transient — the source owns these once written. Keep it
+     TERSE — do not describe every type in prose; that is code the source owns. -->
 
-## Gaps / Bugs to Fix
-<!-- Checklist. Each item: what is wrong / to build, where (file:line), and the
-     correct behavior per the spec. Every spec scenario and every gap needs a
-     test. For a bug fix, list the FAILING reproduction test(s) first — one per
-     rejection/edge path the defect touches. -->
-- [ ] ...
+## Implementation Phases (TDD)
+<!-- The ordered work for THIS change, phase by phase, in DEPENDENCY ORDER
+     (domain → application → infrastructure → mock regeneration). This is the
+     single list of what to build/fix and in what sequence — the implementer
+     follows it top to bottom.
+
+     Each phase states, concretely:
+     - Red:   the tests to write FIRST, and what they assert. Every spec scenario
+              and every gap MUST appear as a Red assertion somewhere.
+     - Green: what to implement to make them pass.
+
+     For a BUG FIX, Phase 1 is the FAILING reproduction tests — one Red assertion
+     per rejection/edge path the defect touches (see the SKILL's "cover EVERY
+     scenario the defect touches" rule) — and later phases are the fix. Put the
+     tests at the RIGHT LEVEL (the layer where the defect lives).
+
+     End with a mock-regeneration phase if any repository interface changed:
+     run `go run github.com/vektra/mockery/v3` after the interfaces are final. -->
+
+### Phase 1: <layer / concern>
+**Red:** <the tests to write first and what they assert>
+**Green:** <what to implement to make them pass>
+
+### Phase 2: <layer / concern>
+**Red:** ...
+**Green:** ...
 
 ## Design decisions to hydrate into design.md
 <!-- The pre-merge checklist for the HYDRATE GATE. List every durable decision
