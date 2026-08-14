@@ -7,4 +7,5 @@ const (
 	Domain
 	Render
 	NotFound
+	Unauthorized
 )

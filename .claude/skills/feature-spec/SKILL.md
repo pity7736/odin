@@ -137,7 +137,20 @@ Discovery (above) must be complete first.
    resolved and agreed changes applied, the agent asks "is everything OK?" and
    waits for the user's approval. GATE.
 
-9. **Manual test** by the user, who runs the application themselves. The agent
+9. **Update the Bruno collection** so the user can exercise the API without
+   hand-building requests. REST only: web/HTMX is tested in the browser, not
+   Bruno. **One request per endpoint is NOT enough** — a lone happy-path request
+   only proves the happy path and is close to useless for finding defects. Add a
+   SEPARATE, named request for every meaningful scenario the endpoint has: the
+   success case AND each rejection and edge case (wrong credentials, missing /
+   empty / malformed fields, unauthorized access, not-found, conflicts, etc.).
+   Mirror the spec's Expected Behavior scenarios one-to-one — if a scenario has
+   no request, it will not get tested. Create/update the
+   `.bruno/<area>/<request>.yml` files and keep shared values (`host`, auth
+   token, secrets) in the environment file, not inline in requests.
+
+10. **Manual test** by the user, who runs the application themselves — the API
+   with the Bruno requests from step 9, the web in the browser. The agent
    waits. What the user finds routes by KIND:
    - **A bug** (the code does not match the spec) → fix in the code, re-run
      `make check` GREEN.
@@ -147,7 +160,7 @@ Discovery (above) must be complete first.
      not describe; that makes the spec lie.
    GATE on the user's approval.
 
-10. **Prune the plan into a living design doc** once everything above passes and
+11. **Prune the plan into a living design doc** once everything above passes and
    the feature ships. `plan.md` stops being a work order and becomes the durable record of
    HOW and WHY. Delete the TRANSIENT sections (Key Types & Signatures, Gaps /
    Bugs to Fix) and strip the CREATE/MODIFY/REGEN annotations from the
@@ -182,14 +195,15 @@ it into a work order, then it is pruned back.
   Key Types & Signatures and Gaps / Bugs to Fix for the delta, and update the
   Design Decisions & Rationale.
 - STOP for review before implementation.
-- Then implement, verify, review, manually review/test, and PRUNE exactly as
-  Workflow steps 6–10 (fresh implementer; `make check` gate; separate reviewer;
-  your manual code review and manual test; prune back to a living design doc).
+- Then implement, verify, review, manually review, update the Bruno collection,
+  manually test, and PRUNE exactly as Workflow steps 6–11 (fresh implementer;
+  `make check` gate; separate reviewer; your manual code review; Bruno REST
+  requests; your manual test; prune back to a living design doc).
 
 ## Checklist before handing a spec for review
 
 - No technical terms anywhere in the spec.
-- User Story present (As a… I want… so that…).
+- User Stories present — one or more, each As a… I want… so that…
 - Expected Behavior covers the happy path AND every rejection/edge case.
 - Out of Scope section present.
 

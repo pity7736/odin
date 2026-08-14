@@ -1,6 +1,7 @@
 package loginhandler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -76,9 +77,24 @@ func (self *loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
 	)
 	session, err := starter.Start(ctx.Context())
 	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return self.handler.HandleBadRequest(err)
+		return self.handleError(ctx, err)
 	}
 	ctx.Status(http.StatusCreated)
 	return self.handler.HandleResponse(session)
+}
+
+func (self *loginHandler) handleError(ctx *fiber.Ctx, err error) error {
+	var odinError *odinerrors.Error
+	if !errors.As(err, &odinError) {
+		return err
+	}
+	switch odinError.Tag() {
+	case odinerrors.Unauthorized:
+		ctx.Status(http.StatusUnauthorized)
+	case odinerrors.Domain:
+		ctx.Status(http.StatusBadRequest)
+	default:
+		return err
+	}
+	return self.handler.HandleBadRequest(err)
 }

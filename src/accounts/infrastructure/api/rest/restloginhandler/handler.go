@@ -19,13 +19,13 @@ func New(ctx *fiber.Ctx) loginhandler.LoginHandler {
 }
 
 func (self *RestLoginHandler) HandleResponse(session *sessionmodel.Session) error {
-	return self.ctx.JSON(response{Token: session.Token(), Error: ""})
+	return self.ctx.JSON(response{Token: session.Token()})
 }
 
 func (self *RestLoginHandler) HandleBadRequest(err error) error {
 	var odinError *odinerrors.Error
 	errors.As(err, &odinError)
-	return self.ctx.JSON(response{Token: "", Error: odinError.ExternalError()})
+	return self.ctx.JSON(response{Error: odinError.ExternalError()})
 }
 
 func (self *RestLoginHandler) ContentType() string {
@@ -33,6 +33,6 @@ func (self *RestLoginHandler) ContentType() string {
 }
 
 type response struct {
-	Token string `json:"token"`
-	Error string `json:"error"`
+	Token string `json:"token,omitempty"`
+	Error string `json:"error,omitempty"`
 }

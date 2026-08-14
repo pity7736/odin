@@ -48,7 +48,7 @@ func (self SessionStarter) start(ctx context.Context, user *usermodel.User) (*se
 	}
 	return nil, odinerrors.NewErrorBuilder("email or password are wrong").
 		WithExternalMessage("Correo o contraseña incorrectos").
-		WithTag(odinerrors.Domain).
+		WithTag(odinerrors.Unauthorized).
 		Build()
 }
 

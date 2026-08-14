@@ -1,8 +1,6 @@
 package logouthandler
 
 import (
-	"strings"
-
 	"github.com/gofiber/fiber/v2"
 
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionterminator"
@@ -27,21 +25,10 @@ func New(sessionRepository repositories.SessionRepository, handler LogoutHandler
 }
 
 func (self *logoutHandler) Logout(ctx *fiber.Ctx) error {
-	token := self.extractToken(ctx)
+	token, _ := ctx.Locals(handler.SessionTokenKey).(string)
 	terminator := sessionterminator.New(self.sessionRepository)
 	if err := terminator.Terminate(ctx.Context(), token); err != nil {
 		return err
 	}
 	return self.handler.HandleResponse()
-}
-
-func (self *logoutHandler) extractToken(ctx *fiber.Ctx) string {
-	if cookie := ctx.Cookies(handler.SessionName); cookie != "" {
-		return cookie
-	}
-	auth := ctx.Get("Authorization")
-	if strings.HasPrefix(auth, "Bearer ") {
-		return strings.TrimPrefix(auth, "Bearer ")
-	}
-	return ""
 }

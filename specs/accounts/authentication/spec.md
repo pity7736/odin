@@ -37,6 +37,8 @@ As a user, I expect that all my financial data (accounts, categories, incomes) i
 
 ### Logout
 - I can log out from the application.
+- Logging out ends the exact session I am currently using; the credentials I logged in with stop working immediately.
+- Logging out never reports success unless it actually ended my session.
 - After logging out, I can no longer access any protected feature.
 - After logging out, I am redirected to the login page.
 
@@ -76,6 +78,12 @@ As a user, I expect that all my financial data (accounts, categories, incomes) i
 - When I log out
 - Then I am redirected to the login page
 - And I can no longer access my financial accounts
+
+### Logging out actually ends the session I am using
+- Given I am logged in
+- When I log out
+- Then the session I was using stops working immediately
+- And trying to log out again does not report success, because there is no session left to end
 
 ### Redirected to intended page after login
 - Given I am not logged in

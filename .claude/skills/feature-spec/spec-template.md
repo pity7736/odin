@@ -17,7 +17,11 @@ RULES (from docs/01-principles.md and CLAUDE.md):
 ## Overview
 <!-- 1-3 sentences: why this matters to a user, in business terms. -->
 
-## User Story
+## User Stories
+<!-- One or more. A feature almost always spans several stories (e.g. logging
+     in, staying logged in, logging out); give each its own named block. -->
+
+### <story name>
 As a <user>, I want to <goal>, so that <benefit>.
 
 ## Acceptance Criteria

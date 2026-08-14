@@ -4,462 +4,209 @@
 
 ## Overview
 
-Expose login, logout, session management, and route protection for both HTMX (web) and REST (mobile) interfaces. Passwords are hashed with bcrypt. Session tokens are generated with `crypto/rand`. Sessions expire after 30 days of inactivity using a sliding window TTL.
+Login, logout, session management, and route protection across both the web
+(cookie-based) and mobile (bearer-token) interfaces. Passwords are verified with
+bcrypt; session tokens come from `crypto/rand`; sessions use a 30-day
+sliding-window TTL that is extended on every authenticated request.
 
-Architectural decisions applied:
-- Strategy pattern for handlers (inject rendering strategy + repositories)
-- Individual repository injection (no factory interfaces)
-- Test boundary at repository layer (handler tests go through real use cases with mock repos)
-- Password hashing is an application concern via `PasswordHasher` interface, not a domain concern
+## Design Decisions & Rationale
+
+- **REST login returns only the outcome-relevant field.** Success →
+  `{"token": ...}`, failure → `{"error": ...}`, via `omitempty` on a single
+  `response` struct. Rejected the prior `{token, error}` shape that always
+  carried an empty companion field (dead data), and rejected two separate
+  structs — the fields are mutually exclusive and each is never empty on its own
+  path, so `omitempty` expresses the contract without extra types.
+- **Wrong credentials are 401, malformed/missing input is 400.** These are
+  different failures — "your credentials are wrong" vs "you sent a bad request" —
+  and conflating both under `Domain`/400 hid that. A new `Unauthorized`
+  odinerror tag lets the layers distinguish them.
+- **Status is chosen once, in the shared orchestrator.** `login_handler` maps
+  the error tag → status, so REST and HTMX stay consistent from a single source
+  of truth. Rejected per-strategy status ownership (two places to keep in sync,
+  more surgery).
+- **The web htmx config gains a `401 → swap:true` rule.** `base.gohtml`
+  deliberately makes `400` swap so the login-error fragment renders on the web;
+  moving wrong-credentials to 401 would otherwise fall into the `[45].. → no
+  swap` bucket and silently stop rendering the error. The new rule mirrors the
+  existing 400 rule.
+- **Only 4xx produces a client error body; everything else is a 500.**
+  `login_handler` renders an error body for `Unauthorized`/`Domain` only; any
+  other error is returned up to the central `errorHandler`. This removes the
+  prior latent nil-pointer panic (a propagated non-odin error was fed to
+  `HandleBadRequest`, which dereferences a nil `*odinerrors.Error`).
+- **Strategy pattern for handlers.** A shared orchestrator (`login_handler`,
+  `logout_handler`) runs the use case; a per-interface strategy renders the
+  result (cookie + redirect for web, JSON for mobile).
+- **Password hashing is an application concern, not a domain one.** The `User`
+  entity stores an already-hashed password and knows nothing about hashing;
+  verification goes through the `PasswordHasher` port.
+- **Sliding-window sessions.** Each validated request calls `Extend`, resetting
+  expiry to now + TTL, so activity keeps a session alive and inactivity lets it
+  lapse. Expired sessions are deleted on read.
+- **Two auth carriers, one enforcement point.** Web sends the
+  `__Secure-odin-session` cookie (`Secure`, `HttpOnly`, `SameSite=Strict`);
+  `/api/v1` sends a bearer token. `loginRequired` centralizes enforcement —
+  401 for `/api/`, redirect to `/auth/login?next=<path>` for the web — with no
+  inline auth checks in feature handlers.
+- **Field-agnostic credential error.** Both a wrong email and a wrong password
+  return the identical message and status, leaking nothing about which field
+  was wrong.
+- **Logout deletes the exact session the middleware validated.** The auth
+  middleware already resolves and validates the request's session, so it stashes
+  that session's token in the request (`handler.SessionTokenKey`, alongside the
+  `RequestContext` it already stores). Logout reads that token and terminates it,
+  doing no cookie/bearer extraction of its own. This replaces a shared
+  `extractToken` that preferred the cookie over the bearer token — a bug where a
+  REST logout deleted a stray cookie's session (when present) while leaving the
+  caller's bearer session alive and still returning success, so the caller was
+  never actually logged out. Rejected both the shared cookie-first extractor and
+  a per-interface `Token()` method on `LogoutHandler`: the latter still assumes
+  the interface matches the credential (a cookie-authenticated REST call would
+  delete nothing and false-succeed), whereas deleting the validated token is
+  correct regardless of which credential authenticated the request.
 
 ## Architecture & Files Summary
 
 ```
+src/shared/domain/odinerrors/
+└── tags.go
+
 src/shared/utils/
-└── random_string.go                                         # CREATE
+└── random_string.go
 
 src/accounts/domain/
-├── usermodel/
-│   └── user.go                                              # CREATE
-├── sessionmodel/
-│   └── session.go                                           # CREATE
+├── usermodel/user.go
+├── sessionmodel/session.go
 └── repositories/
-    ├── user.go                                              # CREATE
-    └── session.go                                           # CREATE
+    ├── user.go
+    └── session.go
 
 src/accounts/application/
-├── passwordhasher/
-│   └── password_hasher.go                                   # CREATE
+├── passwordhasher/password_hasher.go
 └── use_cases/
-    ├── sessionstarter/
-    │   └── session_starter.go                               # CREATE
-    ├── sessionterminator/
-    │   └── session_terminator.go                            # CREATE
-    └── sessionvalidator/
-        └── session_validator.go                             # CREATE
+    ├── sessionstarter/session_starter.go
+    ├── sessionterminator/session_terminator.go
+    └── sessionvalidator/session_validator.go
 
 src/accounts/infrastructure/
 ├── api/
 │   ├── loginhandler/
-│   │   ├── login_handler.go                                 # CREATE
-│   │   └── body.go                                          # CREATE
-│   ├── logouthandler/
-│   │   └── logout_handler.go                                # CREATE
+│   │   ├── login_handler.go
+│   │   └── body.go
+│   ├── logouthandler/logout_handler.go
 │   ├── htmx/
-│   │   ├── htmxloginhandler/
-│   │   │   └── handler.go                                   # CREATE
-│   │   └── htmxlogouthandler/
-│   │       └── handler.go                                   # CREATE
+│   │   ├── htmxloginhandler/handler.go
+│   │   └── htmxlogouthandler/handler.go
 │   └── rest/
-│       ├── restloginhandler/
-│       │   └── handler.go                                   # CREATE
-│       └── restlogouthandler/
-│           └── handler.go                                   # CREATE
-├── security/bcrypthasher/
-│   └── bcrypt_hasher.go                                     # CREATE
+│       ├── restloginhandler/handler.go
+│       └── restlogouthandler/handler.go
+├── security/bcrypthasher/bcrypt_hasher.go
 └── repositories/pgrepositories/
-    ├── user_repository.go                                   # CREATE
-    └── session_repository.go                                # CREATE
+    ├── user_repository.go
+    └── session_repository.go
 
-src/shared/domain/
-├── requestcontext/
-│   └── context.go                                           # CREATE
-└── odinerrors/                                               # (exists)
-
-src/shared/infrastructure/api/
-└── handler.go                                               # CREATE
+src/shared/domain/requestcontext/context.go
+src/shared/infrastructure/api/handler.go
 
 src/app/
-└── fiber_application.go                                     # CREATE
+└── fiber_application.go
 
-src/main.go                                                  # CREATE
-
-tests/unit/accounts/domain/
-├── user_test.go                                             # CREATE
-└── session_test.go                                          # CREATE
+src/shared/infrastructure/templates/
+└── base.gohtml
 
 tests/unit/accounts/application/use_cases/
-├── login_test.go                                            # CREATE
-└── logout_test.go                                           # CREATE
+├── login_test.go
+└── logout_test.go
 
 tests/unit/accounts/infrastructure/api/
-├── login_api_test/
-│   └── login_test.go                                        # CREATE
-└── logout_api_test/
-    └── logout_test.go                                       # CREATE
+├── login_api_test/login_test.go
+└── logout_api_test/logout_test.go
 
-tests/unit/testrepositoryfactory/
-└── factory.go                                               # CREATE
+tests/unit/app/
+└── middleware_test.go
 
-tests/builders/
-├── request_builder.go                                       # CREATE
-└── userbuilder/
-    └── user.go                                              # CREATE
-
-tests/unit/mocks/                                            # REGENERATED
+specs/accounts/authentication/
+├── spec.md
+└── plan.md
 ```
 
-## Domain Layer
+Repositories are referenced by their domain ports (`UserRepository`,
+`SessionRepository`); the `pgrepositories` adapters are wired at the composition
+root and owned by their own concern — swapping them does not touch this plan.
 
-### `User` entity (`src/accounts/domain/usermodel/user.go`)
+## Data Flow
 
-```go
-type User struct {
-    id             string
-    email          string
-    hashedPassword string
-}
+**Login (REST — `POST /api/v1/auth/login`):** orchestrator parses the body and
+validates presence (`strings.Clone` on parsed values) → `SessionStarter.Start`
+looks up the user by email and compares the password via `PasswordHasher` →
+on success it creates a session (`crypto/rand` token, TTL) and persists it →
+strategy returns `{"token": ...}` at 201. On failure the orchestrator maps the
+error tag to a status and the strategy returns `{"error": ...}`.
 
-func New(email, hashedPassword string) (*User, error)
-func (self *User) ID() string
-func (self *User) Email() string
-func (self *User) HashedPassword() string
+**Login (HTMX — `POST /auth/login`):** same orchestrator and use case; the web
+strategy sets the session cookie and an `HX-Redirect` to `next` on success, or
+renders the `login_error` fragment on failure.
+
+**Request authentication (middleware):** the cookie middleware (global) and the
+bearer middleware (`/api/v1`) both read the token, call `SessionValidator.Validate`
+(unknown/expired → anonymous; other errors → 500), extend the session on success,
+and place a `RequestContext` in `ctx.Locals`. `loginRequired` then admits
+authenticated requests and rejects the rest (401 for `/api/`, redirect for web).
+
+**Logout:** the auth middleware has already validated the request's session and
+stashed its token in the request; logout reads that token and
+`SessionTerminator.Terminate` deletes that session. The web strategy then clears
+the cookie and redirects; the mobile strategy returns a confirmation message.
+Because the token deleted is the one that authenticated the request, a second
+logout with the same credential is rejected by the middleware (401).
+
+## Request & Response
+
+**Request data** (login):
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| email | string | yes | empty → 400 "El correo es obligatorio" |
+| password | string | yes | empty → 400 "La contraseña es obligatoria" |
+
+**REST** — `POST /api/v1/auth/login`
+```json
+// request
+{ "email": "some@email.com", "password": "secret" }
+// success 201
+{ "token": "<token>" }
+// wrong credentials 401
+{ "error": "Correo o contraseña incorrectos" }
+// missing/empty field or malformed body 400
+{ "error": "El correo es obligatorio" }
 ```
 
-- `New` generates a UUIDv7 for the ID. Receives an already-hashed password — the entity has no knowledge of hashing.
-- Password hashing and comparison are handled by `PasswordHasher` in the application layer.
-
-### `Session` entity (`src/accounts/domain/sessionmodel/session.go`)
-
-```go
-const DefaultTTL = 30 * 24 * time.Hour
-
-type Session struct {
-    expiresAt time.Time
-    createdAt time.Time
-    token     string
-    userID    string
-}
-
-func New(userID string, ttl time.Duration) (*Session, error)
-func NewFromRepository(token, userID string, createdAt, expiresAt time.Time) *Session
-func (self *Session) Token() string
-func (self *Session) UserID() string
-func (self *Session) CreatedAt() time.Time
-func (self *Session) ExpiresAt() time.Time
-func (self *Session) IsExpired() bool
-func (self *Session) Extend(ttl time.Duration)
-```
-
-- `New` generates token via `utils.RandomString` (`crypto/rand`), sets `createdAt = time.Now()`, `expiresAt = time.Now().Add(ttl)`.
-- `NewFromRepository` reconstitutes from storage without generating a new token.
-- `IsExpired` returns `time.Now().After(self.expiresAt)`.
-- `Extend` sets `expiresAt = time.Now().Add(ttl)`.
-
-### Repository interfaces (`src/accounts/domain/repositories/`)
-
-**`user.go`:**
-
-```go
-type UserRepository interface {
-    GetByEmail(ctx context.Context, email string) (*usermodel.User, error)
-    Add(ctx context.Context, user *usermodel.User) error
-}
-```
-
-**`session.go`:**
-
-```go
-type SessionRepository interface {
-    Add(ctx context.Context, session *sessionmodel.Session) error
-    Get(ctx context.Context, token string) (*sessionmodel.Session, error)
-    Save(ctx context.Context, session *sessionmodel.Session) error
-    Delete(ctx context.Context, token string) error
-}
-```
-
-- `Get` returns `odinerrors` with tag `NotFound` and external `"Sesión no encontrada"` for unknown tokens. Returns `odinerrors` with tag `DOMAIN` and external `"Sesión expirada"` for expired sessions (and deletes the expired session from storage).
-- `Save` updates an existing session (sliding window extension).
-- `Delete` removes a session (logout).
-
-### Shared utils (`src/shared/utils/random_string.go`)
-
-```go
-func RandomString(length uint8) (string, error)
-```
-
-Uses `crypto/rand` to generate alphanumeric strings.
-
-### Request context (`src/shared/domain/requestcontext/context.go`)
-
-```go
-type RequestContext struct {
-    userID    string
-    requestID string
-}
-
-func New(userID string) (*RequestContext, error)
-func NewAnonymous() *RequestContext
-func (self *RequestContext) UserID() string
-func (self *RequestContext) RequestID() string
-func (self *RequestContext) IsAuthenticated() bool
-```
-
-- `New` validates non-empty userID, generates UUIDv7 for requestID.
-- `NewAnonymous` creates context with empty userID.
-- `IsAuthenticated` returns `self.userID != ""`.
-
-## Application Layer
-
-### `PasswordHasher` interface (`src/accounts/application/passwordhasher/password_hasher.go`)
-
-```go
-type PasswordHasher interface {
-    Compare(hashedPassword, password string) bool
-}
-```
-
-- `Compare` checks a plain password against a hashed one.
-
-### `SessionStarter` (`src/accounts/application/use_cases/sessionstarter/session_starter.go`)
-
-```go
-type SessionStarter struct {
-    email             string
-    password          string
-    userRepository    repositories.UserRepository
-    sessionRepository repositories.SessionRepository
-    passwordHasher    passwordhasher.PasswordHasher
-}
-
-func New(email, password string, userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher) SessionStarter
-func (self SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error)
-```
-
-Steps:
-1. `userRepository.GetByEmail(ctx, email)` — propagate error.
-2. If user is nil or `passwordHasher.Compare(user.HashedPassword(), password)` fails → `odinerrors` with tag `DOMAIN`, message `"email or password are wrong"`, external `"Correo o contraseña incorrectos"`.
-3. `sessionmodel.New(userID, DefaultTTL)` — propagate error.
-4. `sessionRepository.Add(ctx, session)` — propagate error.
-5. Return session.
-
-### `SessionTerminator` (`src/accounts/application/use_cases/sessionterminator/session_terminator.go`)
-
-```go
-type SessionTerminator struct {
-    sessionRepository repositories.SessionRepository
-}
-
-func New(sessionRepository repositories.SessionRepository) SessionTerminator
-func (self SessionTerminator) Terminate(ctx context.Context, token string) error
-```
-
-Calls `sessionRepository.Delete(ctx, token)`.
-
-### `SessionValidator` (`src/accounts/application/use_cases/sessionvalidator/session_validator.go`)
-
-```go
-type SessionValidator struct {
-    sessionRepository repositories.SessionRepository
-}
-
-func New(sessionRepository repositories.SessionRepository) SessionValidator
-func (self SessionValidator) Validate(ctx context.Context, token string) (*sessionmodel.Session, error)
-```
-
-Steps:
-1. `sessionRepository.Get(ctx, token)` — if error, check tag:
-   - `NotFound` → return `nil, nil` (continue as anonymous).
-   - `DOMAIN` (expired) → return `nil, nil` (continue as anonymous, session already deleted by repo).
-   - Other errors → propagate (caller returns 500).
-2. Call `session.Extend(DefaultTTL)`.
-3. `sessionRepository.Save(ctx, session)` — propagate error.
-4. Return session.
-
-## Infrastructure Layer
-
-### Login handler orchestrator (`src/accounts/infrastructure/api/loginhandler/login_handler.go`)
-
-```go
-type LoginHandler interface {
-    HandleResponse(session *sessionmodel.Session) error
-    HandleBadRequest(err error) error
-    ContentType() string
-}
-
-type loginHandler struct {
-    userRepository    repositories.UserRepository
-    sessionRepository repositories.SessionRepository
-    passwordHasher    passwordhasher.PasswordHasher
-    handler           LoginHandler
-}
-
-func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher, handler LoginHandler) *loginHandler
-func (self *loginHandler) Login(ctx *fiber.Ctx) error
-```
-
-- Parse body, validate email/password presence (use `strings.Clone` on parsed values).
-- Validation errors use `odinerrors` with tag `DOMAIN`:
-  - Empty email → message `"email is required"`, external `"El correo es obligatorio"`.
-  - Empty password → message `"password is required"`, external `"La contraseña es obligatoria"`.
-  - Malformed body → message `"wrong body"`, external `"Datos de solicitud inválidos"`.
-- Construct `SessionStarter` with repos, call `Start`.
-- Error → 400 + `strategy.HandleBadRequest(err)`. Success → 201 + `strategy.HandleResponse(session)`.
-
-### HTMX login strategy (`src/accounts/infrastructure/api/htmx/htmxloginhandler/handler.go`)
-
-- `HandleResponse`: set `__Secure-odin-session` cookie (`Secure`, `HttpOnly`, `SameSite=Strict`), set `HX-Redirect` to `ctx.Query("next", "/")`.
-- `HandleBadRequest`: render `login_error` template with the error's external message.
-
-### REST login strategy (`src/accounts/infrastructure/api/rest/restloginhandler/handler.go`)
-
-- `HandleResponse`: return JSON `{"token": "<token>", "error": ""}`.
-- `HandleBadRequest`: return JSON `{"token": "", "error": "<external message>"}`.
-
-### Logout handler orchestrator (`src/accounts/infrastructure/api/logouthandler/logout_handler.go`)
-
-```go
-type LogoutHandler interface {
-    HandleResponse() error
-    ContentType() string
-}
-
-type logoutHandler struct {
-    sessionRepository repositories.SessionRepository
-    handler           LogoutHandler
-}
-
-func New(sessionRepository repositories.SessionRepository, handler LogoutHandler) *logoutHandler
-func (self *logoutHandler) Logout(ctx *fiber.Ctx) error
-```
-
-- Extract token from cookie (HTMX) or Bearer header (REST).
-- Construct `SessionTerminator`, call `Terminate`.
-- Delegate to `strategy.HandleResponse()`.
-
-### HTMX logout strategy (`src/accounts/infrastructure/api/htmx/htmxlogouthandler/handler.go`)
-
-- Clear `__Secure-odin-session` cookie (`MaxAge: -1`), set `HX-Redirect: /auth/login`.
-
-### REST logout strategy (`src/accounts/infrastructure/api/rest/restlogouthandler/handler.go`)
-
-- Return JSON `{"message": "session closed"}`.
-
-### Bcrypt hasher (`src/accounts/infrastructure/security/bcrypthasher/bcrypt_hasher.go`)
-
-```go
-type BcryptHasher struct{}
-
-func New() BcryptHasher
-func (self BcryptHasher) Compare(hashedPassword, password string) bool
-```
-
-- `Compare` uses `bcrypt.CompareHashAndPassword`.
-- Dependency: `golang.org/x/crypto/bcrypt`.
-
-### In-memory repositories (`src/accounts/infrastructure/repositories/pgrepositories/`)
-
-**`user_repository.go`:**
-- Backed by `map[string]*usermodel.User` keyed by email.
-- Constructor seeds initial users via `usermodel.New` with pre-hashed passwords (uses bcrypt directly — infrastructure layer).
-- `GetByEmail` returns `nil, nil` for unknown emails.
-
-**`session_repository.go`:**
-- Backed by `map[string]*sessionmodel.Session` keyed by token.
-- `Get` returns `odinerrors` with tag `NotFound` for unknown tokens. For expired tokens, deletes the session and returns `odinerrors` with tag `DOMAIN` and external `"Sesión expirada"`.
-- `Save` updates the session in the map.
-- `Delete` removes from the map.
-
-## Middleware and Route Protection
-
-### Cookie middleware (global)
-
-1. Set `requestcontext.Key` to `NewAnonymous()`.
-2. Read `SessionName` cookie. If empty, continue.
-3. `sessionValidator.Validate(ctx, token)` — on error, return 500.
-4. If session nil, continue as anonymous.
-5. If valid, create `RequestContext`, set in `ctx.Locals`.
-
-### Bearer token middleware (`/api/v1` group)
-
-1. Read `Authorization` header. If not `Bearer <token>` format, continue.
-2. `sessionValidator.Validate(ctx, token)` — on error, return 500.
-3. If session nil, continue as anonymous.
-4. If valid, create `RequestContext`, set in `ctx.Locals`.
-
-### `loginRequired` function
-
-```go
-func loginRequired(ctx *fiber.Ctx, handler handler.Handler) error
-```
-
-- Authenticated → delegate to handler.
-- Unauthenticated + JSON → 401.
-- Unauthenticated + HTML → redirect to `/auth/login?next=<path>`.
-- All protected routes use `loginRequired`. No inline auth checks.
-
-### Route registration
-
-**`NewFiberApplication` signature** receives repositories and the password hasher:
-
-```go
-func NewFiberApplication(
-    accountingRepositoryFactory accountingrepositoryfactory.RepositoryFactory,
-    sessionRepository accountsrepos.SessionRepository,
-    userRepository accountsrepos.UserRepository,
-    passwordHasher passwordhasher.PasswordHasher,
-) Application
-```
-
-**Auth routes (no login required):**
-- `GET /auth/login` — render login form.
-- `POST /auth/login` — HTMX login.
-- `POST /api/v1/auth/login` — REST login.
-
-**Logout routes (login required):**
-- `POST /auth/logout` — HTMX logout.
-- `DELETE /api/v1/auth/logout` — REST logout.
-
-**Protected routes (all use `loginRequired`):**
-- `POST /categories`, `GET /categories`
-- `POST /api/v1/categories`, `GET /api/v1/categories`
-- `POST /accounts`, `GET /accounts`, `GET /accounts/:accountID`
-- `POST /api/v1/accounts`
-- `POST /accounts/:accountID/incomes`
-
-### Entry point (`src/main.go`)
-
-Create each repository and the bcrypt hasher, pass to `NewFiberApplication`.
-
-## Implementation Phases (TDD)
-
-### Phase 1: Domain — User
-
-**Red:** `New` generates a UUIDv7 ID. Entity stores email and pre-hashed password.
-
-**Green:** Implement `User` with UUIDv7. No hashing dependency.
-
-### Phase 2: Domain — Session
-
-**Red:** `New` returns token of expected length with `expiresAt ≈ now + ttl`. `IsExpired` returns false for new session, true when past. `Extend` resets `expiresAt`.
-
-**Green:** Implement `Session` with `crypto/rand`.
-
-### Phase 3: Use Cases
-
-**Red:** Successful login returns session. Wrong password/email returns `"Correo o contraseña incorrectos"`. Repo errors propagate. Successful logout deletes session. Logout repo error propagates.
-
-**Green:** Implement `SessionStarter` and `SessionTerminator`.
-
-### Phase 4: Handlers
-
-**Red:** REST/HTMX login with valid credentials. REST/HTMX login with wrong credentials returns Spanish errors. Validation errors return Spanish messages. REST/HTMX logout clears session. Accessing protected route after logout fails.
-
-**Green:** Implement login/logout handlers and strategies.
-
-### Phase 5: Middleware and Route Protection
-
-**Red:** Cookie middleware sets `RequestContext` for valid session. Cookie middleware returns anonymous for expired session. Bearer middleware sets `RequestContext` for valid token. Bearer middleware returns anonymous for invalid token (no panic). Both middlewares return 500 on session lookup error. Both middlewares extend session on valid request. `loginRequired` delegates for authenticated users. `loginRequired` returns 401 for JSON, redirect for HTML. All category routes enforce auth via `loginRequired`.
-
-**Green:** Implement middlewares, `loginRequired`, wire all routes.
-
-### Phase 6: Mock Regeneration
-
-Run `go run github.com/vektra/mockery/v3` after all repository interfaces are final.
+**HTMX** — `POST /auth/login`
+- Form fields: `email`, `password` (query `next` carries the post-login target)
+- Success: set `__Secure-odin-session` cookie (`Secure`, `HttpOnly`,
+  `SameSite=Strict`) + `HX-Redirect: <next>`
+- Error: render `login_error` fragment into `#login_error`. Wrong credentials
+  now return 401; the htmx `responseHandling` config swaps on `400` and `401`
+  so the fragment renders for both validation and credential failures.
+
+**REST** — `DELETE /api/v1/auth/logout` → `{"message": "session closed"}`
+(bearer token identifies the session).
+
+**HTMX** — `POST /auth/logout` → clears the cookie + `HX-Redirect: /auth/login`.
 
 ## Quality Pillars
 
-- **Security:** bcrypt password hashing, `crypto/rand` for session tokens, 30-day sliding window TTL, cookie attributes (`Secure`, `HttpOnly`, `SameSite=Strict`), consistent auth enforcement via `loginRequired`, `strings.Clone` on parsed request body values.
-- **Reliability:** nil-safe Bearer token middleware, session lookup errors handled (not silenced), expired sessions rejected in both middlewares, no panics in auth flow.
-- **Performance:** Deferred — single user, in-memory repos.
-- **Observability:** Deferred — no production infrastructure. `odinerrors` location tracking provides debugging context.
+- **Security:** bcrypt verification, `crypto/rand` tokens, 30-day sliding TTL,
+  cookie hardening (`Secure`/`HttpOnly`/`SameSite=Strict`), `strings.Clone` on
+  parsed body values, centralized `loginRequired`. Wrong email and wrong
+  password remain indistinguishable (identical 401 + message); the 400/401 split
+  only distinguishes malformed input from an authentication failure, not which
+  credential field was wrong.
+- **Reliability:** nil-safe bearer/cookie middleware; propagated non-4xx errors
+  now surface as 500 instead of nil-panicking on a 400 path; expired sessions
+  are rejected and deleted; no panics in the auth flow.
+- **Performance:** Deferred — in-memory repositories, minimal user set; no
+  hot-path concern in this change.
+- **Observability:** Deferred — no production telemetry yet; `odinerrors`
+  location tracking provides debugging context.

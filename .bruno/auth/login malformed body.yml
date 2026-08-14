@@ -1,0 +1,21 @@
+info:
+  name: login malformed body
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{host}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "some@email.com" "password": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,6 +1,7 @@
 package login_api_test
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
@@ -41,9 +43,9 @@ func TestRest(t *testing.T) {
 		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
 		defer func() { _ = response.Body.Close() }()
 
-		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 		assert.Equal(t, "Correo o contraseña incorrectos", responseData["error"])
-		assert.Empty(t, responseData["token"])
+		assert.NotContains(t, responseData, "token")
 		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
 	})
 
@@ -99,7 +101,7 @@ func TestRest(t *testing.T) {
 
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, testCase.expectedError, responseData["error"])
-				assert.Empty(t, responseData["token"])
+				assert.NotContains(t, responseData, "token")
 				repository.AssertNotCalled(t, "GetByEmail")
 			})
 		}
@@ -126,8 +128,82 @@ func TestRest(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
-		assert.Empty(t, responseData["error"])
+		assert.NotContains(t, responseData, "error")
 		assert.NotEmpty(t, responseData["token"])
+		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
+	})
+
+	t.Run("when the use case returns a raw non-odin error", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := newApplication(factory)
+		builder := userbuilder.New()
+		user := builder.Build()
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), builder.Password())
+		userRepositoryMock := factory.GetUserRepositoryMock()
+		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(nil, errors.New("database unavailable"))
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
+			WithPath("/api/v1/auth/login").
+			WithPayload(body).
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithAnonymousSession()
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+		assert.Zero(t, response.ContentLength)
+		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
+	})
+
+	t.Run("when the use case returns an odin error with a non-4xx handled tag", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := newApplication(factory)
+		builder := userbuilder.New()
+		user := builder.Build()
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), builder.Password())
+		renderError := odinerrors.NewErrorBuilder("render failed").
+			WithExternalMessage("Error interno").
+			WithTag(odinerrors.Render).
+			Build()
+		userRepositoryMock := factory.GetUserRepositoryMock()
+		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(nil, renderError)
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
+			WithPath("/api/v1/auth/login").
+			WithPayload(body).
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithAnonymousSession()
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+		assert.Zero(t, response.ContentLength)
+		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
+	})
+
+	t.Run("when the use case returns an odin error with a domain tag", func(t *testing.T) {
+		factory := testrepositoryfactory.New(t)
+		application := newApplication(factory)
+		builder := userbuilder.New()
+		user := builder.Build()
+		body := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email(), builder.Password())
+		var responseData map[string]string
+		domainError := odinerrors.NewErrorBuilder("domain failure").
+			WithExternalMessage("Solicitud inválida").
+			WithTag(odinerrors.Domain).
+			Build()
+		userRepositoryMock := factory.GetUserRepositoryMock()
+		userRepositoryMock.EXPECT().GetByEmail(mock.Anything, user.Email()).Return(nil, domainError)
+		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
+			WithPath("/api/v1/auth/login").
+			WithPayload(body).
+			WithResponseData(&responseData).
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithAnonymousSession()
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, "Solicitud inválida", responseData["error"])
+		assert.NotContains(t, responseData, "token")
 		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
 	})
 }
@@ -171,7 +247,7 @@ func TestHTMX(t *testing.T) {
 		response, responseData := testutils.GetHTMLResponseFromRequestBuilder(application, requestBuilder)
 		defer func() { _ = response.Body.Close() }()
 
-		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 		assert.True(t, strings.Contains(responseData, "Correo o contraseña incorrectos"))
 		repository.AssertCalled(t, "GetByEmail", mock.Anything, email)
 	})
