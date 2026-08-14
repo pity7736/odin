@@ -9,11 +9,6 @@ Login, logout, session management, and route protection across both the web
 bcrypt; session tokens come from `crypto/rand`; sessions use a 30-day
 sliding-window TTL that is extended on every authenticated request.
 
-This update changes how the REST login **response** is shaped and how a failed
-login is **classified**: the response now carries only the field relevant to the
-outcome, and wrong credentials are reported as an authentication failure (401)
-distinct from malformed input (400), consistently on both interfaces.
-
 ## Design Decisions & Rationale
 
 - **REST login returns only the outcome-relevant field.** Success →
@@ -75,7 +70,7 @@ distinct from malformed input (400), consistently on both interfaces.
 
 ```
 src/shared/domain/odinerrors/
-└── tags.go                                                 # MODIFY (add Unauthorized)
+└── tags.go
 
 src/shared/utils/
 └── random_string.go
@@ -90,21 +85,21 @@ src/accounts/domain/
 src/accounts/application/
 ├── passwordhasher/password_hasher.go
 └── use_cases/
-    ├── sessionstarter/session_starter.go                   # MODIFY (Unauthorized tag)
+    ├── sessionstarter/session_starter.go
     ├── sessionterminator/session_terminator.go
     └── sessionvalidator/session_validator.go
 
 src/accounts/infrastructure/
 ├── api/
 │   ├── loginhandler/
-│   │   ├── login_handler.go                                # MODIFY (tag→status mapping)
+│   │   ├── login_handler.go
 │   │   └── body.go
-│   ├── logouthandler/logout_handler.go                     # MODIFY (read validated token)
+│   ├── logouthandler/logout_handler.go
 │   ├── htmx/
 │   │   ├── htmxloginhandler/handler.go
 │   │   └── htmxlogouthandler/handler.go
 │   └── rest/
-│       ├── restloginhandler/handler.go                     # MODIFY (single struct + omitempty)
+│       ├── restloginhandler/handler.go
 │       └── restlogouthandler/handler.go
 ├── security/bcrypthasher/bcrypt_hasher.go
 └── repositories/pgrepositories/
@@ -112,23 +107,28 @@ src/accounts/infrastructure/
     └── session_repository.go
 
 src/shared/domain/requestcontext/context.go
-src/shared/infrastructure/api/handler.go                     # MODIFY (SessionTokenKey const)
+src/shared/infrastructure/api/handler.go
 
 src/app/
-└── fiber_application.go                                     # MODIFY (errorHandler: Unauthorized→401; validateSession stashes token)
+└── fiber_application.go
 
 src/shared/infrastructure/templates/
-└── base.gohtml                                             # MODIFY (htmx 401 → swap:true)
+└── base.gohtml
 
 tests/unit/accounts/application/use_cases/
-└── login_test.go                                           # MODIFY (Unauthorized tag)
+├── login_test.go
+└── logout_test.go
 
-tests/unit/accounts/infrastructure/api/login_api_test/
-└── login_test.go                                           # MODIFY (401 + field presence)
+tests/unit/accounts/infrastructure/api/
+├── login_api_test/login_test.go
+└── logout_api_test/logout_test.go
+
+tests/unit/app/
+└── middleware_test.go
 
 specs/accounts/authentication/
 ├── spec.md
-└── plan.md                                                 # MODIFY
+└── plan.md
 ```
 
 Repositories are referenced by their domain ports (`UserRepository`,
@@ -194,55 +194,6 @@ logout with the same credential is rejected by the middleware (401).
 (bearer token identifies the session).
 
 **HTMX** — `POST /auth/logout` → clears the cookie + `HX-Redirect: /auth/login`.
-
-## Key Types & Signatures
-
-- `odinerrors.Unauthorized` — new `Tag` constant.
-- `sessionstarter.start` — the wrong-credentials error is built with
-  `WithTag(odinerrors.Unauthorized)` (message English, external Spanish
-  unchanged).
-- `loginHandler.login` — on use-case error, select status by tag:
-  `Unauthorized`→401 and `Domain`→400 both delegate to `HandleBadRequest`; any
-  other error is returned up (no `HandleBadRequest` call) so `errorHandler`
-  yields 500. `validateRequestBody` failures remain 400.
-- `restloginhandler.response` — one struct, `omitempty` on both fields:
-  `Token string json:"token,omitempty"`, `Error string json:"error,omitempty"`.
-- `errorHandler` — add `case odinerrors.Unauthorized: code = 401`.
-- `handler.SessionTokenKey` — new fiber `Locals` key. `validateSession` sets
-  `c.Locals(handler.SessionTokenKey, session.Token())` after validating the
-  session. `logoutHandler.Logout` reads it (`token, _ := ctx.Locals(...).(string)`)
-  and terminates that session; the cookie-first `extractToken` and its `strings`
-  import are removed. The `LogoutHandler` interface is unchanged.
-
-## Gaps / Bugs to Fix
-
-- [ ] Add `Unauthorized` to `odinerrors/tags.go`.
-- [ ] Tag the wrong-credentials error in `sessionstarter/session_starter.go:49`
-      as `Unauthorized`.
-- [ ] `login_handler.login`: map error tag → status; return non-4xx errors up
-      the stack instead of forcing 400 through `HandleBadRequest` (fixes the
-      nil-pointer panic path).
-- [ ] `restloginhandler/handler.go`: collapse to a single `response` struct with
-      `omitempty` on `token` and `error`.
-- [ ] `base.gohtml`: add `{"code":"401","swap":true}` before the `[45]..` rule.
-- [ ] `fiber_application.go` `errorHandler`: map `Unauthorized` → 401.
-- [ ] Tests: REST and HTMX wrong-credentials assert 401; REST success asserts no
-      `error` key; REST failure asserts no `token` key; use-case test asserts the
-      `Unauthorized` tag.
-- [ ] Tests: login where the use case returns a non-4xx error — (a) a raw
-      non-odin error and (b) an odinerror with a non-4xx tag — assert the
-      response is 500 and no panic. Covers `handleError`'s two error-forwarding
-      branches (the nil-panic fix), required by the 100% business-logic rule.
-- [ ] Mocks: repository interfaces are unchanged — no regeneration.
-- [ ] Add `SessionTokenKey` const to `shared/infrastructure/api/handler.go`;
-      `validateSession` stashes `session.Token()` under it after validating.
-- [ ] `logout_handler.go`: read the token from `ctx.Locals(SessionTokenKey)` and
-      terminate it; delete the cookie-first `extractToken` and its `strings`
-      import. `LogoutHandler` interface unchanged (no mock regeneration).
-- [ ] Tests: REST logout terminates the session that authenticated the request
-      (the bearer session) even when a `__Secure-odin-session` cookie is also
-      present (regression for the cookie-first bug); HTMX logout terminates the
-      cookie session; the middleware stashes the validated token.
 
 ## Quality Pillars
 
