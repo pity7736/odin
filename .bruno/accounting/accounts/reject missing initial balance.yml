@@ -1,0 +1,30 @@
+info:
+  name: reject missing initial balance
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Nequi",
+        "type": "savings",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  Initial balance omitted. Expect 400 with body
+  { "error": "El saldo inicial es obligatorio" }.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

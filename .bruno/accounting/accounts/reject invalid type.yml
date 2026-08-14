@@ -1,0 +1,31 @@
+info:
+  name: reject invalid type
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Falabella",
+        "initial_balance": "100000",
+        "type": "checking",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  Type must be one of savings, credit_card, cash. Expect 400 with body
+  { "error": "Tipo de cuenta inválido" }.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounting/domain/repositories"
 	"raiseexception.dev/odin/src/accounting/infrastructure/api/handlers/accounthandler/createaccounthandler"
+	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
 type RestCreateAccountHandler struct {
@@ -20,6 +21,7 @@ func (self RestCreateAccountHandler) Handle(ctx *fiber.Ctx) error {
 	ctx.Set("content-type", fiber.MIMEApplicationJSON)
 	account, err := self.handler.Handle(ctx)
 	if err != nil {
+		_ = ctx.JSON(fiber.Map{"error": handler.ExternalOrFallback(err, "No se pudo crear la cuenta")})
 		return err
 	}
 	return ctx.JSON(createAccountResponse{

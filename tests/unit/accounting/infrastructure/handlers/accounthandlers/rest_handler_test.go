@@ -110,6 +110,31 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.Equal(t, "El nombre es obligatorio", odinError.ExternalError())
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
 		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "El nombre es obligatorio", responseBody["error"])
+	})
+
+	t.Run("return error when name and currency already exist", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationJSON)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody([]byte(`{"name":"Global66","initial_balance":"100","type":"savings","currency":"USD"}`))
+		repository.EXPECT().ExistsByNameAndCurrency(mock.Anything, "Global66", mock.Anything).Return(true, nil)
+		createAccountHandler := restcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, "Ya tienes una cuenta con ese nombre en esa moneda", odinError.ExternalError())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "Ya tienes una cuenta con ese nombre en esa moneda", responseBody["error"])
 	})
 
 	t.Run("return error when initial balance is missing", func(t *testing.T) {
@@ -128,6 +153,9 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "El saldo inicial es obligatorio", odinError.ExternalError())
 		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "El saldo inicial es obligatorio", responseBody["error"])
 	})
 
 	t.Run("return error when initial balance is not valid", func(t *testing.T) {
@@ -147,6 +175,31 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.Equal(t, "El valor ingresado no es un monto válido", odinError.ExternalError())
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "El valor ingresado no es un monto válido", responseBody["error"])
+	})
+
+	t.Run("return error when initial balance is negative", func(t *testing.T) {
+		repository := mocks.NewMockAccountRepository(t)
+		ctxBuilder := builders.NewFiberContextBuilder()
+		ctxBuilder.WithMethod("POST").WithContentType(fiber.MIMEApplicationJSON)
+		defer ctxBuilder.Release()
+		ctxBuilder.WithBody([]byte(`{"name":"test","initial_balance":"-100","type":"savings","currency":"COP"}`))
+		repository.EXPECT().ExistsByNameAndCurrency(mock.Anything, "test", mock.Anything).Return(false, nil)
+		createAccountHandler := restcreateaccounthandler.New(repository)
+		ctx := ctxBuilder.Build()
+
+		err := createAccountHandler.Handle(ctx)
+
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, "El saldo inicial no puede ser negativo", odinError.ExternalError())
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "El saldo inicial no puede ser negativo", responseBody["error"])
 	})
 
 	t.Run("return error when type is invalid", func(t *testing.T) {
@@ -165,6 +218,9 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "Tipo de cuenta inválido", odinError.ExternalError())
 		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "Tipo de cuenta inválido", responseBody["error"])
 	})
 
 	t.Run("return error when currency is invalid", func(t *testing.T) {
@@ -183,6 +239,9 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "Moneda inválida", odinError.ExternalError())
 		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "Moneda inválida", responseBody["error"])
 	})
 
 	t.Run("return error when body is not valid", func(t *testing.T) {
@@ -196,8 +255,16 @@ func TestCreateAccountHandlerShould(t *testing.T) {
 
 		err := createAccountHandler.Handle(ctx)
 
+		var odinError *odinerrors.Error
+		ok := errors.As(err, &odinError)
+		assert.True(t, ok)
+		assert.Equal(t, odinerrors.Domain, odinError.Tag())
+		assert.Equal(t, "Datos de solicitud inválidos", odinError.ExternalError())
 		assert.Contains(t, err.Error(), "invalid character")
 		assert.Equal(t, fiber.MIMEApplicationJSON, string(ctx.Response().Header.ContentType()))
+		var responseBody map[string]string
+		_ = json.Unmarshal(ctx.Response().Body(), &responseBody)
+		assert.Equal(t, "Datos de solicitud inválidos", responseBody["error"])
 	})
 
 	t.Run("return error when repository returns error", func(t *testing.T) {

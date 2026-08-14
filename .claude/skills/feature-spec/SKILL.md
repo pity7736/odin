@@ -1,6 +1,6 @@
 ---
 name: feature-spec
-description: Spec-Driven Development workflow for Odin — covers BOTH starting a new feature and updating an existing one. Use whenever creating or updating a feature's spec.md or plan.md under specs/, before writing any feature code. Produces a business-focused spec (the WHAT) and a technical plan (the HOW) using the canonical templates. Triggers on requests to "new feature", "write a spec", "create a plan", "update a feature", or any work referencing specs/<module>/<feature>/.
+description: Spec-Driven Development workflow for Odin — covers starting a new feature, updating an existing one, AND fixing a bug in one. Use whenever creating or updating a feature's spec.md or plan.md under specs/, or fixing a defect in a feature's behavior, before writing any feature code. Produces a business-focused spec (the WHAT) and a technical plan (the HOW) using the canonical templates. Triggers on requests to "new feature", "write a spec", "create a plan", "update a feature", "fix a bug", "fix", or any work referencing specs/<module>/<feature>/.
 ---
 
 # Feature Spec Workflow (SDD)
@@ -18,8 +18,8 @@ Do not write, copy, or fill any file until discovery is complete. Ask **one
 question at a time** and wait for the answer before the next. **Never assume** —
 if something is unclear, ask.
 
-1. **Q1 (branch):** Is this a **new feature** or an **update to an existing
-   one**? The answer decides the path (see below).
+1. **Q1 (branch):** Is this a **new feature**, an **update to an existing one**,
+   or a **bug fix** in an existing one? The answer decides the path (see below).
 2. **Q2:** What is the feature about, in your own words?
 3. Then keep asking follow-ups until ALL of these are covered:
    - purpose / the benefit to the user
@@ -28,6 +28,11 @@ if something is unclear, ask.
    - rejection & edge cases
    - what's out of scope
 4. **For an update, also cover:** what exactly is changing, and why.
+5. **For a bug fix, also cover:** what the user observes (the wrong behavior),
+   what they expected instead, and how to reproduce it. Then decide whether the
+   spec already describes the correct behavior (code diverges from spec — most
+   bugs) or the spec itself is wrong/silent (a behavior problem). That decision
+   picks the path below.
 
 Only when the picture is complete do you proceed to write the spec.
 
@@ -35,6 +40,7 @@ Only when the picture is complete do you proceed to write the spec.
 
 - **New feature** → follow "Workflow" below.
 - **Update to an existing feature** → follow "Updating an existing feature".
+- **Bug fix** → follow "Fixing a bug in an existing feature".
 
 ## Files this skill owns
 
@@ -199,6 +205,64 @@ it into a work order, then it is pruned back.
   manually test, and PRUNE exactly as Workflow steps 6–11 (fresh implementer;
   `make check` gate; separate reviewer; your manual code review; Bruno REST
   requests; your manual test; prune back to a living design doc).
+
+## Fixing a bug in an existing feature
+
+A bug is code that does not do what the spec says. It is a close cousin of an
+update, with one decisive difference: the intended behavior usually already
+lives in `spec.md`, so there is nothing to change there. Do NOT invent a new
+spec or rewrite the old one to match the buggy code — that makes the spec lie.
+
+First confirm it really is a bug in THIS feature (the code diverges from this
+feature's own spec), not a missing capability. A missing capability is an
+update or a new feature, not a bug fix.
+
+**MANDATORY: failing tests that reproduce the bug come first.** Before any fix
+is written, there MUST be at least one test that exercises the broken behavior
+and FAILS for the reason the user reported (Red). This is non-negotiable — it
+proves the bug is real, pins down the exact defect, and guards against
+regression. The fix is complete only when those tests pass (Green) with no other
+test broken. A bug fix without a test that failed before it is not done.
+
+**One reproduction test is rarely enough — cover EVERY scenario the defect
+touches.** A single root cause usually manifests across many cases; each is a
+distinct test. Enumerate them before writing the fix and do not stop at the
+first. For example, "rejections return an empty response body" is not one case —
+it is every rejection path: empty name, duplicate name+currency, invalid type,
+invalid currency, not-found, unauthorized, and so on. Missing one scenario
+leaves that path unguarded and free to regress. Add each reproduction test to
+the plan's Gaps / Bugs to Fix as its own checklist item.
+
+Put these tests at the RIGHT LEVEL — the layer where the defect actually lives
+(see docs/04-tdd-workflow.md). A bug in domain or application logic is a unit
+test against that unit; a bug in a handler or in shared HTTP wiring (error
+mapping, response serialization) is a unit test of that component. Reach for an
+integration test only when the defect is genuinely in the wiring BETWEEN
+components and cannot be shown at the unit level. Do not default to an
+integration test because it is the easiest place to hit the endpoint.
+
+Discovery (above) must be complete first — including the observed wrong
+behavior, the expected behavior, and how to reproduce it.
+
+Then split by KIND (the same split as Workflow step 10):
+
+- **Code diverges from the spec** (the spec is already correct — most bugs) →
+  the spec does NOT change. Confirm `spec.md` already covers the correct
+  behavior and its Expected Behavior has a scenario for the case that broke; if
+  that scenario is missing, add it (this is a spec gap, review it as in Workflow
+  step 2). Otherwise go straight to **Plan investigation & discussion**: read the
+  feature's code, find the root cause, and discuss it. Re-open `plan.md` into a
+  WORK ORDER whose Gaps / Bugs to Fix names the actual defect and root cause,
+  and update Design Decisions & Rationale if the fix changes a decision. Then
+  implement, verify, review, manually review, update Bruno, manually test, and
+  PRUNE exactly as Workflow steps 6–11. The implementer works test-first: a
+  FAILING test that reproduces the bug comes before the fix (Red), then the fix
+  makes it green.
+
+- **The spec itself is wrong or silent** (a behavior problem — the code does
+  what the spec says, but the spec specifies the wrong thing) → this is not a
+  pure bug fix. Follow "Updating an existing feature": edit `spec.md` to the
+  correct intended behavior, STOP for review, then the rest of the flow.
 
 ## Checklist before handing a spec for review
 

@@ -1,0 +1,31 @@
+info:
+  name: reject non-numeric initial balance
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{host}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Nequi",
+        "initial_balance": "some value",
+        "type": "savings",
+        "currency": "COP"
+      }
+  auth: inherit
+
+docs: |-
+  Balance is not a number at all. Expect 400 with body
+  { "error": "El valor ingresado no es un monto válido" }.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
