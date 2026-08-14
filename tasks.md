@@ -26,7 +26,7 @@ Each plan should address relevant structural issues (error handling, auth, routi
 
 ## Tech Debt
 
-- [ ] Fix `.mockery.yaml` to use mockery v3 config syntax (`with-expecter` and `outpkg` are v2 keys rejected by v3) so `make mocks` works correctly and mocks are never hand-edited again
+- [x] Fix `.mockery.yaml` to use mockery v3 config syntax (`with-expecter` and `outpkg` are v2 keys rejected by v3) so `make mocks` works correctly and mocks are never hand-edited again
 - [ ] Extend `RequestBuilder` to support partial/broken requests (raw cookies, raw headers) and remove duplicate utility functions in `tests/testutils/requests.go`
 - [ ] Review HTMX implementation: verify correct use of hx-* attributes, swap strategies, response handling config, and overall patterns across templates and handlers
 
