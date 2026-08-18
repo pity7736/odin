@@ -4,11 +4,6 @@ pkgname: mocks
 filename: mock_{{.InterfaceName}}.go
 structname: Mock{{.InterfaceName}}
 packages:
-  raiseexception.dev/odin/src/accounting/domain/repositories:
-    interfaces:
-      CategoryRepository:
-      AccountRepository:
-      IncomeRepository:
   raiseexception.dev/odin/src/accounts/domain/repositories:
     interfaces:
       SessionRepository:
