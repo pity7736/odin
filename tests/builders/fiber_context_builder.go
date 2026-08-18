@@ -2,7 +2,6 @@ package builders
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/template/html/v2"
 	"github.com/valyala/fasthttp"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
@@ -20,16 +19,9 @@ type FiberContextBuilder struct {
 }
 
 func NewFiberContextBuilder() *FiberContextBuilder {
-	engine := html.New(
-		"/Users/julian.cortes/development/odin/src/shared/infrastructure/templates",
-		".gohtml",
-	)
 	return &FiberContextBuilder{
-		method: fiber.MethodGet,
-		app: fiber.New(fiber.Config{
-			Views:       engine,
-			ViewsLayout: "base",
-		}),
+		method:         fiber.MethodGet,
+		app:            fiber.New(),
 		user:           userbuilder.New().Build(),
 		requestContext: requestcontext.NewAnonymous(),
 	}

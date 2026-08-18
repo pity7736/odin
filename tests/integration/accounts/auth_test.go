@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 
-	"raiseexception.dev/odin/src/accounting/infrastructure/repositories/accountingrepositoryfactory"
 	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/pgrepositories"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
@@ -19,7 +18,6 @@ func newIntegrationApp() (app.Application, *pgrepositories.PGUserRepository, *pg
 	userRepository := pgrepositories.NewPGUserRepository()
 	sessionRepository := pgrepositories.NewPGSessionRepository()
 	application := app.NewFiberApplication(
-		accountingrepositoryfactory.New(),
 		sessionRepository,
 		userRepository,
 		bcrypthasher.New(),
