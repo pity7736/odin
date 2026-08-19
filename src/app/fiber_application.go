@@ -8,13 +8,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
-	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
+	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionvalidator"
 	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
-	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restloginhandler"
-	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restlogouthandler"
 
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
@@ -28,7 +26,7 @@ type fibberApplication struct {
 func NewFiberApplication(
 	sessionRepository accountsrepos.SessionRepository,
 	userRepository accountsrepos.UserRepository,
-	passwordHasher passwordhasher.PasswordHasher,
+	authHasher authhasher.AuthHasher,
 ) Application {
 
 	app := fiber.New(fiber.Config{
@@ -38,13 +36,13 @@ func NewFiberApplication(
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
+	login := loginhandler.New(userRepository, sessionRepository, authHasher)
+	logout := logouthandler.New(sessionRepository)
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
-	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(userRepository, sessionRepository, passwordHasher, restloginhandler.New(ctx)).Login(ctx)
-	})
+	apiV1.Post("/auth/login", login.Login)
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
-		return loginRequired(ctx, logouthandler.New(sessionRepository, restlogouthandler.New(ctx)).Logout)
+		return loginRequired(ctx, logout.Logout)
 	})
 	return &fibberApplication{app: app}
 }
@@ -99,6 +97,7 @@ func (self *fibberApplication) Test(request *http.Request) (*http.Response, erro
 func errorHandler(ctx *fiber.Ctx, err error) error {
 	var odinError *odinerrors.Error
 	code := http.StatusInternalServerError
+	defer func() { ctx.Status(code) }()
 	ok := errors.As(err, &odinError)
 	if ok {
 		switch odinError.Tag() {
@@ -110,7 +109,7 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 			code = http.StatusUnauthorized
 		default:
 		}
+		return ctx.JSON(map[string]string{"error": odinError.ExternalError()})
 	}
-	ctx.Status(code)
 	return nil
 }

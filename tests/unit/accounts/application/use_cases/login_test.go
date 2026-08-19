@@ -32,11 +32,12 @@ func TestLogin(t *testing.T) {
 			factory.GetSessionRepository(),
 			bcrypthasher.New(),
 		)
-		session, err := sessionStarter.Start(context.TODO())
+		session, authenticatedUser, err := sessionStarter.Start(context.TODO())
 
 		assert.Nil(t, err)
 		assert.NotEmpty(t, session.Token())
 		assert.Equal(t, user.ID(), session.UserID())
+		assert.Equal(t, user, authenticatedUser)
 		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
@@ -56,10 +57,11 @@ func TestLogin(t *testing.T) {
 			factory.GetSessionRepository(),
 			bcrypthasher.New(),
 		)
-		session, err := sessionStarter.Start(context.TODO())
+		session, authenticatedUser, err := sessionStarter.Start(context.TODO())
 
 		assert.Equal(t, repoErr, err)
 		assert.Nil(t, session)
+		assert.Nil(t, authenticatedUser)
 		sessionRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
@@ -71,13 +73,13 @@ func TestLogin(t *testing.T) {
 		testCases := []struct {
 			name         string
 			email        string
-			password     string
+			authHash     string
 			expectedUser *usermodel.User
 		}{
 			{
-				"when password is wrong",
+				"when auth hash is wrong",
 				user.Email(),
-				"wrong password",
+				"wrong auth hash",
 				user,
 			},
 			{
@@ -93,18 +95,19 @@ func TestLogin(t *testing.T) {
 				userRepository.EXPECT().GetByEmail(context.TODO(), testCase.email).Return(testCase.expectedUser, nil)
 				sessionStarter := sessionstarter.New(
 					testCase.email,
-					testCase.password,
+					testCase.authHash,
 					factory.GetUserRepository(),
 					factory.GetSessionRepository(),
 					bcrypthasher.New(),
 				)
-				session, err := sessionStarter.Start(context.TODO())
+				session, authenticatedUser, err := sessionStarter.Start(context.TODO())
 
 				var odinError *odinerrors.Error
 				assert.True(t, errors.As(err, &odinError))
 				assert.Equal(t, "Correo o contraseña incorrectos", odinError.ExternalError())
 				assert.Equal(t, odinerrors.Unauthorized, odinError.Tag())
 				assert.Nil(t, session)
+				assert.Nil(t, authenticatedUser)
 				userRepository.AssertCalled(t, "GetByEmail", context.TODO(), testCase.email)
 				sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
 			})
@@ -126,10 +129,11 @@ func TestLogin(t *testing.T) {
 			factory.GetSessionRepository(),
 			bcrypthasher.New(),
 		)
-		session, err := sessionStarter.Start(context.TODO())
+		session, authenticatedUser, err := sessionStarter.Start(context.TODO())
 
 		assert.Equal(t, repoErr, err)
 		assert.Nil(t, session)
+		assert.Nil(t, authenticatedUser)
 		sessionRepository.AssertNotCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 }

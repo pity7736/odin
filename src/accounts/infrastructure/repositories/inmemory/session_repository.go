@@ -1,4 +1,4 @@
-package pgrepositories
+package inmemory
 
 import (
 	"context"
@@ -7,20 +7,20 @@ import (
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
-type PGSessionRepository struct {
+type InMemorySessionRepository struct {
 	sessions map[string]*sessionmodel.Session
 }
 
-func NewPGSessionRepository() *PGSessionRepository {
-	return &PGSessionRepository{sessions: make(map[string]*sessionmodel.Session)}
+func NewInMemorySessionRepository() *InMemorySessionRepository {
+	return &InMemorySessionRepository{sessions: make(map[string]*sessionmodel.Session)}
 }
 
-func (self *PGSessionRepository) Add(ctx context.Context, session *sessionmodel.Session) error {
+func (self *InMemorySessionRepository) Add(ctx context.Context, session *sessionmodel.Session) error {
 	self.sessions[session.Token()] = session
 	return nil
 }
 
-func (self *PGSessionRepository) Get(ctx context.Context, token string) (*sessionmodel.Session, error) {
+func (self *InMemorySessionRepository) Get(ctx context.Context, token string) (*sessionmodel.Session, error) {
 	session := self.sessions[token]
 	if session == nil {
 		return nil, odinerrors.NewErrorBuilder("session not found").
@@ -38,12 +38,12 @@ func (self *PGSessionRepository) Get(ctx context.Context, token string) (*sessio
 	return session, nil
 }
 
-func (self *PGSessionRepository) Save(ctx context.Context, session *sessionmodel.Session) error {
+func (self *InMemorySessionRepository) Save(ctx context.Context, session *sessionmodel.Session) error {
 	self.sessions[session.Token()] = session
 	return nil
 }
 
-func (self *PGSessionRepository) Delete(ctx context.Context, token string) error {
+func (self *InMemorySessionRepository) Delete(ctx context.Context, token string) error {
 	delete(self.sessions, token)
 	return nil
 }

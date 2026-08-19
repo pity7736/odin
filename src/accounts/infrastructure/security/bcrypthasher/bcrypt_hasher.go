@@ -8,6 +8,6 @@ func New() BcryptHasher {
 	return BcryptHasher{}
 }
 
-func (self BcryptHasher) Compare(hashedPassword, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
+func (self BcryptHasher) Compare(storedHash, authHash string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(authHash)) == nil
 }

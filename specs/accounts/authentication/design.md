@@ -4,86 +4,94 @@
 
 ## Overview
 
-Login, logout, session management, and route protection across both the web
-(cookie-based) and mobile (bearer-token) interfaces. Passwords are verified with
-bcrypt; session tokens come from `crypto/rand`; sessions use a 30-day
-sliding-window TTL that is extended on every authenticated request.
+Login, logout, session management, and route protection for a zero-knowledge,
+E2E-encrypted architecture. The server never sees the user's password — it
+receives a pre-derived auth hash from the client. The double-hashing chain
+(client Argon2id → server bcrypt) ensures neither a database leak nor a transit
+interception compromises the vault. Sessions use a 30-day sliding-window TTL
+extended on every authenticated request. The login response returns the session
+token, the user's encrypted master key, and key derivation params so the client
+can unlock the vault.
 
 ## Design Decisions & Rationale
 
-- **REST login returns only the outcome-relevant field.** Success →
-  `{"token": ...}`, failure → `{"error": ...}`, via `omitempty` on a single
-  `response` struct. Rejected the prior `{token, error}` shape that always
-  carried an empty companion field (dead data), and rejected two separate
-  structs — the fields are mutually exclusive and each is never empty on its own
-  path, so `omitempty` expresses the contract without extra types.
-- **Wrong credentials are 401, malformed/missing input is 400.** These are
-  different failures — "your credentials are wrong" vs "you sent a bad request" —
-  and conflating both under `Domain`/400 hid that. A new `Unauthorized`
-  odinerror tag lets the layers distinguish them.
-- **Status is chosen once, in the shared orchestrator.** `login_handler` maps
-  the error tag → status, so REST and HTMX stay consistent from a single source
-  of truth. Rejected per-strategy status ownership (two places to keep in sync,
-  more surgery).
-- **The web htmx config gains a `401 → swap:true` rule.** `base.gohtml`
-  deliberately makes `400` swap so the login-error fragment renders on the web;
-  moving wrong-credentials to 401 would otherwise fall into the `[45].. → no
-  swap` bucket and silently stop rendering the error. The new rule mirrors the
-  existing 400 rule.
-- **Only 4xx produces a client error body; everything else is a 500.**
-  `login_handler` renders an error body for `Unauthorized`/`Domain` only; any
-  other error is returned up to the central `errorHandler`. This removes the
-  prior latent nil-pointer panic (a propagated non-odin error was fed to
-  `HandleBadRequest`, which dereferences a nil `*odinerrors.Error`).
-- **Strategy pattern for handlers.** A shared orchestrator (`login_handler`,
-  `logout_handler`) runs the use case; a per-interface strategy renders the
-  result (cookie + redirect for web, JSON for mobile).
-- **Password hashing is an application concern, not a domain one.** The `User`
-  entity stores an already-hashed password and knows nothing about hashing;
-  verification goes through the `PasswordHasher` port.
+- **AuthHasher replaces PasswordHasher.** The server hashes auth hashes (already
+  high-entropy output of client-side Argon2id), not passwords. The port is named
+  to reflect what it actually does. Bcrypt is sufficient server-side because
+  the input is already high-entropy.
+- **`hashedPassword` renamed to `authHashDigest`.** The server never sees a
+  password; it stores a digest of the client-derived auth hash. The field name
+  reflects the actual data.
+- **KeyParams is a domain value object and a VALUE TYPE (not pointer).** It
+  holds algorithm, iterations, memory, parallelism, and salt. It validates
+  structure (non-empty, positive values) with Spanish external messages, but not
+  specific algorithms — the domain doesn't know which algorithms are valid;
+  that's an infrastructure/crypto concern. Every user must have key params; the
+  zero value is the error case, not nil. Struct field ordering follows alignment
+  rule 2.4: strings (16 bytes) before ints (8 bytes). Getters use value
+  receivers — it's a value object, not an entity.
+- **User entity gains encryptedMasterKey and keyParams.** Both stored at
+  registration, returned at login. `encryptedMasterKey` is an opaque string
+  (the server stores it but cannot decrypt it). `keyParams` is a KeyParams
+  value type.
+- **Login response contract.** Success: `token` + `encrypted_master_key` +
+  `key_params` (algorithm, iterations, memory, parallelism, salt). Error
+  responses exclude key data via `omitempty`.
+- **SessionStarter.Start returns (Session, User, error).** The handler needs
+  both session (token) and user (encrypted master key, key params) to build the
+  login response. Three return values is a known smell — consider refactoring to
+  an Authenticator use case with `AuthResult{Session, User}` when the next auth
+  change lands.
+- **No handler strategy pattern.** With HTMX removed, only REST remains.
+  Handlers are app-scoped value types created once at startup; `*fiber.Ctx` is
+  passed as a method parameter. No intermediate strategy interfaces, no
+  per-request allocation.
+- **LoginBody validates itself.** Field validation (`Validate()`) lives on the
+  body struct, not in the handler — the body knows its own rules.
+- **Centralized error handling.** Fiber's global `errorHandler` renders JSON
+  with external messages for all odin errors. Handlers just return errors —
+  no local error rendering or status-code mapping. Uses `defer` for
+  `ctx.Status(code)` to avoid duplicated status-setting. Non-odin errors get
+  500 with no body.
+- **No LoginResult struct.** The handler builds `loginResponse` directly from
+  session + user. An intermediate struct added no value with only one consumer.
+- **`newKeyParamsResponse` constructor.** Encapsulates the domain-to-response
+  mapping for KeyParams, keeping the transformation inside the response type.
+- **REST login returns only the outcome-relevant fields.** Success →
+  `{token, encrypted_master_key, key_params}`, failure → `{"error": ...}`,
+  via `omitempty` on a single `loginResponse` struct.
+- **Wrong credentials are 401, malformed/missing input is 400.** Different
+  failures — "your credentials are wrong" vs "you sent a bad request" — with
+  distinct status codes via the `Unauthorized` odinerror tag.
 - **Sliding-window sessions.** Each validated request calls `Extend`, resetting
-  expiry to now + TTL, so activity keeps a session alive and inactivity lets it
-  lapse. Expired sessions are deleted on read.
-- **Two auth carriers, one enforcement point.** Web sends the
-  `__Secure-odin-session` cookie (`Secure`, `HttpOnly`, `SameSite=Strict`);
-  `/api/v1` sends a bearer token. `loginRequired` centralizes enforcement —
-  401 for `/api/`, redirect to `/auth/login?next=<path>` for the web — with no
-  inline auth checks in feature handlers.
+  expiry to now + TTL. Expired sessions are deleted on read.
+- **Bearer-only auth.** REST API uses bearer tokens. Cookie-based auth removed
+  with the HTMX/web interface.
 - **Field-agnostic credential error.** Both a wrong email and a wrong password
   return the identical message and status, leaking nothing about which field
   was wrong.
 - **Logout deletes the exact session the middleware validated.** The auth
-  middleware already resolves and validates the request's session, so it stashes
-  that session's token in the request (`handler.SessionTokenKey`, alongside the
-  `RequestContext` it already stores). Logout reads that token and terminates it,
-  doing no cookie/bearer extraction of its own. This replaces a shared
-  `extractToken` that preferred the cookie over the bearer token — a bug where a
-  REST logout deleted a stray cookie's session (when present) while leaving the
-  caller's bearer session alive and still returning success, so the caller was
-  never actually logged out. Rejected both the shared cookie-first extractor and
-  a per-interface `Token()` method on `LogoutHandler`: the latter still assumes
-  the interface matches the credential (a cookie-authenticated REST call would
-  delete nothing and false-succeed), whereas deleting the validated token is
-  correct regardless of which credential authenticated the request.
+  middleware resolves and validates the request's session, stashing that
+  session's token in the request (`handler.SessionTokenKey`). Logout reads that
+  token and terminates it, doing no token extraction of its own.
+- **Repositories named for what they are.** `inmemory/InMemoryUserRepository`
+  and `InMemorySessionRepository` — honest naming for in-memory
+  implementations. Referenced by domain ports; swapping adapters doesn't touch
+  this design.
 
 ## Architecture & Files Summary
 
 ```
-src/shared/domain/odinerrors/
-└── tags.go
-
-src/shared/utils/
-└── random_string.go
-
 src/accounts/domain/
 ├── usermodel/user.go
+├── keyparams/key_params.go
 ├── sessionmodel/session.go
 └── repositories/
     ├── user.go
     └── session.go
 
 src/accounts/application/
-├── passwordhasher/password_hasher.go
+├── authhasher/auth_hasher.go
 └── use_cases/
     ├── sessionstarter/session_starter.go
     ├── sessionterminator/session_terminator.go
@@ -94,72 +102,70 @@ src/accounts/infrastructure/
 │   ├── loginhandler/
 │   │   ├── login_handler.go
 │   │   └── body.go
-│   ├── logouthandler/logout_handler.go
-│   ├── htmx/
-│   │   ├── htmxloginhandler/handler.go
-│   │   └── htmxlogouthandler/handler.go
-│   └── rest/
-│       ├── restloginhandler/handler.go
-│       └── restlogouthandler/handler.go
+│   └── logouthandler/logout_handler.go
 ├── security/bcrypthasher/bcrypt_hasher.go
-└── repositories/pgrepositories/
+└── repositories/inmemory/
     ├── user_repository.go
     └── session_repository.go
 
-src/shared/domain/requestcontext/context.go
+src/shared/domain/
+├── odinerrors/
+├── requestcontext/context.go
+└── ...
+
 src/shared/infrastructure/api/handler.go
 
 src/app/
 └── fiber_application.go
 
-src/shared/infrastructure/templates/
-└── base.gohtml
+tests/unit/accounts/domain/
+├── user_test.go
+└── key_params_test.go
 
 tests/unit/accounts/application/use_cases/
-├── login_test.go
-└── logout_test.go
+└── login_test.go
 
 tests/unit/accounts/infrastructure/api/
-├── login_api_test/login_test.go
+├── login_api_test/
+│   ├── login_test.go
+│   └── body_test.go
 └── logout_api_test/logout_test.go
 
 tests/unit/app/
 └── middleware_test.go
 
-specs/accounts/authentication/
-├── spec.md
-└── plan.md
-```
+tests/integration/accounts/
+└── auth_test.go
 
-Repositories are referenced by their domain ports (`UserRepository`,
-`SessionRepository`); the `pgrepositories` adapters are wired at the composition
-root and owned by their own concern — swapping them does not touch this plan.
+tests/builders/
+├── userbuilder/user.go
+└── request_builder.go
+```
 
 ## Data Flow
 
-**Login (REST — `POST /api/v1/auth/login`):** orchestrator parses the body and
-validates presence (`strings.Clone` on parsed values) → `SessionStarter.Start`
-looks up the user by email and compares the password via `PasswordHasher` →
-on success it creates a session (`crypto/rand` token, TTL) and persists it →
-strategy returns `{"token": ...}` at 201. On failure the orchestrator maps the
-error tag to a status and the strategy returns `{"error": ...}`.
+**Login (`POST /api/v1/auth/login`):** handler parses the JSON body and
+delegates field validation to `LoginBody.Validate()` (`strings.Clone` on parsed
+values) → `SessionStarter.Start` looks up the user by email and compares the
+auth hash via `AuthHasher` → on success it creates a session (`crypto/rand`
+token, TTL), persists it, and returns both session and user → handler builds
+`loginResponse` with token, encrypted master key, and key params (via
+`newKeyParamsResponse`) at 201. On failure the handler returns the error to
+Fiber's global `errorHandler`, which maps the odin error tag to a status code
+and renders `{"error": externalMessage}`.
 
-**Login (HTMX — `POST /auth/login`):** same orchestrator and use case; the web
-strategy sets the session cookie and an `HX-Redirect` to `next` on success, or
-renders the `login_error` fragment on failure.
+**Request authentication (middleware):** the bearer middleware (`/api/v1`) reads
+the token from `Authorization: Bearer <token>`, calls
+`SessionValidator.Validate` (unknown/expired → anonymous; other errors → 500),
+extends the session on success, and places a `RequestContext` in `ctx.Locals`.
+`loginRequired` then admits authenticated requests and rejects the rest (401).
 
-**Request authentication (middleware):** the cookie middleware (global) and the
-bearer middleware (`/api/v1`) both read the token, call `SessionValidator.Validate`
-(unknown/expired → anonymous; other errors → 500), extend the session on success,
-and place a `RequestContext` in `ctx.Locals`. `loginRequired` then admits
-authenticated requests and rejects the rest (401 for `/api/`, redirect for web).
-
-**Logout:** the auth middleware has already validated the request's session and
-stashed its token in the request; logout reads that token and
-`SessionTerminator.Terminate` deletes that session. The web strategy then clears
-the cookie and redirects; the mobile strategy returns a confirmation message.
-Because the token deleted is the one that authenticated the request, a second
-logout with the same credential is rejected by the middleware (401).
+**Logout (`DELETE /api/v1/auth/logout`):** the auth middleware has already
+validated the request's session and stashed its token in the request; logout
+reads that token and `SessionTerminator.Terminate` deletes that session,
+returning `{"message": "session closed"}`. Because the token deleted is the one
+that authenticated the request, a second logout with the same credential is
+rejected by the middleware (401).
 
 ## Request & Response
 
@@ -168,43 +174,54 @@ logout with the same credential is rejected by the middleware (401).
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
 | email | string | yes | empty → 400 "El correo es obligatorio" |
-| password | string | yes | empty → 400 "La contraseña es obligatoria" |
+| auth_hash | string | yes | empty → 400 "La contraseña es obligatoria" |
 
-**REST** — `POST /api/v1/auth/login`
+**Login** — `POST /api/v1/auth/login`
 ```json
 // request
-{ "email": "some@email.com", "password": "secret" }
+{ "email": "some@email.com", "auth_hash": "<client-derived-auth-hash>" }
 // success 201
-{ "token": "<token>" }
+{
+  "token": "<session-token>",
+  "encrypted_master_key": "<opaque-blob>",
+  "key_params": {
+    "algorithm": "argon2id",
+    "iterations": 3,
+    "memory": 65536,
+    "parallelism": 4,
+    "salt": "<base64-salt>"
+  }
+}
 // wrong credentials 401
 { "error": "Correo o contraseña incorrectos" }
 // missing/empty field or malformed body 400
 { "error": "El correo es obligatorio" }
 ```
 
-**HTMX** — `POST /auth/login`
-- Form fields: `email`, `password` (query `next` carries the post-login target)
-- Success: set `__Secure-odin-session` cookie (`Secure`, `HttpOnly`,
-  `SameSite=Strict`) + `HX-Redirect: <next>`
-- Error: render `login_error` fragment into `#login_error`. Wrong credentials
-  now return 401; the htmx `responseHandling` config swaps on `400` and `401`
-  so the fragment renders for both validation and credential failures.
+**Logout** — `DELETE /api/v1/auth/logout` (bearer token identifies the session)
+```json
+// success 200
+{ "message": "session closed" }
+```
 
-**REST** — `DELETE /api/v1/auth/logout` → `{"message": "session closed"}`
-(bearer token identifies the session).
+## Known Limitations
 
-**HTMX** — `POST /auth/logout` → clears the cookie + `HX-Redirect: /auth/login`.
+- In-memory repositories — data is lost on restart. Storage adapter TBD.
+- Session token is the only auth mechanism — no refresh tokens, no device
+  management.
+- No rate limiting on login attempts.
 
 ## Quality Pillars
 
-- **Security:** bcrypt verification, `crypto/rand` tokens, 30-day sliding TTL,
-  cookie hardening (`Secure`/`HttpOnly`/`SameSite=Strict`), `strings.Clone` on
-  parsed body values, centralized `loginRequired`. Wrong email and wrong
-  password remain indistinguishable (identical 401 + message); the 400/401 split
-  only distinguishes malformed input from an authentication failure, not which
-  credential field was wrong.
-- **Reliability:** nil-safe bearer/cookie middleware; propagated non-4xx errors
-  now surface as 500 instead of nil-panicking on a 400 path; expired sessions
+- **Security:** The password never leaves the device. The client derives an auth
+  hash (Argon2id) and sends that to the server; the server bcrypt-hashes the
+  auth hash for storage. The double-hashing chain ensures neither a database
+  leak nor a transit interception reveals the password. `crypto/rand` tokens,
+  30-day sliding TTL, `strings.Clone` on parsed body values, centralized
+  `loginRequired`. Wrong email and wrong password remain indistinguishable
+  (identical 401 + message). Error responses never include key data.
+- **Reliability:** nil-safe bearer middleware; propagated non-4xx errors surface
+  as 500 via the global error handler (no nil-pointer panics); expired sessions
   are rejected and deleted; no panics in the auth flow.
 - **Performance:** Deferred — in-memory repositories, minimal user set; no
   hot-path concern in this change.
