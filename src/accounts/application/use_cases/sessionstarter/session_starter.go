@@ -3,7 +3,7 @@ package sessionstarter
 import (
 	"context"
 
-	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
+	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
@@ -12,54 +12,54 @@ import (
 
 type SessionStarter struct {
 	email             string
-	password          string
+	authHash          string
 	userRepository    repositories.UserRepository
 	sessionRepository repositories.SessionRepository
-	passwordHasher    passwordhasher.PasswordHasher
+	authHasher        authhasher.AuthHasher
 }
 
 func New(
-	email, password string,
+	email, authHash string,
 	userRepository repositories.UserRepository,
 	sessionRepository repositories.SessionRepository,
-	passwordHasher passwordhasher.PasswordHasher,
+	authHasher authhasher.AuthHasher,
 ) SessionStarter {
 
 	return SessionStarter{
 		email:             email,
-		password:          password,
+		authHash:          authHash,
 		userRepository:    userRepository,
 		sessionRepository: sessionRepository,
-		passwordHasher:    passwordHasher,
+		authHasher:        authHasher,
 	}
 }
 
-func (self SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, error) {
+func (self SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, *usermodel.User, error) {
 	user, err := self.userRepository.GetByEmail(ctx, self.email)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	return self.start(ctx, user)
 }
 
-func (self SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
-	if user != nil && self.passwordHasher.Compare(user.HashedPassword(), self.password) {
+func (self SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, *usermodel.User, error) {
+	if user != nil && self.authHasher.Compare(user.AuthHashDigest(), self.authHash) {
 		return self.createSession(ctx, user)
 	}
-	return nil, odinerrors.NewErrorBuilder("email or password are wrong").
+	return nil, nil, odinerrors.NewErrorBuilder("email or password are wrong").
 		WithExternalMessage("Correo o contraseña incorrectos").
 		WithTag(odinerrors.Unauthorized).
 		Build()
 }
 
-func (self SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, error) {
+func (self SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, *usermodel.User, error) {
 	session, err := sessionmodel.New(user.ID(), sessionmodel.DefaultTTL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = self.sessionRepository.Add(ctx, session)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return session, nil
+	return session, user, nil
 }

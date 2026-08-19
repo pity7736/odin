@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
-	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
+	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionvalidator"
 	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
@@ -28,7 +28,7 @@ type fibberApplication struct {
 func NewFiberApplication(
 	sessionRepository accountsrepos.SessionRepository,
 	userRepository accountsrepos.UserRepository,
-	passwordHasher passwordhasher.PasswordHasher,
+	authHasher authhasher.AuthHasher,
 ) Application {
 
 	app := fiber.New(fiber.Config{
@@ -41,7 +41,7 @@ func NewFiberApplication(
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
 	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(userRepository, sessionRepository, passwordHasher, restloginhandler.New(ctx)).Login(ctx)
+		return loginhandler.New(userRepository, sessionRepository, authHasher, restloginhandler.New(ctx)).Login(ctx)
 	})
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, logouthandler.New(sessionRepository, restlogouthandler.New(ctx)).Logout)

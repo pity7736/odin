@@ -6,15 +6,21 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"raiseexception.dev/odin/src/accounts/application/passwordhasher"
+	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
+	"raiseexception.dev/odin/src/accounts/domain/keyparams"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
-	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
+type LoginResult struct {
+	Token              string
+	EncryptedMasterKey string
+	KeyParams          keyparams.KeyParams
+}
+
 type LoginHandler interface {
-	HandleResponse(session *sessionmodel.Session) error
+	HandleResponse(result *LoginResult) error
 	HandleBadRequest(err error) error
 	ContentType() string
 }
@@ -22,15 +28,15 @@ type LoginHandler interface {
 type loginHandler struct {
 	userRepository    repositories.UserRepository
 	sessionRepository repositories.SessionRepository
-	passwordHasher    passwordhasher.PasswordHasher
+	authHasher        authhasher.AuthHasher
 	handler           LoginHandler
 }
 
-func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, passwordHasher passwordhasher.PasswordHasher, handler LoginHandler) *loginHandler {
+func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, authHasher authhasher.AuthHasher, handler LoginHandler) *loginHandler {
 	return &loginHandler{
 		userRepository:    userRepository,
 		sessionRepository: sessionRepository,
-		passwordHasher:    passwordHasher,
+		authHasher:        authHasher,
 		handler:           handler,
 	}
 }
@@ -58,8 +64,8 @@ func (self *loginHandler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) e
 			WithTag(odinerrors.Domain).
 			Build()
 	}
-	if body.Password == "" {
-		return odinerrors.NewErrorBuilder("password is required").
+	if body.AuthHash == "" {
+		return odinerrors.NewErrorBuilder("auth hash is required").
 			WithExternalMessage("La contraseña es obligatoria").
 			WithTag(odinerrors.Domain).
 			Build()
@@ -70,17 +76,21 @@ func (self *loginHandler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) e
 func (self *loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
 	starter := sessionstarter.New(
 		strings.Clone(body.Email),
-		strings.Clone(body.Password),
+		strings.Clone(body.AuthHash),
 		self.userRepository,
 		self.sessionRepository,
-		self.passwordHasher,
+		self.authHasher,
 	)
-	session, err := starter.Start(ctx.Context())
+	session, user, err := starter.Start(ctx.Context())
 	if err != nil {
 		return self.handleError(ctx, err)
 	}
 	ctx.Status(http.StatusCreated)
-	return self.handler.HandleResponse(session)
+	return self.handler.HandleResponse(&LoginResult{
+		Token:              session.Token(),
+		EncryptedMasterKey: user.EncryptedMasterKey(),
+		KeyParams:          user.KeyParams(),
+	})
 }
 
 func (self *loginHandler) handleError(ctx *fiber.Ctx, err error) error {

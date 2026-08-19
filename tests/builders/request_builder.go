@@ -13,7 +13,6 @@ import (
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
-	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 )
 
@@ -101,19 +100,9 @@ func (self *RequestBuilder) Build() *http.Request {
 				self.sessionRepository,
 				bcrypthasher.New(),
 			)
-			session, _ = sessionStarter.Start(context.TODO())
+			session, _, _ = sessionStarter.Start(context.TODO())
 		}
-		if self.contentType == "application/json" {
-			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", session.Token()))
-		} else {
-			request.AddCookie(&http.Cookie{
-				Name:     handler.SessionName,
-				Value:    session.Token(),
-				Secure:   true,
-				HttpOnly: true,
-				SameSite: http.SameSiteStrictMode,
-			})
-		}
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", session.Token()))
 	}
 	return request
 }

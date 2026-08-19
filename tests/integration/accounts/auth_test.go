@@ -7,16 +7,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 
-	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/pgrepositories"
+	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/inmemory"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
 	"raiseexception.dev/odin/tests/testutils"
 )
 
-func newIntegrationApp() (app.Application, *pgrepositories.PGUserRepository, *pgrepositories.PGSessionRepository) {
-	userRepository := pgrepositories.NewPGUserRepository()
-	sessionRepository := pgrepositories.NewPGSessionRepository()
+func newIntegrationApp() (app.Application, *inmemory.InMemoryUserRepository, *inmemory.InMemorySessionRepository) {
+	userRepository := inmemory.NewInMemoryUserRepository()
+	sessionRepository := inmemory.NewInMemorySessionRepository()
 	application := app.NewFiberApplication(
 		sessionRepository,
 		userRepository,
