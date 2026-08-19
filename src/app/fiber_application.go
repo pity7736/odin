@@ -13,8 +13,6 @@ import (
 	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
-	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restloginhandler"
-	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restlogouthandler"
 
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
@@ -41,10 +39,12 @@ func NewFiberApplication(
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
 	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(userRepository, sessionRepository, authHasher, restloginhandler.New(ctx)).Login(ctx)
+		return loginhandler.New(userRepository, sessionRepository, authHasher, ctx).Login()
 	})
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
-		return loginRequired(ctx, logouthandler.New(sessionRepository, restlogouthandler.New(ctx)).Logout)
+		return loginRequired(ctx, func(_ *fiber.Ctx) error {
+			return logouthandler.New(sessionRepository, ctx).Logout()
+		})
 	})
 	return &fibberApplication{app: app}
 }

@@ -44,10 +44,13 @@ src/accounts/application/
 src/accounts/infrastructure/
 ├── api/
 │   ├── loginhandler/
-│   │   ├── login_handler.go                       # MODIFY — rename PasswordHasher→AuthHasher, password→authHash, LoginResult uses value types
+│   │   ├── login_handler.go                       # MODIFY — rename PasswordHasher→AuthHasher, password→authHash, LoginResult uses value types, inline REST JSON response, remove LoginHandler interface
 │   │   └── body.go                                # MODIFY — rename Password→AuthHash
+│   ├── logouthandler/
+│   │   └── logout_handler.go                      # MODIFY — inline REST JSON response, remove LogoutHandler interface
 │   └── rest/
-│       └── restloginhandler/handler.go            # MODIFY — expand response with encrypted master key and key params, make struct private
+│       ├── restloginhandler/handler.go            # DELETE — strategy inlined into loginhandler
+│       └── restlogouthandler/handler.go           # DELETE — strategy inlined into logouthandler
 ├── security/
 │   └── bcrypthasher/bcrypt_hasher.go              # MODIFY — implement AuthHasher instead of PasswordHasher
 └── repositories/inmemory/
@@ -57,7 +60,7 @@ src/accounts/infrastructure/
 src/shared/domain/requestcontext/context.go            # NO CHANGE — carries userID/requestID, unaware of auth hashes or key params
 
 src/app/
-└── fiber_application.go                           # MODIFY — AuthHasher instead of PasswordHasher
+└── fiber_application.go                           # MODIFY — AuthHasher instead of PasswordHasher, remove restloginhandler/restlogouthandler wiring
                                                    # Bearer middleware, validateSession, loginRequired: NO CHANGE
                                                    # (they operate on session tokens, not auth hashes or key params)
 
@@ -135,16 +138,9 @@ type LoginResult struct {
     KeyParams          keyparams.KeyParams
 }
 
-// LoginHandler interface update
-type LoginHandler interface {
-    HandleResponse(result *LoginResult) error
-    HandleBadRequest(err error) error
-    ContentType() string
-}
-
-// REST login response — src/accounts/infrastructure/api/rest/restloginhandler/handler.go
-// Struct is private (restLoginHandler, not RestLoginHandler).
-type response struct {
+// No LoginHandler interface — REST JSON response is inlined directly in loginhandler.
+// Login response JSON:
+type loginResponse struct {
     Token              string             `json:"token,omitempty"`
     EncryptedMasterKey string             `json:"encrypted_master_key,omitempty"`
     KeyParams          *keyParamsResponse `json:"key_params,omitempty"`
@@ -157,6 +153,8 @@ type keyParamsResponse struct {
     Parallelism int    `json:"parallelism"`
     Salt        string `json:"salt"`
 }
+
+// No LogoutHandler interface — REST JSON response is inlined directly in logouthandler.
 ```
 
 ## Implementation Phases (TDD)
@@ -228,9 +226,8 @@ type keyParamsResponse struct {
 **Green:**
 - Modify `src/accounts/infrastructure/api/loginhandler/body.go`: rename `Password` → `AuthHash`, json tag `"password"` → `"auth_hash"`.
 - Add `LoginResult` struct to `login_handler.go` with value types: `Token string`, `EncryptedMasterKey string`, `KeyParams keyparams.KeyParams`.
-- Update `LoginHandler` interface: `HandleResponse(result *LoginResult) error`.
-- Modify `login_handler.go`: rename PasswordHasher → AuthHasher, build `LoginResult` from session token + user data, pass to handler.
-- Modify `restloginhandler/handler.go`: make struct private (`restLoginHandler`), expand response struct, map `LoginResult` to response JSON.
+- Modify `login_handler.go`: rename PasswordHasher → AuthHasher, build `LoginResult` from session token + user data, render JSON response directly (no LoginHandler interface, no strategy).
+- Delete `restloginhandler/` package entirely.
 
 ### Phase 6: Wiring and test infrastructure
 
@@ -247,6 +244,19 @@ type keyParamsResponse struct {
 ### Phase 7: Mock regeneration
 
 Run `go run github.com/vektra/mockery/v3` to regenerate mocks if any repository interface changed. Then `make check` to verify everything is green.
+
+### Phase 8: Remove handler strategy pattern
+
+Only REST remains after the HTMX removal — the LoginHandler and LogoutHandler interfaces add indirection with a single implementation. Flatten them.
+
+**Red:** Update `tests/unit/accounts/infrastructure/api/logout_api_test/logout_test.go`:
+- Remove `restlogouthandler` import and wiring — wire `logouthandler` directly.
+
+**Green:**
+- Modify `src/accounts/infrastructure/api/logouthandler/logout_handler.go`: remove `LogoutHandler` interface, inline the JSON response (`{"message": "session closed"}`), accept `*fiber.Ctx` directly instead of delegating to a strategy.
+- Delete `src/accounts/infrastructure/api/rest/restlogouthandler/` package entirely.
+- Modify `src/app/fiber_application.go`: remove `restloginhandler` and `restlogouthandler` imports and wiring — `loginhandler.New(...)` and `logouthandler.New(...)` now take `*fiber.Ctx` directly.
+- `make check` GREEN.
 
 ## Design decisions to hydrate into design.md
 
@@ -265,3 +275,4 @@ Run `go run github.com/vektra/mockery/v3` to regenerate mocks if any repository 
 - [ ] Remove Data Flow and Request & Response sections for HTMX.
 - [ ] Update Architecture & Files Summary to reflect deleted HTMX handlers, new files, and renamed repositories.
 - [ ] Update Quality Pillars: password never leaves device, auth hash double-hashing.
+- [ ] LoginHandler/LogoutHandler strategy pattern removed — with HTMX gone, only REST remains. The handlers render JSON directly instead of delegating to a strategy interface. restloginhandler/ and restlogouthandler/ packages deleted.

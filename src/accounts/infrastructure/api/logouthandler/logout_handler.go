@@ -8,27 +8,23 @@ import (
 	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 )
 
-type LogoutHandler interface {
-	HandleResponse() error
-}
-
 type logoutHandler struct {
 	sessionRepository repositories.SessionRepository
-	handler           LogoutHandler
+	ctx               *fiber.Ctx
 }
 
-func New(sessionRepository repositories.SessionRepository, handler LogoutHandler) *logoutHandler {
+func New(sessionRepository repositories.SessionRepository, ctx *fiber.Ctx) *logoutHandler {
 	return &logoutHandler{
 		sessionRepository: sessionRepository,
-		handler:           handler,
+		ctx:               ctx,
 	}
 }
 
-func (self *logoutHandler) Logout(ctx *fiber.Ctx) error {
-	token, _ := ctx.Locals(handler.SessionTokenKey).(string)
+func (self *logoutHandler) Logout() error {
+	token, _ := self.ctx.Locals(handler.SessionTokenKey).(string)
 	terminator := sessionterminator.New(self.sessionRepository)
-	if err := terminator.Terminate(ctx.Context(), token); err != nil {
+	if err := terminator.Terminate(self.ctx.Context(), token); err != nil {
 		return err
 	}
-	return self.handler.HandleResponse()
+	return self.ctx.JSON(map[string]string{"message": "session closed"})
 }

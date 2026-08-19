@@ -14,7 +14,6 @@ import (
 	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
 
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
-	"raiseexception.dev/odin/src/accounts/infrastructure/api/rest/restlogouthandler"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
@@ -22,7 +21,7 @@ func newRestLogoutApp(factory *testrepositoryfactory.Factory, token string) *fib
 	application := fiber.New()
 	application.Use(stashToken(token))
 	application.Delete("/api/v1/auth/logout", func(ctx *fiber.Ctx) error {
-		return logouthandler.New(factory.GetSessionRepository(), restlogouthandler.New(ctx)).Logout(ctx)
+		return logouthandler.New(factory.GetSessionRepository(), ctx).Logout()
 	})
 	return application
 }

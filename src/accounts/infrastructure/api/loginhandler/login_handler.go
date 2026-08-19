@@ -19,40 +19,34 @@ type LoginResult struct {
 	KeyParams          keyparams.KeyParams
 }
 
-type LoginHandler interface {
-	HandleResponse(result *LoginResult) error
-	HandleBadRequest(err error) error
-	ContentType() string
-}
-
 type loginHandler struct {
 	userRepository    repositories.UserRepository
 	sessionRepository repositories.SessionRepository
 	authHasher        authhasher.AuthHasher
-	handler           LoginHandler
+	ctx               *fiber.Ctx
 }
 
-func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, authHasher authhasher.AuthHasher, handler LoginHandler) *loginHandler {
+func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, authHasher authhasher.AuthHasher, ctx *fiber.Ctx) *loginHandler {
 	return &loginHandler{
 		userRepository:    userRepository,
 		sessionRepository: sessionRepository,
 		authHasher:        authHasher,
-		handler:           handler,
+		ctx:               ctx,
 	}
 }
 
-func (self *loginHandler) Login(ctx *fiber.Ctx) error {
-	ctx.Set("Content-Type", self.handler.ContentType())
+func (self *loginHandler) Login() error {
+	self.ctx.Set("Content-Type", fiber.MIMEApplicationJSON)
 	var body LoginBody
-	if err := self.validateRequestBody(ctx, &body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return self.handler.HandleBadRequest(err)
+	if err := self.validateRequestBody(&body); err != nil {
+		self.ctx.Status(http.StatusBadRequest)
+		return self.renderError(err)
 	}
-	return self.login(ctx, &body)
+	return self.login(&body)
 }
 
-func (self *loginHandler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) error {
-	if err := ctx.BodyParser(body); err != nil {
+func (self *loginHandler) validateRequestBody(body *LoginBody) error {
+	if err := self.ctx.BodyParser(body); err != nil {
 		return odinerrors.NewErrorBuilder("wrong body").
 			WithExternalMessage("Datos de solicitud inválidos").
 			WithTag(odinerrors.Domain).
@@ -73,7 +67,7 @@ func (self *loginHandler) validateRequestBody(ctx *fiber.Ctx, body *LoginBody) e
 	return nil
 }
 
-func (self *loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
+func (self *loginHandler) login(body *LoginBody) error {
 	starter := sessionstarter.New(
 		strings.Clone(body.Email),
 		strings.Clone(body.AuthHash),
@@ -81,30 +75,66 @@ func (self *loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
 		self.sessionRepository,
 		self.authHasher,
 	)
-	session, user, err := starter.Start(ctx.Context())
+	session, user, err := starter.Start(self.ctx.Context())
 	if err != nil {
-		return self.handleError(ctx, err)
+		return self.handleError(err)
 	}
-	ctx.Status(http.StatusCreated)
-	return self.handler.HandleResponse(&LoginResult{
+	self.ctx.Status(http.StatusCreated)
+	result := &LoginResult{
 		Token:              session.Token(),
 		EncryptedMasterKey: user.EncryptedMasterKey(),
 		KeyParams:          user.KeyParams(),
-	})
+	}
+	return self.renderSuccess(result)
 }
 
-func (self *loginHandler) handleError(ctx *fiber.Ctx, err error) error {
+func (self *loginHandler) handleError(err error) error {
 	var odinError *odinerrors.Error
 	if !errors.As(err, &odinError) {
 		return err
 	}
 	switch odinError.Tag() {
 	case odinerrors.Unauthorized:
-		ctx.Status(http.StatusUnauthorized)
+		self.ctx.Status(http.StatusUnauthorized)
 	case odinerrors.Domain:
-		ctx.Status(http.StatusBadRequest)
+		self.ctx.Status(http.StatusBadRequest)
 	default:
 		return err
 	}
-	return self.handler.HandleBadRequest(err)
+	return self.renderError(err)
+}
+
+func (self *loginHandler) renderSuccess(result *LoginResult) error {
+	return self.ctx.JSON(loginResponse{
+		Token:              result.Token,
+		EncryptedMasterKey: result.EncryptedMasterKey,
+		KeyParams: &keyParamsResponse{
+			Algorithm:   result.KeyParams.Algorithm(),
+			Iterations:  result.KeyParams.Iterations(),
+			Memory:      result.KeyParams.Memory(),
+			Parallelism: result.KeyParams.Parallelism(),
+			Salt:        result.KeyParams.Salt(),
+		},
+	})
+}
+
+func (self *loginHandler) renderError(err error) error {
+	var odinError *odinerrors.Error
+	errors.As(err, &odinError)
+	return self.ctx.JSON(loginResponse{Error: odinError.ExternalError()})
+}
+
+type loginResponse struct {
+	Token              string             `json:"token,omitempty"`
+	EncryptedMasterKey string             `json:"encrypted_master_key,omitempty"`
+	KeyParams          *keyParamsResponse `json:"key_params,omitempty"`
+	Error              string             `json:"error,omitempty"`
+}
+
+type keyParamsResponse struct {
+	Algorithm   string `json:"algorithm"`
+	Iterations  int    `json:"iterations"`
+	Memory      int    `json:"memory"`
+	Parallelism int    `json:"parallelism"`
+	Salt        string `json:"salt"`
 }
