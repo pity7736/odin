@@ -54,7 +54,18 @@ Core accounting, all client-side.
 - [ ] Multi-currency support
 - [ ] Reports and dashboards
 
-## Phase 6 — Expand
+## Phase 6 — AI-powered expense entry (Kotlin + Gideon integration)
+
+Voice/text expense creation to eliminate manual data entry friction — the retention differentiator.
+
+- [ ] Sitia integration: mobile app authenticates with Sitia (all AI requests are routed through Sitia, Gideon doesn't handle public requests)
+- [ ] Text-based expense parsing: natural language → structured expense (amount, currency, category, description)
+- [ ] Gideon expense skill: mobile app sends plaintext to Sitia → Sitia routes to Gideon → Gideon parses → returns structured data → mobile encrypts locally (opt-in, zero-knowledge tradeoff with clear disclosure)
+- [ ] Category matching: client sends user's category list alongside the text for accurate classification
+- [ ] Audio clip support: speech-to-text → text parsing pipeline
+- [ ] Multi-currency disambiguation (e.g. "20 dollars" when user has USD and EUR accounts)
+
+## Phase 7 — Expand
 
 - [ ] Web client
 - [ ] iOS (extract crypto to Rust + UniFFI)
