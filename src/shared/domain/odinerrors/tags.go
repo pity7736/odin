@@ -8,4 +8,5 @@ const (
 	Render
 	NotFound
 	Unauthorized
+	AlreadyExists
 )

@@ -13,6 +13,7 @@ import (
 	accountsrepos "raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/loginhandler"
 	"raiseexception.dev/odin/src/accounts/infrastructure/api/logouthandler"
+	"raiseexception.dev/odin/src/accounts/infrastructure/api/registerhandler"
 
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
@@ -38,8 +39,10 @@ func NewFiberApplication(
 	})
 	login := loginhandler.New(userRepository, sessionRepository, authHasher)
 	logout := logouthandler.New(sessionRepository)
+	register := registerhandler.New(userRepository, authHasher)
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
+	apiV1.Post("/auth/register", register.Register)
 	apiV1.Post("/auth/login", login.Login)
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, logout.Logout)
@@ -107,6 +110,8 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 			code = http.StatusNotFound
 		case odinerrors.Unauthorized:
 			code = http.StatusUnauthorized
+		case odinerrors.AlreadyExists:
+			code = http.StatusConflict
 		default:
 		}
 		return ctx.JSON(map[string]string{"error": odinError.ExternalError()})
