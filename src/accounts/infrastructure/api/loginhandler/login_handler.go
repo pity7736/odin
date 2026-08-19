@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
+	"raiseexception.dev/odin/src/accounts/domain/keyparams"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
@@ -55,13 +56,7 @@ func (self loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
 	return ctx.JSON(loginResponse{
 		Token:              session.Token(),
 		EncryptedMasterKey: user.EncryptedMasterKey(),
-		KeyParams: &keyParamsResponse{
-			Algorithm:   user.KeyParams().Algorithm(),
-			Iterations:  user.KeyParams().Iterations(),
-			Memory:      user.KeyParams().Memory(),
-			Parallelism: user.KeyParams().Parallelism(),
-			Salt:        user.KeyParams().Salt(),
-		},
+		KeyParams:          newKeyParamsResponse(user.KeyParams()),
 	})
 }
 
@@ -78,4 +73,14 @@ type keyParamsResponse struct {
 	Memory      int    `json:"memory"`
 	Parallelism int    `json:"parallelism"`
 	Salt        string `json:"salt"`
+}
+
+func newKeyParamsResponse(params keyparams.KeyParams) *keyParamsResponse {
+	return &keyParamsResponse{
+		Algorithm:   params.Algorithm(),
+		Iterations:  params.Iterations(),
+		Memory:      params.Memory(),
+		Parallelism: params.Parallelism(),
+		Salt:        params.Salt(),
+	}
 }
