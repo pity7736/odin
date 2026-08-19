@@ -1,5 +1,5 @@
 info:
-  name: login missing password
+  name: login missing auth hash
   type: http
   seq: 4
 
