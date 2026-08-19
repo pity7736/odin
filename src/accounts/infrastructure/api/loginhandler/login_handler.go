@@ -1,73 +1,45 @@
 package loginhandler
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/application/use_cases/sessionstarter"
-	"raiseexception.dev/odin/src/accounts/domain/keyparams"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
-
-type LoginResult struct {
-	Token              string
-	EncryptedMasterKey string
-	KeyParams          keyparams.KeyParams
-}
 
 type loginHandler struct {
 	userRepository    repositories.UserRepository
 	sessionRepository repositories.SessionRepository
 	authHasher        authhasher.AuthHasher
-	ctx               *fiber.Ctx
 }
 
-func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, authHasher authhasher.AuthHasher, ctx *fiber.Ctx) *loginHandler {
-	return &loginHandler{
+func New(userRepository repositories.UserRepository, sessionRepository repositories.SessionRepository, authHasher authhasher.AuthHasher) loginHandler {
+	return loginHandler{
 		userRepository:    userRepository,
 		sessionRepository: sessionRepository,
 		authHasher:        authHasher,
-		ctx:               ctx,
 	}
 }
 
-func (self *loginHandler) Login() error {
-	self.ctx.Set("Content-Type", fiber.MIMEApplicationJSON)
+func (self loginHandler) Login(ctx *fiber.Ctx) error {
 	var body LoginBody
-	if err := self.validateRequestBody(&body); err != nil {
-		self.ctx.Status(http.StatusBadRequest)
-		return self.renderError(err)
-	}
-	return self.login(&body)
-}
-
-func (self *loginHandler) validateRequestBody(body *LoginBody) error {
-	if err := self.ctx.BodyParser(body); err != nil {
+	if err := ctx.BodyParser(&body); err != nil {
 		return odinerrors.NewErrorBuilder("wrong body").
 			WithExternalMessage("Datos de solicitud inválidos").
 			WithTag(odinerrors.Domain).
 			Build()
 	}
-	if body.Email == "" {
-		return odinerrors.NewErrorBuilder("email is required").
-			WithExternalMessage("El correo es obligatorio").
-			WithTag(odinerrors.Domain).
-			Build()
+	if err := body.Validate(); err != nil {
+		return err
 	}
-	if body.AuthHash == "" {
-		return odinerrors.NewErrorBuilder("auth hash is required").
-			WithExternalMessage("La contraseña es obligatoria").
-			WithTag(odinerrors.Domain).
-			Build()
-	}
-	return nil
+	return self.login(ctx, &body)
 }
 
-func (self *loginHandler) login(body *LoginBody) error {
+func (self loginHandler) login(ctx *fiber.Ctx, body *LoginBody) error {
 	starter := sessionstarter.New(
 		strings.Clone(body.Email),
 		strings.Clone(body.AuthHash),
@@ -75,53 +47,22 @@ func (self *loginHandler) login(body *LoginBody) error {
 		self.sessionRepository,
 		self.authHasher,
 	)
-	session, user, err := starter.Start(self.ctx.Context())
+	session, user, err := starter.Start(ctx.Context())
 	if err != nil {
-		return self.handleError(err)
+		return err
 	}
-	self.ctx.Status(http.StatusCreated)
-	result := &LoginResult{
+	ctx.Status(http.StatusCreated)
+	return ctx.JSON(loginResponse{
 		Token:              session.Token(),
 		EncryptedMasterKey: user.EncryptedMasterKey(),
-		KeyParams:          user.KeyParams(),
-	}
-	return self.renderSuccess(result)
-}
-
-func (self *loginHandler) handleError(err error) error {
-	var odinError *odinerrors.Error
-	if !errors.As(err, &odinError) {
-		return err
-	}
-	switch odinError.Tag() {
-	case odinerrors.Unauthorized:
-		self.ctx.Status(http.StatusUnauthorized)
-	case odinerrors.Domain:
-		self.ctx.Status(http.StatusBadRequest)
-	default:
-		return err
-	}
-	return self.renderError(err)
-}
-
-func (self *loginHandler) renderSuccess(result *LoginResult) error {
-	return self.ctx.JSON(loginResponse{
-		Token:              result.Token,
-		EncryptedMasterKey: result.EncryptedMasterKey,
 		KeyParams: &keyParamsResponse{
-			Algorithm:   result.KeyParams.Algorithm(),
-			Iterations:  result.KeyParams.Iterations(),
-			Memory:      result.KeyParams.Memory(),
-			Parallelism: result.KeyParams.Parallelism(),
-			Salt:        result.KeyParams.Salt(),
+			Algorithm:   user.KeyParams().Algorithm(),
+			Iterations:  user.KeyParams().Iterations(),
+			Memory:      user.KeyParams().Memory(),
+			Parallelism: user.KeyParams().Parallelism(),
+			Salt:        user.KeyParams().Salt(),
 		},
 	})
-}
-
-func (self *loginHandler) renderError(err error) error {
-	var odinError *odinerrors.Error
-	errors.As(err, &odinError)
-	return self.ctx.JSON(loginResponse{Error: odinError.ExternalError()})
 }
 
 type loginResponse struct {

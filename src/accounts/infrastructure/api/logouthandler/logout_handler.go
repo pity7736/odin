@@ -10,21 +10,19 @@ import (
 
 type logoutHandler struct {
 	sessionRepository repositories.SessionRepository
-	ctx               *fiber.Ctx
 }
 
-func New(sessionRepository repositories.SessionRepository, ctx *fiber.Ctx) *logoutHandler {
-	return &logoutHandler{
+func New(sessionRepository repositories.SessionRepository) logoutHandler {
+	return logoutHandler{
 		sessionRepository: sessionRepository,
-		ctx:               ctx,
 	}
 }
 
-func (self *logoutHandler) Logout() error {
-	token, _ := self.ctx.Locals(handler.SessionTokenKey).(string)
+func (self logoutHandler) Logout(ctx *fiber.Ctx) error {
+	token, _ := ctx.Locals(handler.SessionTokenKey).(string)
 	terminator := sessionterminator.New(self.sessionRepository)
-	if err := terminator.Terminate(self.ctx.Context(), token); err != nil {
+	if err := terminator.Terminate(ctx.Context(), token); err != nil {
 		return err
 	}
-	return self.ctx.JSON(map[string]string{"message": "session closed"})
+	return ctx.JSON(map[string]string{"message": "session closed"})
 }

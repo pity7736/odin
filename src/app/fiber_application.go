@@ -36,15 +36,13 @@ func NewFiberApplication(
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.SendString("pong")
 	})
+	login := loginhandler.New(userRepository, sessionRepository, authHasher)
+	logout := logouthandler.New(sessionRepository)
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
-	apiV1.Post("/auth/login", func(ctx *fiber.Ctx) error {
-		return loginhandler.New(userRepository, sessionRepository, authHasher, ctx).Login()
-	})
+	apiV1.Post("/auth/login", login.Login)
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
-		return loginRequired(ctx, func(_ *fiber.Ctx) error {
-			return logouthandler.New(sessionRepository, ctx).Logout()
-		})
+		return loginRequired(ctx, logout.Logout)
 	})
 	return &fibberApplication{app: app}
 }
@@ -99,6 +97,7 @@ func (self *fibberApplication) Test(request *http.Request) (*http.Response, erro
 func errorHandler(ctx *fiber.Ctx, err error) error {
 	var odinError *odinerrors.Error
 	code := http.StatusInternalServerError
+	defer func() { ctx.Status(code) }()
 	ok := errors.As(err, &odinError)
 	if ok {
 		switch odinError.Tag() {
@@ -110,7 +109,7 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 			code = http.StatusUnauthorized
 		default:
 		}
+		return ctx.JSON(map[string]string{"error": odinError.ExternalError()})
 	}
-	ctx.Status(code)
 	return nil
 }

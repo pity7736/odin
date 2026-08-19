@@ -20,9 +20,8 @@ import (
 func newRestLogoutApp(factory *testrepositoryfactory.Factory, token string) *fiber.App {
 	application := fiber.New()
 	application.Use(stashToken(token))
-	application.Delete("/api/v1/auth/logout", func(ctx *fiber.Ctx) error {
-		return logouthandler.New(factory.GetSessionRepository(), ctx).Logout()
-	})
+	logout := logouthandler.New(factory.GetSessionRepository())
+	application.Delete("/api/v1/auth/logout", logout.Logout)
 	return application
 }
 

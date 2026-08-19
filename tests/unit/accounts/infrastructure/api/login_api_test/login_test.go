@@ -171,6 +171,7 @@ func TestRest(t *testing.T) {
 		builder := userbuilder.New()
 		user := builder.Build()
 		body := fmt.Sprintf(`{"email": "%s", "auth_hash": "%s"}`, user.Email(), builder.Password())
+		var responseData map[string]any
 		renderError := odinerrors.NewErrorBuilder("render failed").
 			WithExternalMessage("Error interno").
 			WithTag(odinerrors.Render).
@@ -180,13 +181,17 @@ func TestRest(t *testing.T) {
 		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/api/v1/auth/login").
 			WithPayload(body).
+			WithResponseData(&responseData).
 			WithContentType(fiber.MIMEApplicationJSON).
 			WithAnonymousSession()
 		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
 		defer func() { _ = response.Body.Close() }()
 
 		assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
-		assert.Zero(t, response.ContentLength)
+		assert.Equal(t, "Error interno", responseData["error"])
+		assert.NotContains(t, responseData, "token")
+		assert.NotContains(t, responseData, "encrypted_master_key")
+		assert.NotContains(t, responseData, "key_params")
 		userRepositoryMock.AssertCalled(t, "GetByEmail", mock.Anything, user.Email())
 	})
 
