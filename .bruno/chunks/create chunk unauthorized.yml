@@ -1,0 +1,22 @@
+info:
+  name: create chunk unauthorized
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{host}}/chunks"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "0192f0c1-8a2b-7def-8123-456789abcdef",
+        "content": "encrypted-content-base64"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

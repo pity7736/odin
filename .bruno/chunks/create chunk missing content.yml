@@ -1,0 +1,24 @@
+info:
+  name: create chunk missing content
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{host}}/chunks"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "id": "0192f0c1-8a2b-7def-8123-456789abcdef"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
