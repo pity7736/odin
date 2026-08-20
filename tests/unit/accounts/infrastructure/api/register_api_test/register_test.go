@@ -9,16 +9,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
+	"raiseexception.dev/odin/tests/builders/apptest"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
 func newApplication(factory *testrepositoryfactory.Factory) app.Application {
-	return app.NewFiberApplication(factory.GetSessionRepository(), factory.GetUserRepository(), bcrypthasher.New())
+	return apptest.New().
+		WithSessionRepository(factory.GetSessionRepository()).
+		WithUserRepository(factory.GetUserRepository()).
+		Build()
 }
 
 func validRegisterBody(email string) string {

@@ -11,15 +11,18 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"raiseexception.dev/odin/src/accounts/domain/sessionmodel"
-	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	handler "raiseexception.dev/odin/src/shared/infrastructure/api"
+	"raiseexception.dev/odin/tests/builders/apptest"
 	"raiseexception.dev/odin/tests/unit/testrepositoryfactory"
 )
 
 func newApp(factory *testrepositoryfactory.Factory) app.Application {
-	return app.NewFiberApplication(factory.GetSessionRepository(), factory.GetUserRepository(), bcrypthasher.New())
+	return apptest.New().
+		WithSessionRepository(factory.GetSessionRepository()).
+		WithUserRepository(factory.GetUserRepository()).
+		Build()
 }
 
 func TestLogoutShould(t *testing.T) {
