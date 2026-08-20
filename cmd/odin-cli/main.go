@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -29,7 +30,7 @@ const (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: odin-cli <register|login> [flags]")
+		fmt.Println("usage: odin-cli <register|login|create-chunk> [flags]")
 		os.Exit(1)
 	}
 	switch os.Args[1] {
@@ -40,6 +41,11 @@ func main() {
 		}
 	case "login":
 		if err := runLogin(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			os.Exit(1)
+		}
+	case "create-chunk":
+		if err := runCreateChunk(os.Args[2:]); err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			os.Exit(1)
 		}
@@ -267,6 +273,91 @@ func unwrapMasterKey(encryptionKey []byte, encryptedMasterKey string) ([]byte, e
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
+func runCreateChunk(args []string) error {
+	flags := flag.NewFlagSet("create-chunk", flag.ExitOnError)
+	email := flags.String("email", "", "account email")
+	plaintext := flags.String("plaintext", "", "data to encrypt and store")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *email == "" || *plaintext == "" {
+		return fmt.Errorf("email and plaintext are required")
+	}
+	sessions, err := loadSessions()
+	if err != nil {
+		return err
+	}
+	current, ok := sessions[*email]
+	if !ok || current.Token == "" {
+		return fmt.Errorf("no active session for %s (run login first)", *email)
+	}
+	masterKey, err := base64.StdEncoding.DecodeString(current.MasterKey)
+	if err != nil {
+		return err
+	}
+	content, err := sealContent(masterKey, *plaintext)
+	if err != nil {
+		return err
+	}
+	id, err := uuid.NewV7()
+	if err != nil {
+		return err
+	}
+	response, err := createChunk(current.Token, id.String(), content)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("chunk stored id=%s\n", response.ID)
+	return nil
+}
+
+func createChunk(token, id, content string) (createChunkResponse, error) {
+	payload, err := json.Marshal(createChunkRequest{ID: id, Content: content})
+	if err != nil {
+		return createChunkResponse{}, err
+	}
+	request, err := http.NewRequest(http.MethodPost, defaultBaseURL+"/chunks", bytes.NewReader(payload))
+	if err != nil {
+		return createChunkResponse{}, err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+	httpResponse, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return createChunkResponse{}, err
+	}
+	defer func() { _ = httpResponse.Body.Close() }()
+	raw, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return createChunkResponse{}, err
+	}
+	if httpResponse.StatusCode != http.StatusCreated {
+		return createChunkResponse{}, fmt.Errorf("create chunk failed (%d): %s", httpResponse.StatusCode, raw)
+	}
+	var response createChunkResponse
+	if err := json.Unmarshal(raw, &response); err != nil {
+		return createChunkResponse{}, err
+	}
+	return response, nil
+}
+
+func sealContent(key []byte, plaintext string) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce, err := randomBytes(gcm.NonceSize())
+	if err != nil {
+		return "", err
+	}
+	sealed := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+	return base64.StdEncoding.EncodeToString(sealed), nil
+}
+
 type registerRequest struct {
 	Email              string    `json:"email"`
 	AuthHash           string    `json:"auth_hash"`
@@ -302,4 +393,13 @@ type session struct {
 	Salt      string `json:"salt"`
 	Token     string `json:"token"`
 	MasterKey string `json:"master_key"`
+}
+
+type createChunkRequest struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
+}
+
+type createChunkResponse struct {
+	ID string `json:"id"`
 }

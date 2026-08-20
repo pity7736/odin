@@ -42,11 +42,8 @@ func TestCreateChunkIntegrationShould(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Equal(t, id, responseData["id"])
-		storedChunk, err := chunkRepository.GetByID(context.TODO(), owner.ID(), id)
+		exists, err := chunkRepository.Exists(context.TODO(), owner.ID(), id)
 		assert.Nil(t, err)
-		assert.NotNil(t, storedChunk)
-		assert.Equal(t, id, storedChunk.ID())
-		assert.Equal(t, owner.ID(), storedChunk.OwnerID())
-		assert.Equal(t, "nonce-ciphertext-tag-base64", storedChunk.Content())
+		assert.True(t, exists)
 	})
 }

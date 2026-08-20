@@ -56,7 +56,7 @@ func TestCreateChunkRestShould(t *testing.T) {
 		testContext := newChunkHandlerTestContext(t)
 		owner := userbuilder.New().WithEmail("owner@example.com").Create(testContext.userRepository)
 		id := uuid.NewString()
-		testContext.chunkRepository.EXPECT().GetByID(mock.Anything, owner.ID(), id).Return(nil, nil)
+		testContext.chunkRepository.EXPECT().Exists(mock.Anything, owner.ID(), id).Return(false, nil)
 		var storedChunk *chunkmodel.EncryptedChunk
 		testContext.chunkRepository.EXPECT().Add(mock.Anything, mock.Anything).Run(func(ctx context.Context, chunk *chunkmodel.EncryptedChunk) {
 			storedChunk = chunk
@@ -81,8 +81,7 @@ func TestCreateChunkRestShould(t *testing.T) {
 		testContext := newChunkHandlerTestContext(t)
 		owner := userbuilder.New().WithEmail("owner@example.com").Create(testContext.userRepository)
 		id := uuid.NewString()
-		existingChunk, _ := chunkmodel.New(id, owner.ID(), "existing-content")
-		testContext.chunkRepository.EXPECT().GetByID(mock.Anything, owner.ID(), id).Return(existingChunk, nil)
+		testContext.chunkRepository.EXPECT().Exists(mock.Anything, owner.ID(), id).Return(true, nil)
 		var responseData map[string]any
 		requestBuilder := testContext.requestBuilder().
 			WithPayload(fmt.Sprintf(`{"id": "%s", "content": "encrypted-content"}`, id)).
@@ -107,7 +106,7 @@ func TestCreateChunkRestShould(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "Datos de solicitud inválidos", responseData["error"])
-		testContext.chunkRepository.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything, mock.Anything)
+		testContext.chunkRepository.AssertNotCalled(t, "Exists", mock.Anything, mock.Anything, mock.Anything)
 		testContext.chunkRepository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
@@ -124,14 +123,14 @@ func TestCreateChunkRestShould(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "Datos de solicitud inválidos", responseData["error"])
-		testContext.chunkRepository.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything, mock.Anything)
+		testContext.chunkRepository.AssertNotCalled(t, "Exists", mock.Anything, mock.Anything, mock.Anything)
 		testContext.chunkRepository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
 	t.Run("reject a chunk whose id is not a valid uuid", func(t *testing.T) {
 		testContext := newChunkHandlerTestContext(t)
 		owner := userbuilder.New().WithEmail("owner@example.com").Create(testContext.userRepository)
-		testContext.chunkRepository.EXPECT().GetByID(mock.Anything, owner.ID(), "not-a-uuid").Return(nil, nil)
+		testContext.chunkRepository.EXPECT().Exists(mock.Anything, owner.ID(), "not-a-uuid").Return(false, nil)
 		var responseData map[string]any
 		requestBuilder := testContext.requestBuilder().
 			WithPayload(`{"id": "not-a-uuid", "content": "encrypted-content"}`).
@@ -156,7 +155,7 @@ func TestCreateChunkRestShould(t *testing.T) {
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "Datos de solicitud inválidos", responseData["error"])
-		testContext.chunkRepository.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything, mock.Anything)
+		testContext.chunkRepository.AssertNotCalled(t, "Exists", mock.Anything, mock.Anything, mock.Anything)
 		testContext.chunkRepository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
@@ -169,7 +168,7 @@ func TestCreateChunkRestShould(t *testing.T) {
 		response := testutils.GetJSONResponseFromRequestBuilder(testContext.application, requestBuilder)
 		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
-		testContext.chunkRepository.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything, mock.Anything)
+		testContext.chunkRepository.AssertNotCalled(t, "Exists", mock.Anything, mock.Anything, mock.Anything)
 		testContext.chunkRepository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 }

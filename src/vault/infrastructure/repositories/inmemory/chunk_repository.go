@@ -14,12 +14,13 @@ func NewInMemoryChunkRepository() *InMemoryChunkRepository {
 	return &InMemoryChunkRepository{chunks: make(map[string]map[string]*chunkmodel.EncryptedChunk)}
 }
 
-func (self *InMemoryChunkRepository) GetByID(ctx context.Context, ownerID, id string) (*chunkmodel.EncryptedChunk, error) {
+func (self *InMemoryChunkRepository) Exists(ctx context.Context, ownerID, id string) (bool, error) {
 	ownedChunks, ok := self.chunks[ownerID]
 	if !ok {
-		return nil, nil
+		return false, nil
 	}
-	return ownedChunks[id], nil
+	_, ok = ownedChunks[id]
+	return ok, nil
 }
 
 func (self *InMemoryChunkRepository) Add(ctx context.Context, chunk *chunkmodel.EncryptedChunk) error {

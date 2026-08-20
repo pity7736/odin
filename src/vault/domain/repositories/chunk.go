@@ -7,6 +7,6 @@ import (
 )
 
 type ChunkRepository interface {
-	GetByID(ctx context.Context, ownerID, id string) (*chunkmodel.EncryptedChunk, error)
+	Exists(ctx context.Context, ownerID, id string) (bool, error)
 	Add(ctx context.Context, chunk *chunkmodel.EncryptedChunk) error
 }

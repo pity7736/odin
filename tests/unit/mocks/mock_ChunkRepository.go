@@ -95,25 +95,23 @@ func (_c *MockChunkRepository_Add_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
-// GetByID provides a mock function for the type MockChunkRepository
-func (_mock *MockChunkRepository) GetByID(ctx context.Context, ownerID string, id string) (*chunkmodel.EncryptedChunk, error) {
+// Exists provides a mock function for the type MockChunkRepository
+func (_mock *MockChunkRepository) Exists(ctx context.Context, ownerID string, id string) (bool, error) {
 	ret := _mock.Called(ctx, ownerID, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByID")
+		panic("no return value specified for Exists")
 	}
 
-	var r0 *chunkmodel.EncryptedChunk
+	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*chunkmodel.EncryptedChunk, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
 		return returnFunc(ctx, ownerID, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *chunkmodel.EncryptedChunk); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
 		r0 = returnFunc(ctx, ownerID, id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*chunkmodel.EncryptedChunk)
-		}
+		r0 = ret.Get(0).(bool)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = returnFunc(ctx, ownerID, id)
@@ -123,20 +121,20 @@ func (_mock *MockChunkRepository) GetByID(ctx context.Context, ownerID string, i
 	return r0, r1
 }
 
-// MockChunkRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
-type MockChunkRepository_GetByID_Call struct {
+// MockChunkRepository_Exists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exists'
+type MockChunkRepository_Exists_Call struct {
 	*mock.Call
 }
 
-// GetByID is a helper method to define mock.On call
+// Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ownerID string
 //   - id string
-func (_e *MockChunkRepository_Expecter) GetByID(ctx any, ownerID any, id any) *MockChunkRepository_GetByID_Call {
-	return &MockChunkRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, ownerID, id)}
+func (_e *MockChunkRepository_Expecter) Exists(ctx any, ownerID any, id any) *MockChunkRepository_Exists_Call {
+	return &MockChunkRepository_Exists_Call{Call: _e.mock.On("Exists", ctx, ownerID, id)}
 }
 
-func (_c *MockChunkRepository_GetByID_Call) Run(run func(ctx context.Context, ownerID string, id string)) *MockChunkRepository_GetByID_Call {
+func (_c *MockChunkRepository_Exists_Call) Run(run func(ctx context.Context, ownerID string, id string)) *MockChunkRepository_Exists_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -159,12 +157,12 @@ func (_c *MockChunkRepository_GetByID_Call) Run(run func(ctx context.Context, ow
 	return _c
 }
 
-func (_c *MockChunkRepository_GetByID_Call) Return(encryptedChunk *chunkmodel.EncryptedChunk, err error) *MockChunkRepository_GetByID_Call {
-	_c.Call.Return(encryptedChunk, err)
+func (_c *MockChunkRepository_Exists_Call) Return(b bool, err error) *MockChunkRepository_Exists_Call {
+	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *MockChunkRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, ownerID string, id string) (*chunkmodel.EncryptedChunk, error)) *MockChunkRepository_GetByID_Call {
+func (_c *MockChunkRepository_Exists_Call) RunAndReturn(run func(ctx context.Context, ownerID string, id string) (bool, error)) *MockChunkRepository_Exists_Call {
 	_c.Call.Return(run)
 	return _c
 }

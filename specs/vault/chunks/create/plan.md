@@ -78,7 +78,7 @@ func (self *EncryptedChunk) Content() string
 
 // src/vault/domain/repositories — owner-scoped
 type ChunkRepository interface {
-    GetByID(ctx context.Context, ownerID, id string) (*chunkmodel.EncryptedChunk, error)
+    Exists(ctx context.Context, ownerID, id string) (bool, error)
     Add(ctx context.Context, chunk *chunkmodel.EncryptedChunk) error
 }
 
@@ -140,11 +140,11 @@ to `.mockery.yaml` and regenerate (`go run github.com/vektra/mockery/v3`) so
 downstream tests have `MockChunkRepository`.
 
 ### Phase 2: Application — chunkcreator use case
-**Red:** `create_test.go` (MockChunkRepository): new id (`GetByID(owner,id)` → nil)
+**Red:** `create_test.go` (MockChunkRepository): new id (`Exists(owner,id)` → false)
 → `Add` called once with a chunk matching id/owner/content, returns the chunk;
-duplicate (`GetByID` → existing) → `AlreadyExists` error, `Add` NOT called;
-`GetByID` error and `Add` error each propagate.
-**Green:** implement `ChunkCreator`: owner-scoped `GetByID` → non-nil ⇒
+duplicate (`Exists` → true) → `AlreadyExists` error, `Add` NOT called;
+`Exists` error and `Add` error each propagate.
+**Green:** implement `ChunkCreator`: owner-scoped `Exists` → true ⇒
 AlreadyExists; else `chunkmodel.New` → `Add`.
 
 ### Phase 3: Infrastructure — body + handler
@@ -174,7 +174,9 @@ in-memory `ChunkRepository` (owner-scoped map, keyed by owner then id) and regis
 - [ ] Client-generated **UUID** id (v7 by client convention) — validated at the
   boundary so a future Postgres native `uuid` column stays valid and gets v7 insert
   locality. Server treats content as one opaque blob (`nonce‖ciphertext‖tag`), never inspected.
-- [ ] Ownership is **owner-scoped** everywhere: `GetByID(ownerID, id)`; duplicate
+- [ ] Ownership is **owner-scoped** everywhere: `Exists(ownerID, id)` (a bool — no
+  fetch of the content blob, explicit intent; a fetch method is added by the read
+  feature when it needs one); duplicate
   check is per-user (not global) — isolation + no cross-user id oracle. Duplicate → 409 `AlreadyExists`.
 - [ ] Create is auth-required (`loginRequired`); owner comes from the request
   context, never the body. Route `POST /api/v1/chunks`. Response `201 {id}` (id is client-known; pure ack).

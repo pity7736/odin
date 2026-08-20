@@ -22,7 +22,7 @@ func TestCreateChunkShould(t *testing.T) {
 		ownerID := "owner-id"
 		content := "encrypted-content"
 		chunkRepository := factory.GetChunkRepositoryMock()
-		chunkRepository.EXPECT().GetByID(context.TODO(), ownerID, id).Return(nil, nil)
+		chunkRepository.EXPECT().Exists(context.TODO(), ownerID, id).Return(false, nil)
 		var storedChunk *chunkmodel.EncryptedChunk
 		chunkRepository.EXPECT().Add(context.TODO(), mock.Anything).Run(func(ctx context.Context, chunk *chunkmodel.EncryptedChunk) {
 			storedChunk = chunk
@@ -43,9 +43,8 @@ func TestCreateChunkShould(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		id := uuid.NewString()
 		ownerID := "owner-id"
-		existingChunk, _ := chunkmodel.New(id, ownerID, "existing-content")
 		chunkRepository := factory.GetChunkRepositoryMock()
-		chunkRepository.EXPECT().GetByID(context.TODO(), ownerID, id).Return(existingChunk, nil)
+		chunkRepository.EXPECT().Exists(context.TODO(), ownerID, id).Return(true, nil)
 		creator := chunkcreator.New(id, ownerID, "new-content", factory.GetChunkRepository())
 		chunk, err := creator.Create(context.TODO())
 
@@ -63,7 +62,7 @@ func TestCreateChunkShould(t *testing.T) {
 		ownerID := "owner-id"
 		lookupError := errors.New("error getting chunk")
 		chunkRepository := factory.GetChunkRepositoryMock()
-		chunkRepository.EXPECT().GetByID(context.TODO(), ownerID, id).Return(nil, lookupError)
+		chunkRepository.EXPECT().Exists(context.TODO(), ownerID, id).Return(false, lookupError)
 		creator := chunkcreator.New(id, ownerID, "content", factory.GetChunkRepository())
 		chunk, err := creator.Create(context.TODO())
 
@@ -78,7 +77,7 @@ func TestCreateChunkShould(t *testing.T) {
 		ownerID := "owner-id"
 		persistError := errors.New("error saving chunk")
 		chunkRepository := factory.GetChunkRepositoryMock()
-		chunkRepository.EXPECT().GetByID(context.TODO(), ownerID, id).Return(nil, nil)
+		chunkRepository.EXPECT().Exists(context.TODO(), ownerID, id).Return(false, nil)
 		chunkRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(persistError)
 		creator := chunkcreator.New(id, ownerID, "content", factory.GetChunkRepository())
 		chunk, err := creator.Create(context.TODO())
@@ -91,7 +90,7 @@ func TestCreateChunkShould(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		ownerID := "owner-id"
 		chunkRepository := factory.GetChunkRepositoryMock()
-		chunkRepository.EXPECT().GetByID(context.TODO(), ownerID, "not-a-uuid").Return(nil, nil)
+		chunkRepository.EXPECT().Exists(context.TODO(), ownerID, "not-a-uuid").Return(false, nil)
 		creator := chunkcreator.New("not-a-uuid", ownerID, "content", factory.GetChunkRepository())
 		chunk, err := creator.Create(context.TODO())
 

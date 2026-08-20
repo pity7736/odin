@@ -25,11 +25,11 @@ func New(id, ownerID, content string, chunkRepository repositories.ChunkReposito
 }
 
 func (self ChunkCreator) Create(ctx context.Context) (*chunkmodel.EncryptedChunk, error) {
-	existingChunk, err := self.chunkRepository.GetByID(ctx, self.ownerID, self.id)
+	exists, err := self.chunkRepository.Exists(ctx, self.ownerID, self.id)
 	if err != nil {
 		return nil, err
 	}
-	if existingChunk != nil {
+	if exists {
 		return nil, odinerrors.NewErrorBuilder("chunk already exists").
 			WithExternalMessage("El elemento ya existe").
 			WithTag(odinerrors.AlreadyExists).

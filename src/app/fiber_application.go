@@ -44,7 +44,6 @@ func NewFiberApplication(
 	login := loginhandler.New(userRepository, sessionRepository, authHasher)
 	logout := logouthandler.New(sessionRepository)
 	register := registerhandler.New(userRepository, authHasher)
-	chunk := chunkhandler.New(chunkRepository)
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
 	apiV1.Post("/users", register.Register)
@@ -52,6 +51,7 @@ func NewFiberApplication(
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, logout.Logout)
 	})
+	chunk := chunkhandler.New(chunkRepository)
 	apiV1.Post("/chunks", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, chunk.Create)
 	})
