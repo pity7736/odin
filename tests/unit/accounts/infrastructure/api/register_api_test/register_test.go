@@ -38,7 +38,7 @@ func TestRegisterRestShould(t *testing.T) {
 		userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		var responseData map[string]any
 		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
-			WithPath("/api/v1/auth/register").
+			WithPath("/api/v1/users").
 			WithPayload(validRegisterBody(email)).
 			WithResponseData(&responseData).
 			WithContentType(fiber.MIMEApplicationJSON).
@@ -61,7 +61,7 @@ func TestRegisterRestShould(t *testing.T) {
 		userRepository.EXPECT().GetByEmail(mock.Anything, existingUser.Email()).Return(existingUser, nil)
 		var responseData map[string]any
 		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
-			WithPath("/api/v1/auth/register").
+			WithPath("/api/v1/users").
 			WithPayload(validRegisterBody(existingUser.Email())).
 			WithResponseData(&responseData).
 			WithContentType(fiber.MIMEApplicationJSON).
@@ -117,7 +117,7 @@ func TestRegisterRestShould(t *testing.T) {
 				var responseData map[string]any
 				userRepository := factory.GetUserRepositoryMock()
 				requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
-					WithPath("/api/v1/auth/register").
+					WithPath("/api/v1/users").
 					WithPayload(testCase.body).
 					WithResponseData(&responseData).
 					WithContentType(fiber.MIMEApplicationJSON).

@@ -42,7 +42,7 @@ func NewFiberApplication(
 	register := registerhandler.New(userRepository, authHasher)
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(bearerMiddleware(sessionRepository))
-	apiV1.Post("/auth/register", register.Register)
+	apiV1.Post("/users", register.Register)
 	apiV1.Post("/auth/login", login.Login)
 	apiV1.Delete("/auth/logout", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, logout.Logout)

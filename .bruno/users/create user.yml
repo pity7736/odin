@@ -1,0 +1,30 @@
+info:
+  name: create user
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{host}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "some@email.com",
+        "auth_hash": "{{auth_hash}}",
+        "encrypted_master_key": "encrypted-master-key-base64",
+        "key_params": {
+          "algorithm": "argon2id",
+          "salt": "salt-base64",
+          "iterations": 3,
+          "memory": 65536,
+          "parallelism": 4
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

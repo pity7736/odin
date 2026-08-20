@@ -26,6 +26,7 @@ Strip the current server down to a sync/auth API. New domain: User, EncryptedChu
 - [ ] Delete encrypted chunk: soft-delete a chunk by marking it as deleted (tombstone). Hard-delete would break sync — other devices need to learn the chunk is gone, not just stop seeing it. CLI verifies the chunk is gone on read after deletion.
 - [ ] Sync endpoint: return all chunks changed since a given `updated_at` timestamp (delta sync). The client sends its last-known timestamp, the server returns everything newer. This is how devices stay in sync without downloading the full dataset every time. CLI creates/updates/deletes chunks, then syncs and verifies only the changes come back.
 - [ ] Pagination for initial load: when a new device syncs for the first time (no `updated_at`), the full dataset could be large. Page the response so the client can load incrementally instead of waiting for one massive payload. CLI verifies paged responses assemble into the full dataset.
+- [ ] Bug: requesting a non-existent URL returns 500 instead of 404. The global error handler falls through for non-odin errors (including unmatched routes) and yields an empty 500; unmatched routes should return 404.
 
 ## Phase 2 — Crypto module (Kotlin, `odin-android`)
 

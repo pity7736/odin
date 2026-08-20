@@ -34,7 +34,7 @@ func TestErrorHandlerShould(t *testing.T) {
 		)
 		var responseData map[string]any
 		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
-			WithPath("/api/v1/auth/register").
+			WithPath("/api/v1/users").
 			WithPayload(body).
 			WithResponseData(&responseData).
 			WithContentType(fiber.MIMEApplicationJSON).

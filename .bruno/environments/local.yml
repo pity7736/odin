@@ -5,5 +5,5 @@ variables:
   - secret: true
     name: token
     description: Session token captured from the login response; sent as the Bearer token on login-required requests
-  - secret: true
-    name: password
+  - name: auth_hash
+    value: test-auth-hash
