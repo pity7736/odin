@@ -1,7 +1,7 @@
 info:
   name: get chunk invalid id
   type: http
-  seq: 11
+  seq: 10
 
 http:
   method: GET
@@ -11,13 +11,13 @@ http:
       value: Bearer {{token}}
   auth: inherit
 
-docs: |-
-  A malformed identifier is not rejected as a bad request; it simply misses the
-  owner-scoped lookup and returns 404 "El elemento no existe", indistinguishable
-  from a nonexistent chunk.
-
 settings:
   encodeUrl: true
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  A malformed identifier is not rejected as a bad request; it simply misses the
+  owner-scoped lookup and returns 404 "El elemento no existe", indistinguishable
+  from a nonexistent chunk.
