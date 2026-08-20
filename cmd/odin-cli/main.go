@@ -311,6 +311,23 @@ func runCreateChunk(args []string) error {
 	return nil
 }
 
+func sealContent(key []byte, plaintext string) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce, err := randomBytes(gcm.NonceSize())
+	if err != nil {
+		return "", err
+	}
+	sealed := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+	return base64.StdEncoding.EncodeToString(sealed), nil
+}
+
 func createChunk(token, id, content string) (createChunkResponse, error) {
 	payload, err := json.Marshal(createChunkRequest{ID: id, Content: content})
 	if err != nil {
@@ -339,23 +356,6 @@ func createChunk(token, id, content string) (createChunkResponse, error) {
 		return createChunkResponse{}, err
 	}
 	return response, nil
-}
-
-func sealContent(key []byte, plaintext string) (string, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-	nonce, err := randomBytes(gcm.NonceSize())
-	if err != nil {
-		return "", err
-	}
-	sealed := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-	return base64.StdEncoding.EncodeToString(sealed), nil
 }
 
 type registerRequest struct {
