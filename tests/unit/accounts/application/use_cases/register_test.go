@@ -34,7 +34,7 @@ func TestRegisterShould(t *testing.T) {
 		email := "new@example.com"
 		authHash := "client-derived-auth-hash"
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(context.TODO(), email).Return(nil, nil)
+		userRepository.EXPECT().Exists(context.TODO(), email).Return(false, nil)
 		var storedUser *usermodel.User
 		userRepository.EXPECT().Add(context.TODO(), mock.Anything).Run(func(ctx context.Context, user *usermodel.User) {
 			storedUser = user
@@ -63,7 +63,7 @@ func TestRegisterShould(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		existingUser := userbuilder.New().WithEmail("taken@example.com").Build()
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(context.TODO(), existingUser.Email()).Return(existingUser, nil)
+		userRepository.EXPECT().Exists(context.TODO(), existingUser.Email()).Return(true, nil)
 		registrar := userregistrar.New(
 			existingUser.Email(),
 			"client-derived-auth-hash",
@@ -87,7 +87,7 @@ func TestRegisterShould(t *testing.T) {
 		email := "new@example.com"
 		lookupError := errors.New("error getting user")
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(context.TODO(), email).Return(nil, lookupError)
+		userRepository.EXPECT().Exists(context.TODO(), email).Return(false, lookupError)
 		registrar := userregistrar.New(
 			email,
 			"client-derived-auth-hash",
@@ -108,7 +108,7 @@ func TestRegisterShould(t *testing.T) {
 		email := "new@example.com"
 		persistError := errors.New("error saving user")
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(context.TODO(), email).Return(nil, nil)
+		userRepository.EXPECT().Exists(context.TODO(), email).Return(false, nil)
 		userRepository.EXPECT().Add(context.TODO(), mock.Anything).Return(persistError)
 		registrar := userregistrar.New(
 			email,

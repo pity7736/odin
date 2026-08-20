@@ -37,11 +37,11 @@ func New(
 }
 
 func (self UserRegistrar) Register(ctx context.Context) (*usermodel.User, error) {
-	existingUser, err := self.userRepository.GetByEmail(ctx, self.email)
+	exists, err := self.userRepository.Exists(ctx, self.email)
 	if err != nil {
 		return nil, err
 	}
-	if existingUser != nil {
+	if exists {
 		return nil, odinerrors.NewErrorBuilder("email already registered").
 			WithExternalMessage("El correo ya está registrado").
 			WithTag(odinerrors.AlreadyExists).

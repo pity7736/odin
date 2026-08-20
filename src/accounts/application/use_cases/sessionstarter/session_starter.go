@@ -2,6 +2,7 @@ package sessionstarter
 
 import (
 	"context"
+	"errors"
 
 	"raiseexception.dev/odin/src/accounts/application/authhasher"
 	"raiseexception.dev/odin/src/accounts/domain/repositories"
@@ -37,19 +38,20 @@ func New(
 func (self SessionStarter) Start(ctx context.Context) (*sessionmodel.Session, *usermodel.User, error) {
 	user, err := self.userRepository.GetByEmail(ctx, self.email)
 	if err != nil {
+		var odinError *odinerrors.Error
+		if errors.As(err, &odinError) && odinError.Tag() == odinerrors.NotFound {
+			return nil, nil, wrongCredentials()
+		}
 		return nil, nil, err
 	}
 	return self.start(ctx, user)
 }
 
 func (self SessionStarter) start(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, *usermodel.User, error) {
-	if user != nil && self.authHasher.Compare(user.AuthHashDigest(), self.authHash) {
+	if self.authHasher.Compare(user.AuthHashDigest(), self.authHash) {
 		return self.createSession(ctx, user)
 	}
-	return nil, nil, odinerrors.NewErrorBuilder("email or password are wrong").
-		WithExternalMessage("Correo o contraseña incorrectos").
-		WithTag(odinerrors.Unauthorized).
-		Build()
+	return nil, nil, wrongCredentials()
 }
 
 func (self SessionStarter) createSession(ctx context.Context, user *usermodel.User) (*sessionmodel.Session, *usermodel.User, error) {
@@ -62,4 +64,11 @@ func (self SessionStarter) createSession(ctx context.Context, user *usermodel.Us
 		return nil, nil, err
 	}
 	return session, user, nil
+}
+
+func wrongCredentials() error {
+	return odinerrors.NewErrorBuilder("email or password are wrong").
+		WithExternalMessage("Correo o contraseña incorrectos").
+		WithTag(odinerrors.Unauthorized).
+		Build()
 }
