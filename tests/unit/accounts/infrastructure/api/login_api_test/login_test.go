@@ -35,7 +35,11 @@ func TestRest(t *testing.T) {
 		body := fmt.Sprintf(`{"email": "%s", "auth_hash": "%s"}`, email, builder.Password())
 		var responseData map[string]any
 		repository := factory.GetUserRepositoryMock()
-		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
+		notFoundError := odinerrors.NewErrorBuilder("user not found").
+			WithExternalMessage("Usuario no encontrado").
+			WithTag(odinerrors.NotFound).
+			Build()
+		repository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, notFoundError)
 		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/api/v1/auth/login").
 			WithPayload(body).

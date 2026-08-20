@@ -78,6 +78,18 @@ can unlock the vault.
   and `InMemorySessionRepository` — honest naming for in-memory
   implementations. Referenced by domain ports; swapping adapters doesn't touch
   this design.
+- **User repository fetch contract: absence is a `NotFound` error, not `(nil,
+  nil)`.** `UserRepository.GetByEmail` is a pure fetch that returns an
+  `odinerrors` `NotFound` when the user is absent — consistent with
+  `SessionRepository.GetByID`, and removing the nil-sentinel footgun (callers no
+  longer nil-check; a real adapter signals absence the same way). Existence
+  questions use a dedicated `UserRepository.Exists(email) (bool, error)` — no
+  whole-user fetch, explicit intent — mirroring the chunk repo. `SessionStarter`
+  translates a `NotFound` from `GetByEmail` into the field-agnostic
+  wrong-credentials 401 (detected via `errors.As` + `Tag() == NotFound`, the same
+  pattern `SessionValidator` uses); other errors propagate; a found user is
+  compared. `UserRegistrar`'s duplicate check uses `Exists`. Behavior is
+  unchanged — a wrong email still returns the identical 401.
 
 ## Architecture & Files Summary
 
@@ -220,9 +232,10 @@ rejected by the middleware (401).
   30-day sliding TTL, `strings.Clone` on parsed body values, centralized
   `loginRequired`. Wrong email and wrong password remain indistinguishable
   (identical 401 + message). Error responses never include key data.
-- **Reliability:** nil-safe bearer middleware; propagated non-4xx errors surface
-  as 500 via the global error handler (no nil-pointer panics); expired sessions
-  are rejected and deleted; no panics in the auth flow.
+- **Reliability:** absence is an explicit `NotFound` error, not a nil sentinel —
+  callers can't forget to nil-check; nil-safe bearer middleware; propagated
+  non-4xx errors surface as 500 via the global error handler (no nil-pointer
+  panics); expired sessions are rejected and deleted; no panics in the auth flow.
 - **Performance:** Deferred — in-memory repositories, minimal user set; no
   hot-path concern in this change.
 - **Observability:** Deferred — no production telemetry yet; `odinerrors`

@@ -70,29 +70,36 @@ func TestLogin(t *testing.T) {
 		user := builder.Build()
 		factory := testrepositoryfactory.New(t)
 		sessionRepository := factory.GetSessionRepositoryMock()
+		notFoundError := odinerrors.NewErrorBuilder("user not found").
+			WithExternalMessage("Usuario no encontrado").
+			WithTag(odinerrors.NotFound).
+			Build()
 		testCases := []struct {
-			name         string
-			email        string
-			authHash     string
-			expectedUser *usermodel.User
+			name          string
+			email         string
+			authHash      string
+			expectedUser  *usermodel.User
+			expectedError error
 		}{
 			{
 				"when auth hash is wrong",
 				user.Email(),
 				"wrong auth hash",
 				user,
+				nil,
 			},
 			{
 				"when email is wrong",
 				"wrong@test.dev",
 				builder.Password(),
 				nil,
+				notFoundError,
 			},
 		}
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
 				userRepository := factory.GetUserRepositoryMock()
-				userRepository.EXPECT().GetByEmail(context.TODO(), testCase.email).Return(testCase.expectedUser, nil)
+				userRepository.EXPECT().GetByEmail(context.TODO(), testCase.email).Return(testCase.expectedUser, testCase.expectedError)
 				sessionStarter := sessionstarter.New(
 					testCase.email,
 					testCase.authHash,

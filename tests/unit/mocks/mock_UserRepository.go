@@ -95,6 +95,72 @@ func (_c *MockUserRepository_Add_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// Exists provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) Exists(ctx context.Context, email string) (bool, error) {
+	ret := _mock.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Exists")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return returnFunc(ctx, email)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = returnFunc(ctx, email)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_Exists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exists'
+type MockUserRepository_Exists_Call struct {
+	*mock.Call
+}
+
+// Exists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - email string
+func (_e *MockUserRepository_Expecter) Exists(ctx any, email any) *MockUserRepository_Exists_Call {
+	return &MockUserRepository_Exists_Call{Call: _e.mock.On("Exists", ctx, email)}
+}
+
+func (_c *MockUserRepository_Exists_Call) Run(run func(ctx context.Context, email string)) *MockUserRepository_Exists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_Exists_Call) Return(b bool, err error) *MockUserRepository_Exists_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockUserRepository_Exists_Call) RunAndReturn(run func(ctx context.Context, email string) (bool, error)) *MockUserRepository_Exists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByEmail provides a mock function for the type MockUserRepository
 func (_mock *MockUserRepository) GetByEmail(ctx context.Context, email string) (*usermodel.User, error) {
 	ret := _mock.Called(ctx, email)

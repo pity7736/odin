@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"raiseexception.dev/odin/src/accounts/domain/usermodel"
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 )
 
 type InMemoryUserRepository struct {
@@ -15,8 +16,19 @@ func NewInMemoryUserRepository() *InMemoryUserRepository {
 }
 
 func (self *InMemoryUserRepository) GetByEmail(ctx context.Context, email string) (*usermodel.User, error) {
-	user := self.users[email]
+	user, ok := self.users[email]
+	if !ok {
+		return nil, odinerrors.NewErrorBuilder("user not found").
+			WithExternalMessage("Usuario no encontrado").
+			WithTag(odinerrors.NotFound).
+			Build()
+	}
 	return user, nil
+}
+
+func (self *InMemoryUserRepository) Exists(ctx context.Context, email string) (bool, error) {
+	_, ok := self.users[email]
+	return ok, nil
 }
 
 func (self *InMemoryUserRepository) Add(ctx context.Context, user *usermodel.User) error {

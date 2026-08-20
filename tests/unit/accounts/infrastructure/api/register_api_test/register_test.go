@@ -37,7 +37,7 @@ func TestRegisterRestShould(t *testing.T) {
 		application := newApplication(factory)
 		email := "new@example.com"
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(mock.Anything, email).Return(nil, nil)
+		userRepository.EXPECT().Exists(mock.Anything, email).Return(false, nil)
 		userRepository.EXPECT().Add(mock.Anything, mock.Anything).Return(nil)
 		var responseData map[string]any
 		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
@@ -61,7 +61,7 @@ func TestRegisterRestShould(t *testing.T) {
 		application := newApplication(factory)
 		existingUser := userbuilder.New().WithEmail("taken@example.com").Build()
 		userRepository := factory.GetUserRepositoryMock()
-		userRepository.EXPECT().GetByEmail(mock.Anything, existingUser.Email()).Return(existingUser, nil)
+		userRepository.EXPECT().Exists(mock.Anything, existingUser.Email()).Return(true, nil)
 		var responseData map[string]any
 		requestBuilder := builders.NewRequestBuilder(factory.GetUserRepository(), factory.GetSessionRepository()).
 			WithPath("/api/v1/users").
@@ -129,7 +129,7 @@ func TestRegisterRestShould(t *testing.T) {
 				defer func() { _ = response.Body.Close() }()
 				assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 				assert.Equal(t, testCase.expectedError, responseData["error"])
-				userRepository.AssertNotCalled(t, "GetByEmail")
+				userRepository.AssertNotCalled(t, "Exists")
 				userRepository.AssertNotCalled(t, "Add")
 			})
 		}
