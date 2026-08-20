@@ -1,3 +1,6 @@
 .DS_Store
 .idea/
 coverage.out
+
+# odin-cli local session (holds session token + master key)
+.odin-cli-session.json
