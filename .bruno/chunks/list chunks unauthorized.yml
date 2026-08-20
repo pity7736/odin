@@ -1,11 +1,11 @@
 info:
-  name: get chunk unauthorized
+  name: list chunks unauthorized
   type: http
-  seq: 11
+  seq: 13
 
 http:
   method: GET
-  url: "{{host}}/chunks/0192f0c1-8a2b-7def-8123-456789abcdef"
+  url: "{{host}}/chunks"
   auth: inherit
 
 settings:

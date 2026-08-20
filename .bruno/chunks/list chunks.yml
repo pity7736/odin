@@ -1,0 +1,25 @@
+info:
+  name: list chunks
+  type: http
+  seq: 12
+
+http:
+  method: GET
+  url: "{{host}}/chunks"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns every chunk owned by the authenticated user as
+  {"chunks": [ {id, content}, ... ]}, ordered newest-first (id descending).
+  Only the requester's own chunks are ever returned — there is no way to reach
+  another user's chunks through this endpoint. Run "create chunk" a few times
+  first to see multiple entries.

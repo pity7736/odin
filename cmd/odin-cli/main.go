@@ -30,7 +30,7 @@ const (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: odin-cli <register|login|create-chunk|get-chunk> [flags]")
+		fmt.Println("usage: odin-cli <register|login|create-chunk|get-chunk|list-chunks> [flags]")
 		os.Exit(1)
 	}
 	switch os.Args[1] {
@@ -51,6 +51,11 @@ func main() {
 		}
 	case "get-chunk":
 		if err := runGetChunk(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			os.Exit(1)
+		}
+	case "list-chunks":
+		if err := runListChunks(os.Args[2:]); err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			os.Exit(1)
 		}
@@ -352,6 +357,68 @@ func runGetChunk(args []string) error {
 	return nil
 }
 
+func runListChunks(args []string) error {
+	flags := flag.NewFlagSet("list-chunks", flag.ExitOnError)
+	email := flags.String("email", "", "account email")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *email == "" {
+		return fmt.Errorf("email is required")
+	}
+	sessions, err := loadSessions()
+	if err != nil {
+		return err
+	}
+	current, ok := sessions[*email]
+	if !ok || current.Token == "" {
+		return fmt.Errorf("no active session for %s (run login first)", *email)
+	}
+	masterKey, err := base64.StdEncoding.DecodeString(current.MasterKey)
+	if err != nil {
+		return err
+	}
+	response, err := listChunks(current.Token)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("chunks returned=%d (newest-first)\n", len(response.Chunks))
+	for _, chunk := range response.Chunks {
+		plaintext, err := openContent(masterKey, chunk.Content)
+		if err != nil {
+			return fmt.Errorf("content decrypt failed for id=%s: %w", chunk.ID, err)
+		}
+		fmt.Printf("id=%s plaintext=%s\n", chunk.ID, plaintext)
+	}
+	fmt.Println("all chunks decrypted — list round-trip verified")
+	return nil
+}
+
+func listChunks(token string) (listChunksResponse, error) {
+	request, err := http.NewRequest(http.MethodGet, defaultBaseURL+"/chunks", nil)
+	if err != nil {
+		return listChunksResponse{}, err
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	httpResponse, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return listChunksResponse{}, err
+	}
+	defer func() { _ = httpResponse.Body.Close() }()
+	raw, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return listChunksResponse{}, err
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return listChunksResponse{}, fmt.Errorf("list chunks failed (%d): %s", httpResponse.StatusCode, raw)
+	}
+	var response listChunksResponse
+	if err := json.Unmarshal(raw, &response); err != nil {
+		return listChunksResponse{}, err
+	}
+	return response, nil
+}
+
 func getChunk(token, id string) (getChunkResponse, error) {
 	request, err := http.NewRequest(http.MethodGet, defaultBaseURL+"/chunks/"+id, nil)
 	if err != nil {
@@ -498,4 +565,8 @@ type createChunkResponse struct {
 type getChunkResponse struct {
 	ID      string `json:"id"`
 	Content string `json:"content"`
+}
+
+type listChunksResponse struct {
+	Chunks []getChunkResponse `json:"chunks"`
 }

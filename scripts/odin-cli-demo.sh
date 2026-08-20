@@ -35,4 +35,7 @@ $CLI create-chunk -email "$EMAIL" \
 echo "==> get chunk back and decrypt (read round-trip)"
 $CLI get-chunk -email "$EMAIL" -id "$CHECKING_ID"
 
+echo "==> list all chunks and decrypt (list round-trip, newest-first)"
+$CLI list-chunks -email "$EMAIL"
+
 echo "==> done"
