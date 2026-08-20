@@ -28,7 +28,7 @@ func validRegisterBody(email string) string {
 	)
 }
 
-func TestRegisterRest(t *testing.T) {
+func TestRegisterRestShould(t *testing.T) {
 	t.Run("create a new account", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		application := newApplication(factory)

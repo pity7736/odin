@@ -28,8 +28,8 @@ func newKeyParams() keyparams.KeyParams {
 	return params
 }
 
-func TestRegister(t *testing.T) {
-	t.Run("Should register a new user when the email is available", func(t *testing.T) {
+func TestRegisterShould(t *testing.T) {
+	t.Run("register a new user when the email is available", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		email := "new@example.com"
 		authHash := "client-derived-auth-hash"
@@ -59,7 +59,7 @@ func TestRegister(t *testing.T) {
 		userRepository.AssertCalled(t, "Add", context.TODO(), mock.Anything)
 	})
 
-	t.Run("Should reject registration when the email already exists", func(t *testing.T) {
+	t.Run("reject registration when the email already exists", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		existingUser := userbuilder.New().WithEmail("taken@example.com").Build()
 		userRepository := factory.GetUserRepositoryMock()
@@ -82,7 +82,7 @@ func TestRegister(t *testing.T) {
 		userRepository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
-	t.Run("Should propagate the error when looking up the email fails", func(t *testing.T) {
+	t.Run("propagate the error when looking up the email fails", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		email := "new@example.com"
 		lookupError := errors.New("error getting user")
@@ -103,7 +103,7 @@ func TestRegister(t *testing.T) {
 		userRepository.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 
-	t.Run("Should propagate the error when persisting the user fails", func(t *testing.T) {
+	t.Run("propagate the error when persisting the user fails", func(t *testing.T) {
 		factory := testrepositoryfactory.New(t)
 		email := "new@example.com"
 		persistError := errors.New("error saving user")

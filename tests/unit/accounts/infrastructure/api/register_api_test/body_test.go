@@ -18,7 +18,7 @@ func validBody() registerhandler.RegisterBody {
 	}
 }
 
-func TestRegisterBodyValidation(t *testing.T) {
+func TestRegisterBodyShould(t *testing.T) {
 	t.Run("valid body returns no error", func(t *testing.T) {
 		body := validBody()
 		assert.Nil(t, body.Validate())
