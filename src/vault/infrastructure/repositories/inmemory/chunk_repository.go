@@ -3,6 +3,7 @@ package inmemory
 import (
 	"context"
 
+	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/vault/domain/chunkmodel"
 )
 
@@ -31,4 +32,23 @@ func (self *InMemoryChunkRepository) Add(ctx context.Context, chunk *chunkmodel.
 	}
 	ownedChunks[chunk.ID()] = chunk
 	return nil
+}
+
+func (self *InMemoryChunkRepository) Get(ctx context.Context, ownerID, id string) (*chunkmodel.EncryptedChunk, error) {
+	ownedChunks, ok := self.chunks[ownerID]
+	if !ok {
+		return nil, self.notFound()
+	}
+	chunk, ok := ownedChunks[id]
+	if !ok {
+		return nil, self.notFound()
+	}
+	return chunk, nil
+}
+
+func (self *InMemoryChunkRepository) notFound() error {
+	return odinerrors.NewErrorBuilder("chunk not found").
+		WithExternalMessage("El elemento no existe").
+		WithTag(odinerrors.NotFound).
+		Build()
 }

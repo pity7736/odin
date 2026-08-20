@@ -19,8 +19,10 @@ echo "==> login"
 $CLI login -email "$EMAIL" -password "$PASSWORD"
 
 echo "==> create chunks (example finance data, encrypted client-side)"
-$CLI create-chunk -email "$EMAIL" \
-  -plaintext '{"type":"account","name":"Checking","currency":"USD","balance":1000}'
+CHECKING=$($CLI create-chunk -email "$EMAIL" \
+  -plaintext '{"type":"account","name":"Checking","currency":"USD","balance":1000}')
+echo "$CHECKING"
+CHECKING_ID=$(echo "$CHECKING" | awk -F'id=' '{print $2}')
 $CLI create-chunk -email "$EMAIL" \
   -plaintext '{"type":"account","name":"Savings","currency":"USD","balance":5000}'
 $CLI create-chunk -email "$EMAIL" \
@@ -29,5 +31,8 @@ $CLI create-chunk -email "$EMAIL" \
   -plaintext '{"type":"income","amount":3000,"currency":"USD","description":"Salary"}'
 $CLI create-chunk -email "$EMAIL" \
   -plaintext '{"type":"expense","amount":25.5,"currency":"USD","category":"Food","description":"Lunch"}'
+
+echo "==> get chunk back and decrypt (read round-trip)"
+$CLI get-chunk -email "$EMAIL" -id "$CHECKING_ID"
 
 echo "==> done"
