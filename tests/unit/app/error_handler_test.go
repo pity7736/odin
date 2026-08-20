@@ -62,4 +62,14 @@ func TestErrorHandlerShould(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.Equal(t, "El correo es obligatorio", responseData["error"])
 	})
+	t.Run("return 404 for an unmatched route", func(t *testing.T) {
+		application, userRepository, sessionRepository := newErrorHandlerApp()
+		requestBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithMethod(http.MethodGet).
+			WithPath("/does-not-exist").
+			WithAnonymousSession()
+		response := testutils.GetJSONResponseFromRequestBuilder(application, requestBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusNotFound, response.StatusCode)
+	})
 }
