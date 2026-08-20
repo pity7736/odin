@@ -124,5 +124,10 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 		}
 		return ctx.JSON(map[string]string{"error": odinError.ExternalError()})
 	}
+	var fiberError *fiber.Error
+	if errors.As(err, &fiberError) {
+		code = fiberError.Code
+		return ctx.JSON(map[string]string{"error": fiberError.Message})
+	}
 	return nil
 }
