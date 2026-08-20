@@ -1,0 +1,18 @@
+info:
+  name: get chunk
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{host}}/chunks/0192f0c1-8a2b-7def-8123-456789abcdef"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

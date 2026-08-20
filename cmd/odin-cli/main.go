@@ -30,7 +30,7 @@ const (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: odin-cli <register|login|create-chunk> [flags]")
+		fmt.Println("usage: odin-cli <register|login|create-chunk|get-chunk> [flags]")
 		os.Exit(1)
 	}
 	switch os.Args[1] {
@@ -46,6 +46,11 @@ func main() {
 		}
 	case "create-chunk":
 		if err := runCreateChunk(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			os.Exit(1)
+		}
+	case "get-chunk":
+		if err := runGetChunk(os.Args[2:]); err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			os.Exit(1)
 		}
@@ -311,6 +316,92 @@ func runCreateChunk(args []string) error {
 	return nil
 }
 
+func runGetChunk(args []string) error {
+	flags := flag.NewFlagSet("get-chunk", flag.ExitOnError)
+	email := flags.String("email", "", "account email")
+	id := flags.String("id", "", "chunk identifier to retrieve")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *email == "" || *id == "" {
+		return fmt.Errorf("email and id are required")
+	}
+	sessions, err := loadSessions()
+	if err != nil {
+		return err
+	}
+	current, ok := sessions[*email]
+	if !ok || current.Token == "" {
+		return fmt.Errorf("no active session for %s (run login first)", *email)
+	}
+	masterKey, err := base64.StdEncoding.DecodeString(current.MasterKey)
+	if err != nil {
+		return err
+	}
+	response, err := getChunk(current.Token, *id)
+	if err != nil {
+		return err
+	}
+	plaintext, err := openContent(masterKey, response.Content)
+	if err != nil {
+		return fmt.Errorf("content decrypt failed: %w", err)
+	}
+	fmt.Printf("chunk id=%s, encrypted data=%s\n", response.ID, response.Content)
+	fmt.Printf("plaintext=%s\n", plaintext)
+	fmt.Println("content decrypted — read round-trip verified")
+	return nil
+}
+
+func getChunk(token, id string) (getChunkResponse, error) {
+	request, err := http.NewRequest(http.MethodGet, defaultBaseURL+"/chunks/"+id, nil)
+	if err != nil {
+		return getChunkResponse{}, err
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	httpResponse, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return getChunkResponse{}, err
+	}
+	defer func() { _ = httpResponse.Body.Close() }()
+	raw, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return getChunkResponse{}, err
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return getChunkResponse{}, fmt.Errorf("get chunk failed (%d): %s", httpResponse.StatusCode, raw)
+	}
+	var response getChunkResponse
+	if err := json.Unmarshal(raw, &response); err != nil {
+		return getChunkResponse{}, err
+	}
+	return response, nil
+}
+
+func openContent(key []byte, content string) (string, error) {
+	sealed, err := base64.StdEncoding.DecodeString(content)
+	if err != nil {
+		return "", err
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	if len(sealed) < gcm.NonceSize() {
+		return "", fmt.Errorf("content is too short")
+	}
+	nonce := sealed[:gcm.NonceSize()]
+	ciphertext := sealed[gcm.NonceSize():]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(plaintext), nil
+}
+
 func sealContent(key []byte, plaintext string) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -402,4 +493,9 @@ type createChunkRequest struct {
 
 type createChunkResponse struct {
 	ID string `json:"id"`
+}
+
+type getChunkResponse struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
 }
