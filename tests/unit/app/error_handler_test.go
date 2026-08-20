@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/inmemory"
-	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
 	"raiseexception.dev/odin/tests/builders"
+	"raiseexception.dev/odin/tests/builders/apptest"
 	"raiseexception.dev/odin/tests/builders/userbuilder"
 	"raiseexception.dev/odin/tests/testutils"
 )
@@ -19,7 +19,10 @@ import (
 func newErrorHandlerApp() (app.Application, *inmemory.InMemoryUserRepository, *inmemory.InMemorySessionRepository) {
 	userRepository := inmemory.NewInMemoryUserRepository()
 	sessionRepository := inmemory.NewInMemorySessionRepository()
-	application := app.NewFiberApplication(sessionRepository, userRepository, bcrypthasher.New())
+	application := apptest.New().
+		WithUserRepository(userRepository).
+		WithSessionRepository(sessionRepository).
+		Build()
 	return application, userRepository, sessionRepository
 }
 

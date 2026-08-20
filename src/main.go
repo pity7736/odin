@@ -4,6 +4,7 @@ import (
 	"raiseexception.dev/odin/src/accounts/infrastructure/repositories/inmemory"
 	"raiseexception.dev/odin/src/accounts/infrastructure/security/bcrypthasher"
 	"raiseexception.dev/odin/src/app"
+	vaultinmemory "raiseexception.dev/odin/src/vault/infrastructure/repositories/inmemory"
 )
 
 func main() {
@@ -11,6 +12,7 @@ func main() {
 		inmemory.NewInMemorySessionRepository(),
 		inmemory.NewInMemoryUserRepository(),
 		bcrypthasher.New(),
+		vaultinmemory.NewInMemoryChunkRepository(),
 	)
 	if err := application.Start(); err != nil {
 		panic(err)

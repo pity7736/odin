@@ -1,0 +1,25 @@
+info:
+  name: create chunk invalid id
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{host}}/chunks"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "id": "not-a-uuid",
+        "content": "encrypted-content-base64"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

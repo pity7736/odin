@@ -8,3 +8,6 @@ packages:
     interfaces:
       SessionRepository:
       UserRepository:
+  raiseexception.dev/odin/src/vault/domain/repositories:
+    interfaces:
+      ChunkRepository:
