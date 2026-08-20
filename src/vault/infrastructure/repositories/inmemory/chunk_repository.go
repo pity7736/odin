@@ -2,6 +2,7 @@ package inmemory
 
 import (
 	"context"
+	"sort"
 
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/vault/domain/chunkmodel"
@@ -44,6 +45,18 @@ func (self *InMemoryChunkRepository) Get(ctx context.Context, ownerID, id string
 		return nil, self.notFound()
 	}
 	return chunk, nil
+}
+
+func (self *InMemoryChunkRepository) GetAll(ctx context.Context, ownerID string) ([]*chunkmodel.EncryptedChunk, error) {
+	ownedChunks := self.chunks[ownerID]
+	chunks := make([]*chunkmodel.EncryptedChunk, 0, len(ownedChunks))
+	for _, chunk := range ownedChunks {
+		chunks = append(chunks, chunk)
+	}
+	sort.Slice(chunks, func(i, j int) bool {
+		return chunks[i].ID() > chunks[j].ID()
+	})
+	return chunks, nil
 }
 
 func (self *InMemoryChunkRepository) notFound() error {

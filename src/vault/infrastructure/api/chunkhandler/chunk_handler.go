@@ -10,6 +10,7 @@ import (
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 	"raiseexception.dev/odin/src/vault/application/use_cases/chunkcreator"
 	"raiseexception.dev/odin/src/vault/application/use_cases/chunkgetter"
+	"raiseexception.dev/odin/src/vault/application/use_cases/chunklister"
 	"raiseexception.dev/odin/src/vault/domain/repositories"
 )
 
@@ -68,6 +69,21 @@ func (self chunkHandler) Get(ctx *fiber.Ctx) error {
 	return ctx.JSON(getChunkResponse{ID: chunk.ID(), Content: chunk.Content()})
 }
 
+func (self chunkHandler) List(ctx *fiber.Ctx) error {
+	ownerID := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext).UserID()
+	lister := chunklister.New(ownerID, self.chunkRepository)
+	chunks, err := lister.List(ctx.Context())
+	if err != nil {
+		return err
+	}
+	items := make([]getChunkResponse, 0, len(chunks))
+	for _, chunk := range chunks {
+		items = append(items, getChunkResponse{ID: chunk.ID(), Content: chunk.Content()})
+	}
+	ctx.Status(http.StatusOK)
+	return ctx.JSON(listChunksResponse{Chunks: items})
+}
+
 type createChunkResponse struct {
 	ID string `json:"id"`
 }
@@ -75,4 +91,8 @@ type createChunkResponse struct {
 type getChunkResponse struct {
 	ID      string `json:"id"`
 	Content string `json:"content"`
+}
+
+type listChunksResponse struct {
+	Chunks []getChunkResponse `json:"chunks"`
 }

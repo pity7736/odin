@@ -55,6 +55,9 @@ func NewFiberApplication(
 	apiV1.Post("/chunks", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, chunk.Create)
 	})
+	apiV1.Get("/chunks", func(ctx *fiber.Ctx) error {
+		return loginRequired(ctx, chunk.List)
+	})
 	apiV1.Get("/chunks/:id", func(ctx *fiber.Ctx) error {
 		return loginRequired(ctx, chunk.Get)
 	})
