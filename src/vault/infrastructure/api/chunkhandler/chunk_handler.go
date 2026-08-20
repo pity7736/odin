@@ -9,6 +9,7 @@ import (
 	"raiseexception.dev/odin/src/shared/domain/odinerrors"
 	"raiseexception.dev/odin/src/shared/domain/requestcontext"
 	"raiseexception.dev/odin/src/vault/application/use_cases/chunkcreator"
+	"raiseexception.dev/odin/src/vault/application/use_cases/chunkgetter"
 	"raiseexception.dev/odin/src/vault/domain/repositories"
 )
 
@@ -52,6 +53,26 @@ func (self chunkHandler) create(ctx *fiber.Ctx, body *CreateChunkBody) error {
 	return ctx.JSON(createChunkResponse{ID: chunk.ID()})
 }
 
+func (self chunkHandler) Get(ctx *fiber.Ctx) error {
+	ownerID := ctx.Locals(requestcontext.Key).(*requestcontext.RequestContext).UserID()
+	getter := chunkgetter.New(
+		strings.Clone(ctx.Params("id")),
+		ownerID,
+		self.chunkRepository,
+	)
+	chunk, err := getter.Get(ctx.Context())
+	if err != nil {
+		return err
+	}
+	ctx.Status(http.StatusOK)
+	return ctx.JSON(getChunkResponse{ID: chunk.ID(), Content: chunk.Content()})
+}
+
 type createChunkResponse struct {
 	ID string `json:"id"`
+}
+
+type getChunkResponse struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
 }

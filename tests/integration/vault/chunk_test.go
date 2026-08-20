@@ -47,3 +47,72 @@ func TestCreateChunkIntegrationShould(t *testing.T) {
 		assert.True(t, exists)
 	})
 }
+
+func TestReadChunkIntegrationShould(t *testing.T) {
+	t.Run("return a stored chunk to its authenticated owner exactly as stored", func(t *testing.T) {
+		userRepository := accountsinmemory.NewInMemoryUserRepository()
+		sessionRepository := accountsinmemory.NewInMemorySessionRepository()
+		chunkRepository := inmemory.NewInMemoryChunkRepository()
+		application := apptest.New().
+			WithUserRepository(userRepository).
+			WithSessionRepository(sessionRepository).
+			WithChunkRepository(chunkRepository).
+			Build()
+		owner := userbuilder.New().WithEmail("owner@example.com").Create(userRepository)
+		id := uuid.NewString()
+		content := "nonce-ciphertext-tag-base64"
+		body := fmt.Sprintf(`{"id": "%s", "content": "%s"}`, id, content)
+		createBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath("/api/v1/chunks").
+			WithPayload(body).
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithUser(owner)
+		createResponse := testutils.GetJSONResponseFromRequestBuilder(application, createBuilder)
+		defer func() { _ = createResponse.Body.Close() }()
+		assert.Equal(t, http.StatusCreated, createResponse.StatusCode)
+		var responseData map[string]any
+		readBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithMethod("GET").
+			WithPath("/api/v1/chunks/" + id).
+			WithResponseData(&responseData).
+			WithUser(owner)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, readBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(t, id, responseData["id"])
+		assert.Equal(t, content, responseData["content"])
+	})
+
+	t.Run("hide a chunk from a user who is not its owner", func(t *testing.T) {
+		userRepository := accountsinmemory.NewInMemoryUserRepository()
+		sessionRepository := accountsinmemory.NewInMemorySessionRepository()
+		chunkRepository := inmemory.NewInMemoryChunkRepository()
+		application := apptest.New().
+			WithUserRepository(userRepository).
+			WithSessionRepository(sessionRepository).
+			WithChunkRepository(chunkRepository).
+			Build()
+		firstOwner := userbuilder.New().WithEmail("first@example.com").Create(userRepository)
+		otherUser := userbuilder.New().WithEmail("other@example.com").Create(userRepository)
+		id := uuid.NewString()
+		body := fmt.Sprintf(`{"id": "%s", "content": "nonce-ciphertext-tag-base64"}`, id)
+		createBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithPath("/api/v1/chunks").
+			WithPayload(body).
+			WithContentType(fiber.MIMEApplicationJSON).
+			WithUser(firstOwner)
+		createResponse := testutils.GetJSONResponseFromRequestBuilder(application, createBuilder)
+		defer func() { _ = createResponse.Body.Close() }()
+		assert.Equal(t, http.StatusCreated, createResponse.StatusCode)
+		var responseData map[string]any
+		readBuilder := builders.NewRequestBuilder(userRepository, sessionRepository).
+			WithMethod("GET").
+			WithPath("/api/v1/chunks/" + id).
+			WithResponseData(&responseData).
+			WithUser(otherUser)
+		response := testutils.GetJSONResponseFromRequestBuilder(application, readBuilder)
+		defer func() { _ = response.Body.Close() }()
+		assert.Equal(t, http.StatusNotFound, response.StatusCode)
+		assert.Equal(t, "El elemento no existe", responseData["error"])
+	})
+}

@@ -7,7 +7,7 @@ test:
 	go test ./...
 
 mocks:
-	go run github.com/vektra/mockery/v3
+	go tool mockery
 
 COVERAGE_THRESHOLD := 92
 
