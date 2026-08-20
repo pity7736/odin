@@ -16,11 +16,17 @@ Two repos: `odin` (Go sync/auth server), `odin-android` (Kotlin finance app).
 
 Strip the current server down to a sync/auth API. New domain: User, EncryptedChunk, KeyParams, SyncToken.
 
-- [ ] Design the new server domain entities and sync API contract
-- [ ] Auth redesign: key derivation support (Argon2id params), encrypted master key storage, session tokens
-- [ ] Encrypted chunk storage: CRUD with version-based optimistic locking
-- [ ] Sync endpoint: delta sync via `updated_at`, pagination for initial load
-- [ ] Remove old domain code (Account, Category, Income entities, use cases, repositories, HTMX handlers/templates)
+- [x] Auth redesign: key derivation support (Argon2id params), encrypted master key storage, double-hash chain (client Argon2id → server bcrypt), app-scoped handlers, centralized error handling, self-validating request bodies
+- [x] Remove old domain code (Account, Category, Income entities, use cases, repositories, HTMX handlers/templates)
+- [ ] CLI + login verification: build a small CLI (`cmd/odin-cli`) that does client-side crypto (Argon2id key derivation), derives the auth hash for the seeded user, calls the login endpoint, and verifies it gets back the encrypted master key and key params. First real proof the crypto handshake works. The CLI grows with each subsequent task.
+- [ ] Registration: accept email, auth_hash, encrypted_master_key, and key_params from the client. Server bcrypt-hashes the auth_hash and persists the user. Remove seed data — the CLI registers its own users from this point on. Full SDD cycle.
+- [ ] Create encrypted chunk: the CLI encrypts plaintext with AES-256-GCM using the master key, sends the blob to a new server endpoint, reads it back, decrypts, and verifies the plaintext matches. Server-side: accept a client-encrypted blob (ciphertext + IV + auth tag) with a client-generated ID, persist it. This is where the EncryptedChunk entity gets designed — you can't create what you haven't defined. Full SDD cycle.
+- [ ] Read encrypted chunk: retrieve a single encrypted chunk by ID for its owner. Server returns the opaque blob as-is — no decryption, no interpretation. CLI decrypts and verifies the round-trip.
+- [ ] Update encrypted chunk: replace an existing chunk's ciphertext with a new version. Uses optimistic locking (version field) so concurrent edits from multiple devices fail cleanly instead of silently overwriting each other. CLI tests both paths: successful update with correct version, and rejection with stale version.
+- [ ] Delete encrypted chunk: soft-delete a chunk by marking it as deleted (tombstone). Hard-delete would break sync — other devices need to learn the chunk is gone, not just stop seeing it. CLI verifies the chunk is gone on read after deletion.
+- [ ] Sync endpoint: return all chunks changed since a given `updated_at` timestamp (delta sync). The client sends its last-known timestamp, the server returns everything newer. This is how devices stay in sync without downloading the full dataset every time. CLI creates/updates/deletes chunks, then syncs and verifies only the changes come back.
+- [ ] Pagination for initial load: when a new device syncs for the first time (no `updated_at`), the full dataset could be large. Page the response so the client can load incrementally instead of waiting for one massive payload. CLI verifies paged responses assemble into the full dataset.
+- [ ] Bug: requesting a non-existent URL returns 500 instead of 404. The global error handler falls through for non-odin errors (including unmatched routes) and yields an empty 500; unmatched routes should return 404.
 
 ## Phase 2 — Crypto module (Kotlin, `odin-android`)
 

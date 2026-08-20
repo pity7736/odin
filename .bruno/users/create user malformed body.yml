@@ -1,17 +1,16 @@
 info:
-  name: login wrong credentials
+  name: create user malformed body
   type: http
-  seq: 2
+  seq: 16
 
 http:
   method: POST
-  url: "{{host}}/auth/login"
+  url: "{{host}}/users"
   body:
     type: json
     data: |-
       {
-        "email": "some@email.com",
-        "auth_hash": "wrong-auth-hash"
+        "email": "new@example.com" "auth_hash": "{{auth_hash}}"
       }
   auth: inherit
 
